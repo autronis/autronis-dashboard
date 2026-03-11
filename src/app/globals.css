@@ -1,26 +1,47 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-autronis-bg: var(--bg);
+  --color-autronis-card: var(--card);
+  --color-autronis-accent: var(--accent);
+  --color-autronis-accent-hover: var(--accent-hover);
+  --color-autronis-success: var(--success);
+  --color-autronis-warning: var(--warning);
+  --color-autronis-danger: var(--danger);
+  --color-autronis-text-primary: var(--text-primary);
+  --color-autronis-text-secondary: var(--text-secondary);
+  --color-autronis-border: var(--border);
 }
 
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #F0FDFA;
+    --card: #FFFFFF;
+    --accent: #0D9373;
+    --accent-hover: #0F766E;
+    --success: #16A34A;
+    --warning: #EA580C;
+    --danger: #DC2626;
+    --text-primary: #0B1A1F;
+    --text-secondary: #64748B;
+    --border: #CCFBF1;
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  .dark {
+    --bg: #0B1A1F;
+    --card: #112B34;
+    --accent: #2DD4A8;
+    --accent-hover: #5EEAD4;
+    --success: #22C55E;
+    --warning: #F97316;
+    --danger: #EF4444;
+    --text-primary: #F1F5F9;
+    --text-secondary: #94A3B8;
+    --border: #1E3A45;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text-primary);
+  }
 }
