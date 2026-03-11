@@ -1,0 +1,21 @@
+{
+  "name": "Autronis Dashboard",
+  "short_name": "Autronis",
+  "description": "Business dashboard voor Autronis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B1A1F",
+  "theme_color": "#2DD4A8",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
