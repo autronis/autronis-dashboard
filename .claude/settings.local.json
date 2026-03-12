@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(ls -la src/app/api/leads/[id]/activiteiten/ src/app/api/leads/[id]/email/ src/components/ui/email-composer.tsx)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout 15 npx next build)",
+      "Bash(wc -l src/app/\\\\\\(dashboard\\\\\\)/page.tsx src/app/\\\\\\(dashboard\\\\\\)/financien/page.tsx src/app/\\\\\\(dashboard\\\\\\)/financien/nieuw/page.tsx src/app/\\\\\\(dashboard\\\\\\)/financien/[id]/page.tsx src/app/\\\\\\(dashboard\\\\\\)/taken/page.tsx src/app/\\\\\\(dashboard\\\\\\)/klanten/page.tsx src/app/\\\\\\(dashboard\\\\\\)/analytics/page.tsx src/app/\\\\\\(dashboard\\\\\\)/crm/page.tsx)",
+      "Bash(npx next:*)",
+      "Bash(npx drizzle-kit:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
