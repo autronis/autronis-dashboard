@@ -156,6 +156,29 @@ export const leads = sqliteTable("leads", {
   bijgewerktOp: text("bijgewerkt_op").default(sql`(datetime('now'))`),
 });
 
+// ============ NOTIFICATIES ============
+export const notificaties = sqliteTable("notificaties", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  gebruikerId: integer("gebruiker_id").notNull().references(() => gebruikers.id),
+  type: text("type", { enum: ["factuur_te_laat", "deadline_nadert", "factuur_betaald", "taak_toegewezen"] }).notNull(),
+  titel: text("titel").notNull(),
+  omschrijving: text("omschrijving"),
+  link: text("link"),
+  gelezen: integer("gelezen").notNull().default(0),
+  aangemaaktOp: text("aangemaakt_op").notNull().default(sql`(datetime('now'))`),
+});
+
+// ============ LEAD ACTIVITEITEN ============
+export const leadActiviteiten = sqliteTable("lead_activiteiten", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  leadId: integer("lead_id").notNull().references(() => leads.id),
+  gebruikerId: integer("gebruiker_id").notNull().references(() => gebruikers.id),
+  type: text("type", { enum: ["email_verstuurd", "status_gewijzigd", "notitie_toegevoegd", "gebeld", "vergadering"] }).notNull(),
+  titel: text("titel").notNull(),
+  omschrijving: text("omschrijving"),
+  aangemaaktOp: text("aangemaakt_op").notNull().default(sql`(datetime('now'))`),
+});
+
 // ============ AGENDA ITEMS ============
 export const agendaItems = sqliteTable("agenda_items", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -193,6 +216,7 @@ export const notities = sqliteTable("notities", {
   projectId: integer("project_id").references(() => projecten.id),
   leadId: integer("lead_id").references(() => leads.id),
   inhoud: text("inhoud").notNull(),
+  type: text("type", { enum: ["notitie", "belangrijk", "afspraak"] }).default("notitie"),
   aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
 });
 
@@ -203,8 +227,9 @@ export const documenten = sqliteTable("documenten", {
   projectId: integer("project_id").references(() => projecten.id),
   leadId: integer("lead_id").references(() => leads.id),
   naam: text("naam").notNull(),
-  bestandspad: text("bestandspad").notNull(),
-  type: text("type", { enum: ["contract", "offerte", "overig"] }).default("overig"),
+  bestandspad: text("bestandspad").default(""),
+  url: text("url"),
+  type: text("type", { enum: ["contract", "offerte", "link", "overig"] }).default("overig"),
   versie: integer("versie").default(1),
   aangemaaktDoor: integer("aangemaakt_door").references(() => gebruikers.id),
   aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
