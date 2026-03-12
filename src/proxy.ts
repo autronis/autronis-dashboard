@@ -6,6 +6,15 @@ const PUBLIC_PATHS = [
   "/login",
   "/api/auth/login",
   "/api/seed",
+  "/api/belasting/seed",
+  "/api/portal/",
+  "/api/proposal/",
+  "/api/tevredenheid/",
+  "/api/mollie/webhook",
+  "/portal/",
+  "/proposal/",
+  "/feedback/",
+  "/api/docs",
   "/_next",
   "/icons",
   "/manifest.json",
@@ -14,6 +23,7 @@ const PUBLIC_PATHS = [
   "/foto-sem.jpg",
   "/foto-syb.jpg",
   "/waves.webm",
+  "/bonnetjes/",
 ];
 
 function isPublicPath(pathname: string): boolean {

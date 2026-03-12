@@ -18,6 +18,13 @@ import {
   X,
   Command,
   ChevronDown,
+  Landmark,
+  Users2,
+  Sparkles,
+  FileText,
+  Crosshair,
+  Car,
+  BookOpen,
 } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { cn } from "@/lib/utils";
@@ -27,10 +34,17 @@ const navItems = [
   { label: "Tijdregistratie", icon: Clock, href: "/tijdregistratie" },
   { label: "Klanten", icon: Users, href: "/klanten" },
   { label: "Financiën", icon: Euro, href: "/financien" },
+  { label: "Offertes", icon: FileText, href: "/offertes" },
   { label: "Analytics", icon: BarChart3, href: "/analytics" },
   { label: "CRM / Leads", icon: Target, href: "/crm" },
+  { label: "Belasting", icon: Landmark, href: "/belasting" },
   { label: "Agenda", icon: Calendar, href: "/agenda" },
   { label: "Taken", icon: CheckSquare, href: "/taken" },
+  { label: "Doelen (OKR)", icon: Crosshair, href: "/doelen" },
+  { label: "Team", icon: Users2, href: "/team" },
+  { label: "Kilometers", icon: Car, href: "/kilometers" },
+  { label: "Wiki", icon: BookOpen, href: "/wiki" },
+  { label: "AI Assistent", icon: Sparkles, href: "/ai-assistent" },
 ];
 
 const bottomNavItem = { label: "Instellingen", icon: Settings, href: "/instellingen" };
