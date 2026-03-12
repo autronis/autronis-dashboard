@@ -15,33 +15,140 @@
 
 @layer base {
   :root {
-    --bg: #F0FDFA;
+    --bg: #FAFAFA;
     --card: #FFFFFF;
-    --accent: #0D9373;
-    --accent-hover: #0F766E;
+    --accent: #128C7E;
+    --accent-hover: #0E6B5F;
     --success: #16A34A;
     --warning: #EA580C;
     --danger: #DC2626;
-    --text-primary: #0B1A1F;
+    --text-primary: #1F2529;
     --text-secondary: #64748B;
-    --border: #CCFBF1;
+    --border: #E2E8F0;
   }
 
   .dark {
-    --bg: #0B1A1F;
-    --card: #112B34;
-    --accent: #2DD4A8;
-    --accent-hover: #5EEAD4;
+    --bg: #0E1719;
+    --card: #192225;
+    --accent: #17B8A5;
+    --accent-hover: #4DC9B4;
     --success: #22C55E;
     --warning: #F97316;
     --danger: #EF4444;
-    --text-primary: #F1F5F9;
+    --text-primary: #F5F5F5;
     --text-secondary: #94A3B8;
-    --border: #1E3A45;
+    --border: #273134;
   }
 
   body {
     background-color: var(--bg);
     color: var(--text-primary);
   }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+.card-glow {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-glow:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 15%, transparent),
+              0 0 40px color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+/* Gradient KPI kaarten */
+.kpi-gradient-omzet {
+  background: linear-gradient(135deg, var(--card) 0%, rgba(23,184,165,0.08) 100%);
+}
+.kpi-gradient-uren {
+  background: linear-gradient(135deg, var(--card) 0%, rgba(59,130,246,0.08) 100%);
+}
+.kpi-gradient-projecten {
+  background: linear-gradient(135deg, var(--card) 0%, rgba(168,85,247,0.08) 100%);
+}
+.kpi-gradient-deadlines {
+  background: linear-gradient(135deg, var(--card) 0%, rgba(239,68,68,0.08) 100%);
+}
+.kpi-gradient-betaald {
+  background: linear-gradient(135deg, var(--card) 0%, rgba(34,197,94,0.08) 100%);
+}
+.kpi-gradient-openstaand {
+  background: linear-gradient(135deg, var(--card) 0%, rgba(239,68,68,0.08) 100%);
+}
+.kpi-gradient-facturen {
+  background: linear-gradient(135deg, var(--card) 0%, rgba(59,130,246,0.08) 100%);
+}
+
+/* Glassmorphism */
+.glass {
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-modal {
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Focus states */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Status pulse */
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.3); }
+}
+
+.status-pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* Confetti burst */
+@keyframes check-burst {
+  0% { transform: scale(0); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.check-burst {
+  animation: check-burst 0.4s ease-out;
+}
+
+/* Theme transition */
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Safe area for mobile */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
