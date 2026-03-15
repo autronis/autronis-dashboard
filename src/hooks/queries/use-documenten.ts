@@ -1,22 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { DocumentBase, DocumentPayload, AiDraftRequest, AiDraftResponse } from "@/types/documenten";
+import { DocumentBase, DocumentPayload, AiDraftRequest, AiDraftResponse, PaginatedDocumenten, SortOption } from "@/types/documenten";
 
-interface DocumentenResponse {
-  documenten: DocumentBase[];
-}
+async function fetchDocumenten(sort?: SortOption, cursor?: string): Promise<PaginatedDocumenten> {
+  const params = new URLSearchParams();
+  if (sort) params.set("sort", sort);
+  if (cursor) params.set("cursor", cursor);
+  params.set("limit", "20");
 
-async function fetchDocumenten(): Promise<DocumentBase[]> {
-  const res = await fetch("/api/documenten");
+  const res = await fetch(`/api/documenten?${params.toString()}`);
   if (!res.ok) throw new Error("Kon documenten niet ophalen");
-  const data: DocumentenResponse = await res.json();
-  return data.documenten;
+  return res.json();
 }
 
-export function useDocumenten() {
+export function useDocumenten(sort?: SortOption, cursor?: string) {
   return useQuery({
-    queryKey: ["documenten"],
-    queryFn: fetchDocumenten,
+    queryKey: ["documenten", sort ?? "datum-desc", cursor ?? ""],
+    queryFn: () => fetchDocumenten(sort, cursor),
     staleTime: 60_000,
+    select: (data: PaginatedDocumenten) => data,
   });
 }
 
@@ -36,7 +37,46 @@ export function useCreateDocument() {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onMutate: async (payload: DocumentPayload) => {
+      // Cancel outgoing queries
+      await queryClient.cancelQueries({ queryKey: ["documenten"] });
+
+      // Snapshot previous state
+      const previousData = queryClient.getQueriesData<PaginatedDocumenten>({ queryKey: ["documenten"] });
+
+      // Optimistically add the document to all matching query caches
+      queryClient.setQueriesData<PaginatedDocumenten>(
+        { queryKey: ["documenten"] },
+        (old) => {
+          if (!old) return old;
+          const optimisticDoc: DocumentBase = {
+            notionId: `optimistic-${Date.now()}`,
+            titel: payload.titel,
+            type: payload.type,
+            samenvatting: "",
+            aangemaaktDoor: "Jij",
+            aangemaaktOp: new Date().toISOString().split("T")[0],
+            notionUrl: "",
+            isOptimistic: true,
+          };
+          return {
+            ...old,
+            documenten: [optimisticDoc, ...old.documenten],
+          };
+        }
+      );
+
+      return { previousData };
+    },
+    onError: (_err, _payload, context) => {
+      // Rollback on error
+      if (context?.previousData) {
+        for (const [queryKey, data] of context.previousData) {
+          queryClient.setQueryData(queryKey, data);
+        }
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["documenten"] });
     },
   });

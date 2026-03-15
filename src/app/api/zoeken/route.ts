@@ -21,7 +21,8 @@ const CACHE_TTL = 60_000;
 async function getCachedDocuments(): Promise<DocumentBase[]> {
   if (Date.now() - documentCache.timestamp > CACHE_TTL) {
     try {
-      documentCache = { data: await fetchAllDocuments(), timestamp: Date.now() };
+      const result = await fetchAllDocuments({ pageSize: 100 });
+      documentCache = { data: result.documenten, timestamp: Date.now() };
     } catch {
       // Return stale cache on error
     }

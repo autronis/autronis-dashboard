@@ -1,5 +1,5 @@
 import { Client } from "@notionhq/client";
-import { DocumentType, DocumentBase, DocumentPayload, DOCUMENT_TYPE_NOTION_DB_KEYS } from "@/types/documenten";
+import { DocumentType, DocumentBase, DocumentPayload, PaginatedDocumenten, SortOption, DOCUMENT_TYPE_NOTION_DB_KEYS } from "@/types/documenten";
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
@@ -104,78 +104,149 @@ export async function createNotionDocument(
   };
 }
 
-async function fetchFromDatabase(type: DocumentType, dbId: string): Promise<DocumentBase[]> {
-  const response = await withRetry(() => notion.databases.query({
-    database_id: dbId,
-    sorts: [{ property: "Aangemaakt op", direction: "descending" }],
-    page_size: 50,
-  }));
-
-  return response.results.map((page) => {
-    const props = (page as { properties: Record<string, unknown> }).properties as Record<string, {
-      title?: Array<{ plain_text: string }>;
-      rich_text?: Array<{ plain_text: string }>;
-      date?: { start: string } | null;
-    }>;
-
-    return {
-      notionId: page.id,
-      titel: props.Titel?.title?.[0]?.plain_text ?? "Zonder titel",
-      type,
-      samenvatting: props.Samenvatting?.rich_text?.[0]?.plain_text ?? "",
-      aangemaaktDoor: props["Aangemaakt door"]?.rich_text?.[0]?.plain_text ?? "",
-      aangemaaktOp: props["Aangemaakt op"]?.date?.start ?? "",
-      notionUrl: (page as { url: string }).url,
-      klantNaam: props.Klant?.rich_text?.[0]?.plain_text,
-      projectNaam: props.Project?.rich_text?.[0]?.plain_text,
-    };
-  });
+function getNotionSort(sort?: SortOption): Array<{ property: string; direction: "ascending" | "descending" }> {
+  switch (sort) {
+    case "datum-asc": return [{ property: "Aangemaakt op", direction: "ascending" }];
+    case "titel-asc": return [{ property: "Titel", direction: "ascending" }];
+    case "titel-desc": return [{ property: "Titel", direction: "descending" }];
+    case "klant-asc": return [{ property: "Klant", direction: "ascending" }];
+    case "klant-desc": return [{ property: "Klant", direction: "descending" }];
+    case "datum-desc":
+    default: return [{ property: "Aangemaakt op", direction: "descending" }];
+  }
 }
 
-export async function fetchAllDocuments(): Promise<DocumentBase[]> {
+function parseNotionPage(page: { id: string; url?: string; properties?: Record<string, unknown> }, type: DocumentType): DocumentBase {
+  const props = ((page as { properties: Record<string, unknown> }).properties ?? {}) as Record<string, {
+    title?: Array<{ plain_text: string }>;
+    rich_text?: Array<{ plain_text: string }>;
+    date?: { start: string } | null;
+  }>;
+
+  return {
+    notionId: page.id,
+    titel: props.Titel?.title?.[0]?.plain_text ?? "Zonder titel",
+    type,
+    samenvatting: props.Samenvatting?.rich_text?.[0]?.plain_text ?? "",
+    aangemaaktDoor: props["Aangemaakt door"]?.rich_text?.[0]?.plain_text ?? "",
+    aangemaaktOp: props["Aangemaakt op"]?.date?.start ?? "",
+    notionUrl: (page as { url: string }).url,
+    klantNaam: props.Klant?.rich_text?.[0]?.plain_text,
+    projectNaam: props.Project?.rich_text?.[0]?.plain_text,
+  };
+}
+
+async function fetchFromDatabase(
+  type: DocumentType,
+  dbId: string,
+  options?: { pageSize?: number; cursor?: string; sort?: SortOption }
+): Promise<{ docs: DocumentBase[]; nextCursor?: string; hasMore: boolean }> {
+  const queryParams: Record<string, unknown> = {
+    database_id: dbId,
+    sorts: getNotionSort(options?.sort),
+    page_size: options?.pageSize ?? 20,
+  };
+  if (options?.cursor) {
+    queryParams.start_cursor = options.cursor;
+  }
+
+  const response = await withRetry(() => notion.databases.query(queryParams as Parameters<typeof notion.databases.query>[0]));
+
+  return {
+    docs: response.results.map((page) => parseNotionPage(page as { id: string; url?: string; properties?: Record<string, unknown> }, type)),
+    nextCursor: response.next_cursor ?? undefined,
+    hasMore: response.has_more,
+  };
+}
+
+// Paginated fetch — fetches from all 6 databases with a per-db page size
+export async function fetchAllDocuments(options?: {
+  pageSize?: number;
+  cursor?: string;
+  sort?: SortOption;
+}): Promise<PaginatedDocumenten> {
   const allDocs: DocumentBase[] = [];
   const types: DocumentType[] = ["contract", "klantdocument", "intern", "belangrijke-info", "plan", "notitie"];
+  let lastCursor: string | undefined;
+  let anyHasMore = false;
+
+  // When cursor is provided, it's in format "type:cursor" to track which DB
+  let cursorType: string | undefined;
+  let cursorValue: string | undefined;
+  if (options?.cursor) {
+    const [t, c] = options.cursor.split(":");
+    cursorType = t;
+    cursorValue = c;
+  }
+
+  const perDbSize = options?.pageSize ?? 20;
 
   for (const type of types) {
     const envKey = DOCUMENT_TYPE_NOTION_DB_KEYS[type];
     const dbId = process.env[envKey];
     if (!dbId) continue;
 
+    // If we have a cursor, skip DBs until we reach the right one
+    if (cursorType && type !== cursorType) continue;
+
     try {
-      const docs = await fetchFromDatabase(type, dbId);
-      allDocs.push(...docs);
+      const result = await fetchFromDatabase(type, dbId, {
+        pageSize: perDbSize,
+        cursor: cursorType === type ? cursorValue : undefined,
+        sort: options?.sort,
+      });
+      allDocs.push(...result.docs);
+
+      if (result.hasMore) {
+        lastCursor = `${type}:${result.nextCursor}`;
+        anyHasMore = true;
+        break; // Stop after first DB with more results
+      }
     } catch {
       // Skip this database and continue with others
     }
+
+    // Reset cursor tracking after processing the target DB
+    if (cursorType === type) {
+      cursorType = undefined;
+      cursorValue = undefined;
+    }
   }
 
-  allDocs.sort((a, b) => b.aangemaaktOp.localeCompare(a.aangemaaktOp));
-  return allDocs;
+  // Client-side sort across databases when no cursor (first page)
+  if (!options?.cursor) {
+    const sortFn = getSortFn(options?.sort);
+    allDocs.sort(sortFn);
+  }
+
+  return {
+    documenten: allDocs,
+    nextCursor: lastCursor,
+    hasMore: anyHasMore,
+  };
+}
+
+function getSortFn(sort?: SortOption): (a: DocumentBase, b: DocumentBase) => number {
+  switch (sort) {
+    case "datum-asc": return (a, b) => a.aangemaaktOp.localeCompare(b.aangemaaktOp);
+    case "titel-asc": return (a, b) => a.titel.localeCompare(b.titel);
+    case "titel-desc": return (a, b) => b.titel.localeCompare(a.titel);
+    case "klant-asc": return (a, b) => (a.klantNaam ?? "").localeCompare(b.klantNaam ?? "");
+    case "klant-desc": return (a, b) => (b.klantNaam ?? "").localeCompare(a.klantNaam ?? "");
+    case "datum-desc":
+    default: return (a, b) => b.aangemaaktOp.localeCompare(a.aangemaaktOp);
+  }
 }
 
 export async function fetchNotionDocument(notionId: string): Promise<DocumentBase | null> {
   try {
     const page = await withRetry(() => notion.pages.retrieve({ page_id: notionId }));
     const props = (page as { properties: Record<string, unknown> }).properties as Record<string, {
-      title?: Array<{ plain_text: string }>;
       rich_text?: Array<{ plain_text: string }>;
-      date?: { start: string } | null;
     }>;
-
     const storedType = props["Document type"]?.rich_text?.[0]?.plain_text;
     const type = (storedType as DocumentType) ?? "intern";
-
-    return {
-      notionId: page.id,
-      titel: props.Titel?.title?.[0]?.plain_text ?? "Zonder titel",
-      type,
-      samenvatting: props.Samenvatting?.rich_text?.[0]?.plain_text ?? "",
-      aangemaaktDoor: props["Aangemaakt door"]?.rich_text?.[0]?.plain_text ?? "",
-      aangemaaktOp: props["Aangemaakt op"]?.date?.start ?? "",
-      notionUrl: (page as { url: string }).url,
-      klantNaam: props.Klant?.rich_text?.[0]?.plain_text,
-      projectNaam: props.Project?.rich_text?.[0]?.plain_text,
-    };
+    return parseNotionPage(page as { id: string; url?: string; properties?: Record<string, unknown> }, type);
   } catch {
     return null;
   }

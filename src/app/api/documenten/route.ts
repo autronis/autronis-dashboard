@@ -2,16 +2,27 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { createNotionDocument, fetchAllDocuments } from "@/lib/notion";
 import { categorizeDocument } from "@/lib/ai/documenten";
-import { DocumentPayload } from "@/types/documenten";
+import { DocumentPayload, SortOption } from "@/types/documenten";
 import { db } from "@/lib/db";
 import { klanten, projecten } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await requireAuth();
-    const documenten = await fetchAllDocuments();
-    return NextResponse.json({ documenten });
+
+    const { searchParams } = request.nextUrl;
+    const cursor = searchParams.get("cursor") ?? undefined;
+    const sort = (searchParams.get("sort") as SortOption) ?? undefined;
+    const limit = parseInt(searchParams.get("limit") ?? "20", 10);
+
+    const result = await fetchAllDocuments({
+      pageSize: Math.min(limit, 100),
+      cursor,
+      sort,
+    });
+
+    return NextResponse.json(result);
   } catch (error) {
     if (error instanceof Error && error.message === "Niet geauthenticeerd") {
       return NextResponse.json({ fout: "Niet geauthenticeerd" }, { status: 401 });
