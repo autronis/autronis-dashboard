@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, real, uniqueIndex, index } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 // ============ GEBRUIKERS ============
@@ -598,6 +598,7 @@ export const apiKeys = sqliteTable("api_keys", {
   keyPrefix: text("key_prefix").notNull(),
   permissions: text("permissions").default("[]"), // JSON array
   laatstGebruiktOp: text("laatst_gebruikt_op"),
+  isActief: integer("is_actief").default(1),
   aangemaaktDoor: integer("aangemaakt_door").references(() => gebruikers.id),
   aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
 });
@@ -607,4 +608,55 @@ export const mollieInstellingen = sqliteTable("mollie_instellingen", {
   apiKey: text("api_key"),
   actief: integer("actief").default(0),
   bijgewerktOp: text("bijgewerkt_op").default(sql`(datetime('now'))`),
+});
+
+// ============ SCREEN TIME TRACKING ============
+
+export const screenTimeEntries = sqliteTable("screen_time_entries", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  clientId: text("client_id"),
+  gebruikerId: integer("gebruiker_id").references(() => gebruikers.id),
+  app: text("app").notNull(),
+  vensterTitel: text("venster_titel"),
+  url: text("url"),
+  categorie: text("categorie", {
+    enum: ["development", "communicatie", "design", "administratie", "afleiding", "overig"],
+  }).default("overig"),
+  projectId: integer("project_id").references(() => projecten.id),
+  klantId: integer("klant_id").references(() => klanten.id),
+  startTijd: text("start_tijd").notNull(),
+  eindTijd: text("eind_tijd").notNull(),
+  duurSeconden: integer("duur_seconden").notNull(),
+  bron: text("bron", { enum: ["agent", "handmatig"] }).default("agent"),
+  aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
+}, (table) => ({
+  uniekClientId: uniqueIndex("uniek_client_id").on(table.clientId),
+  idxGebruikerStart: index("idx_st_gebruiker_start").on(table.gebruikerId, table.startTijd),
+  idxGebruikerCatStart: index("idx_st_gebruiker_cat_start").on(table.gebruikerId, table.categorie, table.startTijd),
+}));
+
+export const screenTimeRegels = sqliteTable("screen_time_regels", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  type: text("type", { enum: ["app", "url", "venstertitel"] }).notNull(),
+  patroon: text("patroon").notNull(),
+  categorie: text("categorie", {
+    enum: ["development", "communicatie", "design", "administratie", "afleiding", "overig"],
+  }).notNull(),
+  projectId: integer("project_id").references(() => projecten.id),
+  klantId: integer("klant_id").references(() => klanten.id),
+  prioriteit: integer("prioriteit").default(0),
+  isActief: integer("is_actief").default(1),
+  aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
+});
+
+export const screenTimeSuggesties = sqliteTable("screen_time_suggesties", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  gebruikerId: integer("gebruiker_id").references(() => gebruikers.id),
+  type: text("type", { enum: ["categorie", "tijdregistratie", "project_koppeling"] }).notNull(),
+  startTijd: text("start_tijd").notNull(),
+  eindTijd: text("eind_tijd").notNull(),
+  voorstel: text("voorstel").notNull(),
+  status: text("status", { enum: ["openstaand", "goedgekeurd", "afgewezen"] }).default("openstaand"),
+  aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
+  verwerktOp: text("verwerkt_op"),
 });
