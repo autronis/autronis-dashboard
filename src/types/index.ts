@@ -29,7 +29,7 @@ export interface SessionGebruiker {
 
 // ============ SCREEN TIME TYPES ============
 
-export type ScreenTimeCategorie = "development" | "communicatie" | "design" | "administratie" | "afleiding" | "overig";
+export type ScreenTimeCategorie = "development" | "communicatie" | "design" | "administratie" | "afleiding" | "overig" | "inactief";
 
 export interface ScreenTimeEntry {
   id: number;
@@ -74,4 +74,29 @@ export interface ScreenTimeSuggestie {
   status: "openstaand" | "goedgekeurd" | "afgewezen";
   aangemaaktOp: string;
   verwerktOp: string | null;
+}
+
+export interface ScreenTimeSessie {
+  app: string;
+  categorie: ScreenTimeCategorie;
+  projectId: number | null;
+  projectNaam: string | null;
+  klantNaam: string | null;
+  startTijd: string;
+  eindTijd: string;
+  duurSeconden: number;
+  venstertitels: string[];
+  isIdle: boolean;
+}
+
+export interface ScreenTimeSamenvatting {
+  id: number;
+  gebruikerId: number;
+  datum: string;
+  samenvattingKort: string | null;
+  samenvattingDetail: string | null;
+  totaalSeconden: number | null;
+  productiefPercentage: number | null;
+  topProject: string | null;
+  aangemaaktOp: string;
 }
