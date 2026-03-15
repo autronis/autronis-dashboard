@@ -84,6 +84,10 @@ pub fn run() {
     let state_for_sync = Arc::clone(&state);
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ))
         .manage(Arc::clone(&state))
         .invoke_handler(tauri::generate_handler![
             get_config,

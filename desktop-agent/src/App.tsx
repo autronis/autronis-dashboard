@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { enable, disable, isEnabled } from "@tauri-apps/plugin-autostart";
 import "./App.css";
 
 interface Config {
@@ -44,6 +45,7 @@ function App() {
   const [newExclude, setNewExclude] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [autoStart, setAutoStart] = useState(false);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -66,9 +68,24 @@ function App() {
   useEffect(() => {
     fetchConfig();
     fetchStatus();
+    isEnabled().then(setAutoStart).catch(() => {});
     const interval = setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
   }, [fetchConfig, fetchStatus]);
+
+  const handleAutoStartToggle = async () => {
+    try {
+      if (autoStart) {
+        await disable();
+        setAutoStart(false);
+      } else {
+        await enable();
+        setAutoStart(true);
+      }
+    } catch (_) {
+      // ignore
+    }
+  };
 
   const handleToggle = async () => {
     try {
@@ -183,6 +200,21 @@ function App() {
               {showToken ? "Verberg" : "Toon"}
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Opstarten */}
+      <div className="section">
+        <h3 className="section-title">Opstarten</h3>
+        <div className="field checkbox-field">
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={autoStart}
+              onChange={handleAutoStartToggle}
+            />
+            <span>Start bij opstarten</span>
+          </label>
         </div>
       </div>
 

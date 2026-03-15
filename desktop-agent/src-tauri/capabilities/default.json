@@ -11,6 +11,9 @@
     "core:window:allow-set-focus",
     "core:window:allow-show",
     "core:window:allow-hide",
-    "opener:default"
+    "opener:default",
+    "autostart:allow-enable",
+    "autostart:allow-disable",
+    "autostart:allow-is-enabled"
   ]
 }
