@@ -25,6 +25,7 @@ import {
   Crosshair,
   Car,
   BookOpen,
+  Monitor,
 } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
   { label: "Tijdregistratie", icon: Clock, href: "/tijdregistratie" },
+  { label: "Schermtijd", icon: Monitor, href: "/schermtijd" },
   { label: "Klanten", icon: Users, href: "/klanten" },
   { label: "Financiën", icon: Euro, href: "/financien" },
   { label: "Offertes", icon: FileText, href: "/offertes" },
