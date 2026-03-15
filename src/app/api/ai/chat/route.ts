@@ -10,6 +10,7 @@ import {
   klanten,
   leads,
   taken,
+  screenTimeEntries,
 } from "@/lib/db/schema";
 import { eq, and, gte, sql, desc, ne } from "drizzle-orm";
 
@@ -26,7 +27,7 @@ function getMonthRange(): { van: string; tot: string } {
   return { van: firstDay.toISOString(), tot: lastDay.toISOString() };
 }
 
-async function gatherBusinessContext(): Promise<string> {
+async function gatherBusinessContext(gebruikerId: number): Promise<string> {
   const { van, tot } = getMonthRange();
 
   // Revenue this month (betaald facturen)
@@ -152,6 +153,40 @@ async function gatherBusinessContext(): Promise<string> {
     .map((f) => `- ${f.factuurnummer} — ${f.klantNaam ?? "Onbekend"}: €${Math.round(f.bedrag ?? 0)} (${f.status})`)
     .join("\n");
 
+  // Screen time vandaag
+  const vandaag = new Date().toISOString().split("T")[0];
+  const screenTimeSamenvatting = db
+    .select({
+      categorie: screenTimeEntries.categorie,
+      totaal: sql<number>`SUM(duur_seconden)`,
+    })
+    .from(screenTimeEntries)
+    .where(
+      and(
+        eq(screenTimeEntries.gebruikerId, gebruikerId),
+        gte(screenTimeEntries.startTijd, `${vandaag}T00:00:00`)
+      )
+    )
+    .groupBy(screenTimeEntries.categorie)
+    .all();
+
+  const topAppsVandaag = db
+    .select({
+      app: screenTimeEntries.app,
+      totaal: sql<number>`SUM(duur_seconden)`,
+    })
+    .from(screenTimeEntries)
+    .where(
+      and(
+        eq(screenTimeEntries.gebruikerId, gebruikerId),
+        gte(screenTimeEntries.startTijd, `${vandaag}T00:00:00`)
+      )
+    )
+    .groupBy(screenTimeEntries.app)
+    .orderBy(sql`SUM(duur_seconden) DESC`)
+    .limit(5)
+    .all();
+
   return `Je bent de AI-assistent van Autronis, een AI- en automatiseringsbureau opgericht door Sem en Syb.
 Je helpt hen met bedrijfsinzichten op basis van actuele data uit hun dashboard.
 
@@ -179,6 +214,12 @@ ${leadsSamenvatting || "Geen actieve leads"}
 
 👥 KLANTEN
 ${klantenTekst || "Geen actieve klanten"}
+
+🖥️ SCREEN TIME VANDAAG
+${screenTimeSamenvatting.map(s => `- ${s.categorie}: ${Math.round(s.totaal / 60)} minuten`).join("\n") || "Geen data"}
+
+Top apps vandaag:
+${topAppsVandaag.map(a => `- ${a.app}: ${Math.round(a.totaal / 60)} minuten`).join("\n") || "Geen data"}
 
 Regels:
 - Antwoord altijd in het Nederlands
@@ -261,7 +302,7 @@ export async function POST(request: NextRequest) {
       }));
 
     // Gather business context
-    const systemPrompt = await gatherBusinessContext();
+    const systemPrompt = await gatherBusinessContext(gebruiker.id);
 
     // Stream response
     const encoder = new TextEncoder();
