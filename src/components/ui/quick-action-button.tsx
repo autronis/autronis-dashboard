@@ -17,6 +17,7 @@ const actions: QuickAction[] = [
   { label: "Taak aanmaken", icon: CheckSquare, href: "/taken?nieuw=true" },
   { label: "Lead toevoegen", icon: Target, href: "/crm?nieuw=true" },
   { label: "Factuur aanmaken", icon: FileText, href: "/financien/nieuw" },
+  { label: "Nieuw document", icon: FileText, href: "/documenten?nieuw=notitie" },
 ];
 
 export function QuickActionButton() {
