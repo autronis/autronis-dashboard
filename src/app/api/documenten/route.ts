@@ -1,36 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { documenten } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth";
+import { createNotionDocument, fetchAllDocuments } from "@/lib/notion";
+import { categorizeDocument } from "@/lib/ai/documenten";
+import { DocumentPayload } from "@/types/documenten";
+import { db } from "@/lib/db";
+import { klanten, projecten } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
-// POST /api/documenten
-export async function POST(req: NextRequest) {
+export async function GET() {
+  try {
+    await requireAuth();
+    const documenten = await fetchAllDocuments();
+    return NextResponse.json({ documenten });
+  } catch (error) {
+    if (error instanceof Error && error.message === "Niet geauthenticeerd") {
+      return NextResponse.json({ fout: "Niet geauthenticeerd" }, { status: 401 });
+    }
+    return NextResponse.json({ fout: "Kon documenten niet ophalen" }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
   try {
     const gebruiker = await requireAuth();
-    const body = await req.json();
-    const { klantId, projectId, naam, url, type } = body;
+    const payload = (await request.json()) as DocumentPayload;
 
-    if (!naam?.trim()) {
-      return NextResponse.json({ fout: "Naam is verplicht." }, { status: 400 });
+    let klantNaam: string | undefined;
+    let projectNaam: string | undefined;
+
+    if ("klantId" in payload && payload.klantId) {
+      const klant = db.select({ bedrijfsnaam: klanten.bedrijfsnaam }).from(klanten).where(eq(klanten.id, payload.klantId)).get();
+      klantNaam = klant?.bedrijfsnaam;
     }
 
-    const [nieuw] = await db
-      .insert(documenten)
-      .values({
-        klantId: klantId || null,
-        projectId: projectId || null,
-        naam: naam.trim(),
-        url: url?.trim() || null,
-        type: type || "overig",
-        aangemaaktDoor: gebruiker.id,
-      })
-      .returning();
+    if ("projectId" in payload && payload.projectId) {
+      const project = db.select({ naam: projecten.naam }).from(projecten).where(eq(projecten.id, payload.projectId)).get();
+      projectNaam = project?.naam;
+    }
 
-    return NextResponse.json({ document: nieuw }, { status: 201 });
+    const categorisatie = await categorizeDocument(payload.content, payload.type);
+
+    const result = await createNotionDocument(
+      payload,
+      categorisatie.samenvatting,
+      gebruiker.naam,
+      klantNaam,
+      projectNaam
+    );
+
+    return NextResponse.json({ document: { ...result, type: payload.type } }, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && error.message === "Niet geauthenticeerd") {
+      return NextResponse.json({ fout: "Niet geauthenticeerd" }, { status: 401 });
+    }
     return NextResponse.json(
-      { fout: error instanceof Error ? error.message : "Onbekende fout" },
-      { status: error instanceof Error && error.message === "Niet geauthenticeerd" ? 401 : 500 }
+      { fout: error instanceof Error ? error.message : "Kon document niet aanmaken" },
+      { status: 500 }
     );
   }
 }
