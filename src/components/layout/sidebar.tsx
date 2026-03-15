@@ -46,6 +46,7 @@ const navItems = [
   { label: "Team", icon: Users2, href: "/team" },
   { label: "Kilometers", icon: Car, href: "/kilometers" },
   { label: "Wiki", icon: BookOpen, href: "/wiki" },
+  { label: "Documenten", icon: FileText, href: "/documenten" },
   { label: "AI Assistent", icon: Sparkles, href: "/ai-assistent" },
 ];
 
