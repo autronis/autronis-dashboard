@@ -238,6 +238,13 @@ function getSortFn(sort?: SortOption): (a: DocumentBase, b: DocumentBase) => num
   }
 }
 
+export async function archiveNotionDocument(notionId: string, archived: boolean): Promise<void> {
+  await withRetry(() => notion.pages.update({
+    page_id: notionId,
+    archived,
+  }));
+}
+
 export async function fetchNotionDocument(notionId: string): Promise<DocumentBase | null> {
   try {
     const page = await withRetry(() => notion.pages.retrieve({ page_id: notionId }));

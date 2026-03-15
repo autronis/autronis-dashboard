@@ -8,16 +8,25 @@ import { useToast } from "@/hooks/use-toast";
 import { DocumentType, DocumentPayload, DOCUMENT_TYPE_LABELS } from "@/types/documenten";
 import { Sparkles, Loader2 } from "lucide-react";
 
+interface InitialValues {
+  titel?: string;
+  type?: DocumentType;
+  content?: string;
+  klantId?: number;
+  projectId?: number;
+}
+
 interface DocumentModalProps {
   open: boolean;
   onClose: () => void;
   initialType?: DocumentType;
+  initialValues?: InitialValues;
 }
 
-export function DocumentModal({ open, onClose, initialType }: DocumentModalProps) {
-  const [type, setType] = useState<DocumentType>(initialType ?? "notitie");
-  const [titel, setTitel] = useState("");
-  const [content, setContent] = useState("");
+export function DocumentModal({ open, onClose, initialType, initialValues }: DocumentModalProps) {
+  const [type, setType] = useState<DocumentType>(initialValues?.type ?? initialType ?? "notitie");
+  const [titel, setTitel] = useState(initialValues?.titel ?? "");
+  const [content, setContent] = useState(initialValues?.content ?? "");
   const [klantId, setKlantId] = useState<number | undefined>();
   const [projectId, setProjectId] = useState<number | undefined>();
 
@@ -38,11 +47,11 @@ export function DocumentModal({ open, onClose, initialType }: DocumentModalProps
 
   useEffect(() => {
     if (open) {
-      setType(initialType ?? "notitie");
-      setTitel("");
-      setContent("");
-      setKlantId(undefined);
-      setProjectId(undefined);
+      setType(initialValues?.type ?? initialType ?? "notitie");
+      setTitel(initialValues?.titel ?? "");
+      setContent(initialValues?.content ?? "");
+      setKlantId(initialValues?.klantId);
+      setProjectId(initialValues?.projectId);
       setStatus("concept");
       setStartdatum("");
       setEinddatum("");

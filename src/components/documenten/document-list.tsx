@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useDocumenten } from "@/hooks/queries/use-documenten";
+import { useDocumenten, useArchiveDocument } from "@/hooks/queries/use-documenten";
 import { useRecentDocuments, usePinnedDocuments } from "@/hooks/use-document-prefs";
+import { useToast } from "@/hooks/use-toast";
 import { DocumentBase, DocumentType, SortOption, DOCUMENT_TYPE_CONFIG, DOCUMENT_TYPE_LABELS, SORT_LABELS } from "@/types/documenten";
 import { DocumentPreview } from "./document-preview";
-import { FileText, ExternalLink, Search, ArrowUpDown, Loader2, ChevronLeft, ChevronRight, Pin, X, Clock } from "lucide-react";
+import { DocumentModal } from "./document-modal";
+import { SavedFilters } from "./saved-filters";
+import { FileText, ExternalLink, Search, ArrowUpDown, Loader2, ChevronLeft, ChevronRight, Pin, X, Clock, Archive } from "lucide-react";
 
 export function DocumentList() {
   const [zoekterm, setZoekterm] = useState("");
@@ -17,11 +20,15 @@ export function DocumentList() {
   const [cursorHistory, setCursorHistory] = useState<string[]>([]);
   const [previewDoc, setPreviewDoc] = useState<DocumentBase | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [duplicateDoc, setDuplicateDoc] = useState<DocumentBase | null>(null);
 
   const { data, isLoading, error } = useDocumenten(sortBy, cursor);
   const documenten = data?.documenten;
   const { recent, addRecent, hidden: recentHidden, toggleHidden: toggleRecentHidden } = useRecentDocuments();
   const { togglePin, isPinned } = usePinnedDocuments();
+  const archiveDocument = useArchiveDocument();
+  const { addToast } = useToast();
 
   const klantNamen = [...new Set(documenten?.map((d: DocumentBase) => d.klantNaam).filter(Boolean) ?? [])];
 
@@ -41,6 +48,21 @@ export function DocumentList() {
       if (aPinned !== bPinned) return aPinned - bPinned;
       return 0; // Server-side sort handles the rest
     });
+
+  function handleArchive(doc: DocumentBase) {
+    archiveDocument.mutate(
+      { id: doc.notionId, archived: true },
+      {
+        onSuccess: () => addToast("Document gearchiveerd", "succes"),
+        onError: () => addToast("Kon document niet archiveren", "fout"),
+      }
+    );
+  }
+
+  function handleDuplicate(doc: DocumentBase) {
+    setDuplicateDoc(doc);
+    setPreviewOpen(false);
+  }
 
   function openPreview(doc: DocumentBase) {
     setPreviewDoc(doc);
@@ -135,6 +157,26 @@ export function DocumentList() {
           </div>
         </div>
       )}
+
+      {/* Saved filters + archived toggle */}
+      <div className="flex items-center justify-between gap-4">
+        <SavedFilters
+          currentFilters={{ type: filterType, klant: filterKlant, maand: filterDatum, zoekterm }}
+          onApply={(f) => {
+            setFilterType(f.type);
+            setFilterKlant(f.klant);
+            setFilterDatum(f.maand);
+            setZoekterm(f.zoekterm);
+          }}
+        />
+        <button
+          onClick={() => setShowArchived(!showArchived)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showArchived ? "bg-autronis-accent/10 text-autronis-accent" : "text-autronis-text-secondary hover:text-autronis-text-primary"}`}
+        >
+          <Archive className="w-3.5 h-3.5" />
+          {showArchived ? "Toon actief" : "Toon gearchiveerd"}
+        </button>
+      </div>
 
       {/* Filters + Sort */}
       <div className="flex flex-col sm:flex-row gap-3">
@@ -282,7 +324,21 @@ export function DocumentList() {
         document={previewDoc}
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
+        onDuplicate={handleDuplicate}
+        onArchive={handleArchive}
       />
+
+      {/* Duplicate modal */}
+      {duplicateDoc && (
+        <DocumentModal
+          open={!!duplicateDoc}
+          onClose={() => setDuplicateDoc(null)}
+          initialValues={{
+            titel: `${duplicateDoc.titel} — kopie`,
+            type: duplicateDoc.type,
+          }}
+        />
+      )}
     </div>
   );
 }

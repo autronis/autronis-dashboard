@@ -82,6 +82,28 @@ export function useCreateDocument() {
   });
 }
 
+export function useArchiveDocument() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, archived }: { id: string; archived: boolean }) => {
+      const res = await fetch(`/api/documenten/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.fout ?? "Kon document niet archiveren");
+      }
+      return res.json();
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["documenten"] });
+    },
+  });
+}
+
 export function useGenerateDraft() {
   return useMutation({
     mutationFn: async (request: AiDraftRequest): Promise<AiDraftResponse> => {

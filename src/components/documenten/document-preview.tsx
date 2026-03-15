@@ -3,16 +3,17 @@
 import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DocumentBase, DOCUMENT_TYPE_CONFIG } from "@/types/documenten";
-import { X, ExternalLink, Copy, Calendar, User } from "lucide-react";
+import { X, ExternalLink, Copy, Calendar, User, Archive, FileDown } from "lucide-react";
 
 interface DocumentPreviewProps {
   document: DocumentBase | null;
   open: boolean;
   onClose: () => void;
   onDuplicate?: (doc: DocumentBase) => void;
+  onArchive?: (doc: DocumentBase) => void;
 }
 
-export function DocumentPreview({ document: doc, open, onClose, onDuplicate }: DocumentPreviewProps) {
+export function DocumentPreview({ document: doc, open, onClose, onDuplicate, onArchive }: DocumentPreviewProps) {
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -136,6 +137,24 @@ export function DocumentPreview({ document: doc, open, onClose, onDuplicate }: D
                   >
                     <Copy className="w-4 h-4" />
                     Dupliceren
+                  </button>
+                )}
+
+                <button
+                  onClick={() => window.print()}
+                  className="flex items-center gap-2 w-full px-4 py-2.5 rounded-lg border border-autronis-border text-sm text-autronis-text-secondary hover:text-autronis-text-primary hover:border-autronis-accent/50 transition-colors"
+                >
+                  <FileDown className="w-4 h-4" />
+                  Exporteer als PDF
+                </button>
+
+                {onArchive && (
+                  <button
+                    onClick={() => { onArchive(doc); onClose(); }}
+                    className="flex items-center gap-2 w-full px-4 py-2.5 rounded-lg border border-red-500/30 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    <Archive className="w-4 h-4" />
+                    Archiveren
                   </button>
                 )}
               </div>
