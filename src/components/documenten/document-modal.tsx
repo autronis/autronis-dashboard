@@ -59,7 +59,7 @@ export function DocumentModal({ open, onClose, initialType }: DocumentModalProps
 
   async function handleAiDraft() {
     if (!titel) {
-      addToast("Vul eerst een titel in", "waarschuwing");
+      addToast("Vul eerst een titel in", "info");
       return;
     }
 
@@ -83,7 +83,7 @@ export function DocumentModal({ open, onClose, initialType }: DocumentModalProps
 
   async function handleOpslaan() {
     if (!titel) {
-      addToast("Titel is verplicht", "waarschuwing");
+      addToast("Titel is verplicht", "info");
       return;
     }
 

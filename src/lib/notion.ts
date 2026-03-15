@@ -105,15 +105,13 @@ export async function createNotionDocument(
 }
 
 async function fetchFromDatabase(type: DocumentType, dbId: string): Promise<DocumentBase[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const response = await withRetry(() => (notion.databases as any).query({
+  const response = await withRetry(() => notion.databases.query({
     database_id: dbId,
     sorts: [{ property: "Aangemaakt op", direction: "descending" }],
     page_size: 50,
   }));
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (response as any).results.map((page: any) => {
+  return response.results.map((page) => {
     const props = (page as { properties: Record<string, unknown> }).properties as Record<string, {
       title?: Array<{ plain_text: string }>;
       rich_text?: Array<{ plain_text: string }>;
