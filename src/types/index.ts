@@ -26,3 +26,52 @@ export interface SessionGebruiker {
   themaVoorkeur: ThemaVoorkeur;
   uurtariefStandaard?: number | null;
 }
+
+// ============ SCREEN TIME TYPES ============
+
+export type ScreenTimeCategorie = "development" | "communicatie" | "design" | "administratie" | "afleiding" | "overig";
+
+export interface ScreenTimeEntry {
+  id: number;
+  clientId: string | null;
+  gebruikerId: number;
+  app: string;
+  vensterTitel: string | null;
+  url: string | null;
+  categorie: ScreenTimeCategorie;
+  projectId: number | null;
+  klantId: number | null;
+  startTijd: string;
+  eindTijd: string;
+  duurSeconden: number;
+  bron: "agent" | "handmatig";
+  aangemaaktOp: string;
+  projectNaam?: string;
+  klantNaam?: string;
+}
+
+export interface ScreenTimeRegel {
+  id: number;
+  type: "app" | "url" | "venstertitel";
+  patroon: string;
+  categorie: ScreenTimeCategorie;
+  projectId: number | null;
+  klantId: number | null;
+  prioriteit: number;
+  isActief: number;
+  aangemaaktOp: string;
+  projectNaam?: string;
+  klantNaam?: string;
+}
+
+export interface ScreenTimeSuggestie {
+  id: number;
+  gebruikerId: number;
+  type: "categorie" | "tijdregistratie" | "project_koppeling";
+  startTijd: string;
+  eindTijd: string;
+  voorstel: string;
+  status: "openstaand" | "goedgekeurd" | "afgewezen";
+  aangemaaktOp: string;
+  verwerktOp: string | null;
+}
