@@ -742,6 +742,58 @@ export const radarItems = sqliteTable("radar_items", {
   idxScore: index("idx_radar_score").on(table.score),
 }));
 
+// ============ CONTENT ENGINE: KENNISBANK ============
+
+export const contentProfiel = sqliteTable("content_profiel", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  onderwerp: text("onderwerp").notNull(), // "diensten", "tone_of_voice", "usps", "over_ons"
+  inhoud: text("inhoud").notNull(),
+  bijgewerktDoor: integer("bijgewerkt_door").references(() => gebruikers.id),
+  bijgewerktOp: text("bijgewerkt_op").default(sql`(datetime('now'))`),
+});
+
+export const contentInzichten = sqliteTable("content_inzichten", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  titel: text("titel").notNull(),
+  inhoud: text("inhoud").notNull(),
+  categorie: text("categorie", {
+    enum: ["projectervaring", "learning", "tool_review", "trend", "tip"],
+  }).notNull(),
+  klantId: integer("klant_id").references(() => klanten.id),
+  projectId: integer("project_id").references(() => projecten.id),
+  isGebruikt: integer("is_gebruikt").default(0), // Bijhouden of AI dit al heeft gebruikt
+  aangemaaktDoor: integer("aangemaakt_door").references(() => gebruikers.id),
+  aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
+});
+
+// ============ CONTENT ENGINE: POSTS ============
+
+export const contentPosts = sqliteTable("content_posts", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  titel: text("titel").notNull(),
+  inhoud: text("inhoud").notNull(),
+  platform: text("platform", {
+    enum: ["linkedin", "instagram"],
+  }).notNull(),
+  format: text("format", {
+    enum: ["post", "caption", "thought_leadership", "tip", "storytelling", "how_to", "vraag"],
+  }).notNull(),
+  status: text("status", {
+    enum: ["concept", "goedgekeurd", "bewerkt", "afgewezen", "gepubliceerd"],
+  }).default("concept"),
+  batchId: text("batch_id"), // Groepeert posts per wekelijkse batch
+  batchWeek: text("batch_week"), // "2026-W12" formaat
+  inzichtId: integer("inzicht_id").references(() => contentInzichten.id),
+  bewerkteInhoud: text("bewerkte_inhoud"), // Als gebruiker de tekst aanpast
+  afwijsReden: text("afwijs_reden"),
+  gegenereerdeHashtags: text("gegenereerde_hashtags"), // JSON array
+  geplandOp: text("gepland_op"),
+  gepubliceerdOp: text("gepubliceerd_op"),
+  aangemaaktDoor: integer("aangemaakt_door").references(() => gebruikers.id),
+  aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
+  bijgewerktOp: text("bijgewerkt_op").default(sql`(datetime('now'))`),
+});
+
 // ============ IDEEEN ============
 
 export const ideeen = sqliteTable("ideeen", {
@@ -761,6 +813,14 @@ export const ideeen = sqliteTable("ideeen", {
   }).default("normaal"),
   projectId: integer("project_id").references(() => projecten.id),
   notionPageId: text("notion_page_id"),
+  aiScore: integer("ai_score"),
+  aiHaalbaarheid: integer("ai_haalbaarheid"),
+  aiMarktpotentie: integer("ai_marktpotentie"),
+  aiFitAutronis: integer("ai_fit_autronis"),
+  doelgroep: text("doelgroep"),
+  verdienmodel: text("verdienmodel"),
+  isAiSuggestie: integer("is_ai_suggestie").default(0),
+  gepromoveerd: integer("gepromoveerd").default(0),
   aangemaaktDoor: integer("aangemaakt_door").references(() => gebruikers.id),
   aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
   bijgewerktOp: text("bijgewerkt_op").default(sql`(datetime('now'))`),
