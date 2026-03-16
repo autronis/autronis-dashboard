@@ -136,6 +136,152 @@ export async function POST() {
       }
     }
 
+    // 5. Auto-update OVERZICHT.md
+    try {
+      const { writeFile, readdir, stat, readFile } = await import("fs/promises");
+      const path = await import("path");
+
+      const PROJECTS_DIR = "c:/Users/semmi/OneDrive/Claude AI/Projects";
+
+      // Get all project directories
+      const entries = await readdir(PROJECTS_DIR);
+      const projectDirs: Array<{
+        naam: string;
+        heeftBrief: boolean;
+        heeftTodo: boolean;
+        doel: string;
+        status: string;
+        type: string;
+      }> = [];
+
+      for (const entry of entries) {
+        if (entry === "Claude AI" || entry === "OVERZICHT.md") continue;
+        const fullPath = path.join(PROJECTS_DIR, entry);
+        const stats = await stat(fullPath).catch(() => null);
+        if (!stats?.isDirectory()) continue;
+
+        const brief = await readFile(path.join(fullPath, "PROJECT_BRIEF.md"), "utf-8").catch(() => null);
+        const todo = await readFile(path.join(fullPath, "TODO.md"), "utf-8").catch(() => null);
+
+        // Parse goal from brief
+        let doel = "";
+        if (brief) {
+          const goalMatch = brief.match(/Goal:\s*\n([\s\S]*?)(?=\n\w+:|$)/i);
+          doel = goalMatch ? goalMatch[1].trim().split("\n")[0] : "";
+        }
+
+        // Check if this project is in the ideeen table
+        const idee = db.select().from(ideeen)
+          .where(sql`LOWER(REPLACE(${ideeen.naam}, ' ', '-')) = ${entry.toLowerCase()}`)
+          .get();
+
+        // Determine status
+        let status = "\u26AA Onbekend";
+        let type = "Project";
+        if (entry === "autronis-dashboard") {
+          status = "\uD83D\uDFE2 Actief";
+          type = "Hoofdproject";
+          doel = "Intern business dashboard voor Autronis";
+        } else if (idee) {
+          const statusMap: Record<string, string> = {
+            gebouwd: "\u2705 Gebouwd",
+            actief: "\uD83D\uDFE2 Actief",
+            uitgewerkt: "\uD83D\uDFE1 Uitgewerkt",
+            idee: "\u26AA Idee",
+          };
+          status = statusMap[idee.status || "idee"] || "\u26AA Idee";
+        }
+
+        projectDirs.push({
+          naam: entry,
+          heeftBrief: !!brief,
+          heeftTodo: !!todo,
+          doel: doel || (idee?.omschrijving ?? ""),
+          status,
+          type,
+        });
+      }
+
+      // Get idee stats
+      const ideeStats = db.select({
+        status: ideeen.status,
+        count: sql<number>`COUNT(*)`,
+      }).from(ideeen).groupBy(ideeen.status).all();
+
+      const totalIdeeen = db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).get();
+
+      // Generate markdown
+      let md = `# Autronis Projecten Overzicht\n\n`;
+      md += `> Automatisch gegenereerd op ${new Date().toLocaleDateString("nl-NL", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}\n\n`;
+      md += `---\n\n`;
+
+      // Projects table
+      md += `## Projecten (${projectDirs.length})\n\n`;
+      md += `| Project | Status | Doel | Brief | TODO |\n`;
+      md += `|---------|--------|------|-------|------|\n`;
+
+      // Sort: actief first, then uitgewerkt, then rest
+      const statusOrder: Record<string, number> = { "\uD83D\uDFE2 Actief": 0, "\u2705 Gebouwd": 1, "\uD83D\uDFE1 Uitgewerkt": 2, "\u26AA Idee": 3, "\u26AA Onbekend": 4 };
+      projectDirs.sort((a, b) => (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5));
+
+      for (const p of projectDirs) {
+        md += `| ${p.naam} | ${p.status} | ${p.doel.substring(0, 60)}${p.doel.length > 60 ? "..." : ""} | ${p.heeftBrief ? "\u2705" : "\u274C"} | ${p.heeftTodo ? "\u2705" : "\u274C"} |\n`;
+      }
+
+      md += `\n`;
+
+      // Dashboard modules
+      const overzichtModules = [
+        "Dashboard (homepage, briefing, KPIs)",
+        "Tijdregistratie (timer, weekoverzicht, export)",
+        "Schermtijd (tracking, sessies, AI samenvatting)",
+        "Meetings (upload, transcriptie, actiepunten)",
+        "Klanten (CRUD, detail, projecten)",
+        "CRM / Leads (kanban pipeline)",
+        "Financi\u00EBn (facturen, uitgaven, bank, liquiditeit)",
+        "Offertes (CRUD, PDF, versturen)",
+        "Belasting (BTW, W&V, investeringen, reserveringen)",
+        "Analytics (grafieken, heatmap, vergelijking)",
+        "Agenda (kalender, CRUD)",
+        "Taken (status, prioriteit, swipeable)",
+        "Idee\u00EBn (backlog sync, AI generator, start-project)",
+        "Doelen / OKR (objectives, key results)",
+        "Team (verlof, declaraties, capaciteit)",
+        "Kilometers (ritten, export, belasting)",
+        "Wiki (kennisbank, categorie\u00EBn)",
+        "Content (inzichten, posts, banners, kalender)",
+        "Documenten (Notion sync, AI draft)",
+        "Learning Radar (RSS, AI scoring)",
+        "AI Assistent (chat, bedrijfscontext)",
+        "Case Studies (video pipeline)",
+        "Proposals (e-signature)",
+      ];
+
+      md += `## Dashboard Modules (${overzichtModules.length})\n\n`;
+      for (const m of overzichtModules) {
+        md += `- \u2705 ${m}\n`;
+      }
+
+      md += `\n`;
+
+      // Idee stats
+      md += `## Idee\u00EBn Backlog (${totalIdeeen?.count ?? 0})\n\n`;
+      md += `| Status | Aantal |\n`;
+      md += `|--------|--------|\n`;
+      for (const s of ideeStats) {
+        const emoji: Record<string, string> = { gebouwd: "\u2705", actief: "\uD83D\uDFE2", uitgewerkt: "\uD83D\uDFE1", idee: "\u26AA" };
+        const statusKey = s.status ?? "idee";
+        md += `| ${emoji[statusKey] || "\u26AA"} ${statusKey} | ${s.count} |\n`;
+      }
+
+      md += `\n---\n\n_Dit bestand wordt automatisch bijgewerkt door het Autronis Dashboard._\n`;
+
+      await writeFile(path.join(PROJECTS_DIR, "OVERZICHT.md"), md, "utf-8");
+      results.overzichtUpdated = true;
+    } catch (e) {
+      results.overzichtError = e instanceof Error ? e.message : "onbekend";
+    }
+
     return NextResponse.json({ succes: true, results });
   } catch (error) {
     return NextResponse.json(
