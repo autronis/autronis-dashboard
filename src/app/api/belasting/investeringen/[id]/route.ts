@@ -15,11 +15,12 @@ export async function PUT(
     const investId = parseInt(id, 10);
     const body = await req.json();
 
-    const bestaand = await db
+    const bestaand = db
       .select()
       .from(investeringen)
       .where(eq(investeringen.id, investId))
-      .limit(1);
+      .limit(1)
+      .all();
 
     if (bestaand.length === 0) {
       return NextResponse.json(
@@ -38,7 +39,7 @@ export async function PUT(
       notities?: string;
     };
 
-    const updated = await db
+    const updated = db
       .update(investeringen)
       .set({
         ...(naam !== undefined && { naam }),
@@ -50,15 +51,16 @@ export async function PUT(
         ...(notities !== undefined && { notities }),
       })
       .where(eq(investeringen.id, investId))
-      .returning();
+      .returning()
+      .all();
 
-    await db.insert(belastingAuditLog).values({
+    db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
       actie: "investering_bijgewerkt",
       entiteitType: "investering",
       entiteitId: investId,
       details: JSON.stringify(body),
-    });
+    }).run();
 
     return NextResponse.json({ investering: updated[0] });
   } catch (error) {
@@ -79,11 +81,12 @@ export async function DELETE(
     const { id } = await params;
     const investId = parseInt(id, 10);
 
-    const bestaand = await db
+    const bestaand = db
       .select()
       .from(investeringen)
       .where(eq(investeringen.id, investId))
-      .limit(1);
+      .limit(1)
+      .all();
 
     if (bestaand.length === 0) {
       return NextResponse.json(
@@ -92,15 +95,15 @@ export async function DELETE(
       );
     }
 
-    await db.delete(investeringen).where(eq(investeringen.id, investId));
+    db.delete(investeringen).where(eq(investeringen.id, investId)).run();
 
-    await db.insert(belastingAuditLog).values({
+    db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
       actie: "investering_verwijderd",
       entiteitType: "investering",
       entiteitId: investId,
       details: JSON.stringify({ naam: bestaand[0]?.naam }),
-    });
+    }).run();
 
     return NextResponse.json({ succes: true });
   } catch (error) {

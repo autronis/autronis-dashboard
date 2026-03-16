@@ -16,10 +16,11 @@ export async function PUT(
     const body = await req.json();
 
     // Verify deadline exists
-    const [bestaand] = await db
+    const bestaand = db
       .select()
       .from(belastingDeadlines)
-      .where(eq(belastingDeadlines.id, deadlineId));
+      .where(eq(belastingDeadlines.id, deadlineId))
+      .get();
 
     if (!bestaand) {
       return NextResponse.json({ fout: "Deadline niet gevonden." }, { status: 404 });
@@ -39,11 +40,12 @@ export async function PUT(
       return NextResponse.json({ fout: "Geen velden om bij te werken." }, { status: 400 });
     }
 
-    const [bijgewerkt] = await db
+    const [bijgewerkt] = db
       .update(belastingDeadlines)
       .set(updateData)
       .where(eq(belastingDeadlines.id, deadlineId))
-      .returning();
+      .returning()
+      .all();
 
     return NextResponse.json({ deadline: bijgewerkt });
   } catch (error) {

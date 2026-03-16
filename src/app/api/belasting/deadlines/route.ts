@@ -12,11 +12,12 @@ export async function GET(req: NextRequest) {
     const jaarParam = searchParams.get("jaar");
     const jaar = jaarParam ? parseInt(jaarParam, 10) : new Date().getFullYear();
 
-    const deadlines = await db
+    const deadlines = db
       .select()
       .from(belastingDeadlines)
       .where(eq(belastingDeadlines.jaar, jaar))
-      .orderBy(belastingDeadlines.datum);
+      .orderBy(belastingDeadlines.datum)
+      .all();
 
     return NextResponse.json({ deadlines });
   } catch (error) {
@@ -35,10 +36,11 @@ export async function POST(req: NextRequest) {
     const jaar = body.jaar ?? new Date().getFullYear();
 
     // Check if deadlines already exist for this year
-    const bestaande = await db
+    const bestaande = db
       .select()
       .from(belastingDeadlines)
-      .where(eq(belastingDeadlines.jaar, jaar));
+      .where(eq(belastingDeadlines.jaar, jaar))
+      .all();
 
     if (bestaande.length > 0) {
       return NextResponse.json(
@@ -131,14 +133,15 @@ export async function POST(req: NextRequest) {
     ];
 
     for (const deadline of deadlinesToCreate) {
-      await db.insert(belastingDeadlines).values(deadline);
+      db.insert(belastingDeadlines).values(deadline).run();
     }
 
-    const deadlines = await db
+    const deadlines = db
       .select()
       .from(belastingDeadlines)
       .where(eq(belastingDeadlines.jaar, jaar))
-      .orderBy(belastingDeadlines.datum);
+      .orderBy(belastingDeadlines.datum)
+      .all();
 
     return NextResponse.json({ deadlines }, { status: 201 });
   } catch (error) {

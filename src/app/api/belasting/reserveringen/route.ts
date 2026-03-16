@@ -26,22 +26,24 @@ async function berekenGeschatteBelasting(jaar: number): Promise<number> {
   const jaarStart = `${jaar}-01-01`;
   const jaarEind = `${jaar}-12-31`;
 
-  const [omzetResult] = await db
+  const omzetResult = db
     .select({ totaal: sql<number>`COALESCE(SUM(${facturen.bedragExclBtw}), 0)` })
     .from(facturen)
-    .where(and(eq(facturen.status, "betaald"), eq(facturen.isActief, 1), gte(facturen.betaaldOp, jaarStart), lte(facturen.betaaldOp, jaarEind)));
+    .where(and(eq(facturen.status, "betaald"), eq(facturen.isActief, 1), gte(facturen.betaaldOp, jaarStart), lte(facturen.betaaldOp, jaarEind)))
+    .get();
 
   const brutoOmzet = omzetResult?.totaal ?? 0;
 
-  const [kostenResult] = await db
+  const kostenResult = db
     .select({ totaal: sql<number>`COALESCE(SUM(${uitgaven.bedrag}), 0)` })
     .from(uitgaven)
-    .where(and(gte(uitgaven.datum, jaarStart), lte(uitgaven.datum, jaarEind)));
+    .where(and(gte(uitgaven.datum, jaarStart), lte(uitgaven.datum, jaarEind)))
+    .get();
 
   const totaleKosten = kostenResult?.totaal ?? 0;
 
   // Afschrijvingen
-  const alleInvesteringen = await db.select().from(investeringen);
+  const alleInvesteringen = db.select().from(investeringen).all();
   let totaleAfschrijvingen = 0;
   for (const inv of alleInvesteringen) {
     const aanschafJaar = new Date(inv.datum).getFullYear();
@@ -57,23 +59,25 @@ async function berekenGeschatteBelasting(jaar: number): Promise<number> {
   }
 
   // Km aftrek
-  const [kmResult] = await db
+  const kmResult = db
     .select({ totaalKm: sql<number>`COALESCE(SUM(${kilometerRegistraties.kilometers}), 0)` })
     .from(kilometerRegistraties)
-    .where(and(gte(kilometerRegistraties.datum, jaarStart), lte(kilometerRegistraties.datum, jaarEind)));
+    .where(and(gte(kilometerRegistraties.datum, jaarStart), lte(kilometerRegistraties.datum, jaarEind)))
+    .get();
 
   const kmAftrek = (kmResult?.totaalKm ?? 0) * 0.23;
 
   const brutowinst = brutoOmzet - totaleKosten - totaleAfschrijvingen - kmAftrek;
 
   // Uren criterium
-  const [urenRecord] = await db.select().from(urenCriterium).where(eq(urenCriterium.jaar, jaar)).limit(1);
+  const urenRecord = db.select().from(urenCriterium).where(eq(urenCriterium.jaar, jaar)).limit(1).get();
   let totaalUren = urenRecord?.behaaldUren ?? 0;
   if (!urenRecord) {
-    const [urenResult] = await db
+    const urenResult = db
       .select({ totaal: sql<number>`COALESCE(SUM(${tijdregistraties.duurMinuten}), 0)` })
       .from(tijdregistraties)
-      .where(and(gte(tijdregistraties.startTijd, jaarStart), lte(tijdregistraties.startTijd, jaarEind)));
+      .where(and(gte(tijdregistraties.startTijd, jaarStart), lte(tijdregistraties.startTijd, jaarEind)))
+      .get();
     totaalUren = (urenResult?.totaal ?? 0) / 60;
   }
 
@@ -97,7 +101,7 @@ export async function GET(req: NextRequest) {
     const maandStart = `${jaar}-01`;
     const maandEind = `${jaar}-12`;
 
-    const reserveringen = await db
+    const reserveringen = db
       .select()
       .from(belastingReserveringen)
       .where(
@@ -106,7 +110,8 @@ export async function GET(req: NextRequest) {
           lte(belastingReserveringen.maand, maandEind)
         )
       )
-      .orderBy(belastingReserveringen.maand);
+      .orderBy(belastingReserveringen.maand)
+      .all();
 
     const totaalGereserveerd = Math.round(
       reserveringen.reduce((sum, r) => sum + r.bedrag, 0) * 100
@@ -154,7 +159,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await db
+    const result = db
       .insert(belastingReserveringen)
       .values({
         maand,
@@ -162,15 +167,16 @@ export async function POST(req: NextRequest) {
         type: (type as "btw" | "inkomstenbelasting" | "overig") ?? "inkomstenbelasting",
         notities,
       })
-      .returning();
+      .returning()
+      .all();
 
-    await db.insert(belastingAuditLog).values({
+    db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
       actie: "reservering_aangemaakt",
       entiteitType: "reservering",
       entiteitId: result[0]?.id,
       details: JSON.stringify({ maand, bedrag, type }),
-    });
+    }).run();
 
     return NextResponse.json({ reservering: result[0] }, { status: 201 });
   } catch (error) {

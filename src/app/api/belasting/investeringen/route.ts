@@ -24,10 +24,11 @@ export async function GET() {
   try {
     await requireAuth();
 
-    const alleInvesteringen = await db
+    const alleInvesteringen = db
       .select()
       .from(investeringen)
-      .orderBy(sql`${investeringen.datum} DESC`);
+      .orderBy(sql`${investeringen.datum} DESC`)
+      .all();
 
     const enriched = alleInvesteringen.map((inv) => ({
       ...inv,
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await db
+    const result = db
       .insert(investeringen)
       .values({
         naam,
@@ -102,16 +103,17 @@ export async function POST(req: NextRequest) {
         notities,
         aangemaaktDoor: gebruiker.id,
       })
-      .returning();
+      .returning()
+      .all();
 
     // Audit log
-    await db.insert(belastingAuditLog).values({
+    db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
       actie: "investering_aangemaakt",
       entiteitType: "investering",
       entiteitId: result[0]?.id,
       details: JSON.stringify({ naam, bedrag, datum }),
-    });
+    }).run();
 
     return NextResponse.json({ investering: result[0] }, { status: 201 });
   } catch (error) {

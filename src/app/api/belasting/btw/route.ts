@@ -27,57 +27,58 @@ export async function GET(req: NextRequest) {
     const jaarParam = searchParams.get("jaar");
     const jaar = jaarParam ? parseInt(jaarParam, 10) : new Date().getFullYear();
 
-    const aangiftes = await db
+    const aangiftes = db
       .select()
       .from(btwAangiftes)
       .where(eq(btwAangiftes.jaar, jaar))
-      .orderBy(btwAangiftes.kwartaal);
+      .orderBy(btwAangiftes.kwartaal)
+      .all();
 
     // Auto-calculate BTW from facturen and uitgaven per quarter
-    const enrichedAangiftes = await Promise.all(
-      aangiftes.map(async (aangifte) => {
-        const { start, end } = getQuarterDateRange(aangifte.kwartaal, aangifte.jaar);
+    const enrichedAangiftes = aangiftes.map((aangifte) => {
+      const { start, end } = getQuarterDateRange(aangifte.kwartaal, aangifte.jaar);
 
-        // BTW ontvangen: from betaalde facturen within quarter
-        const [facturenResult] = await db
-          .select({
-            totaalBtw: sql<number>`COALESCE(SUM(${facturen.btwBedrag}), 0)`,
-          })
-          .from(facturen)
-          .where(
-            and(
-              eq(facturen.status, "betaald"),
-              eq(facturen.isActief, 1),
-              gte(facturen.betaaldOp, start),
-              lte(facturen.betaaldOp, end)
-            )
-          );
+      // BTW ontvangen: from betaalde facturen within quarter
+      const facturenResult = db
+        .select({
+          totaalBtw: sql<number>`COALESCE(SUM(${facturen.btwBedrag}), 0)`,
+        })
+        .from(facturen)
+        .where(
+          and(
+            eq(facturen.status, "betaald"),
+            eq(facturen.isActief, 1),
+            gte(facturen.betaaldOp, start),
+            lte(facturen.betaaldOp, end)
+          )
+        )
+        .get();
 
-        // BTW betaald: from uitgaven within quarter
-        const [uitgavenResult] = await db
-          .select({
-            totaalBtw: sql<number>`COALESCE(SUM(${uitgaven.btwBedrag}), 0)`,
-          })
-          .from(uitgaven)
-          .where(
-            and(
-              gte(uitgaven.datum, start),
-              lte(uitgaven.datum, end)
-            )
-          );
+      // BTW betaald: from uitgaven within quarter
+      const uitgavenResult = db
+        .select({
+          totaalBtw: sql<number>`COALESCE(SUM(${uitgaven.btwBedrag}), 0)`,
+        })
+        .from(uitgaven)
+        .where(
+          and(
+            gte(uitgaven.datum, start),
+            lte(uitgaven.datum, end)
+          )
+        )
+        .get();
 
-        const btwOntvangen = Math.round((facturenResult?.totaalBtw ?? 0) * 100) / 100;
-        const btwBetaald = Math.round((uitgavenResult?.totaalBtw ?? 0) * 100) / 100;
-        const btwAfdragen = Math.round((btwOntvangen - btwBetaald) * 100) / 100;
+      const btwOntvangen = Math.round((facturenResult?.totaalBtw ?? 0) * 100) / 100;
+      const btwBetaald = Math.round((uitgavenResult?.totaalBtw ?? 0) * 100) / 100;
+      const btwAfdragen = Math.round((btwOntvangen - btwBetaald) * 100) / 100;
 
-        return {
-          ...aangifte,
-          btwOntvangen,
-          btwBetaald,
-          btwAfdragen,
-        };
-      })
-    );
+      return {
+        ...aangifte,
+        btwOntvangen,
+        btwBetaald,
+        btwAfdragen,
+      };
+    });
 
     return NextResponse.json({ aangiftes: enrichedAangiftes });
   } catch (error) {
@@ -96,10 +97,11 @@ export async function POST(req: NextRequest) {
     const jaar = body.jaar ?? new Date().getFullYear();
 
     // Check if aangiftes already exist for this year
-    const bestaande = await db
+    const bestaande = db
       .select()
       .from(btwAangiftes)
-      .where(eq(btwAangiftes.jaar, jaar));
+      .where(eq(btwAangiftes.jaar, jaar))
+      .all();
 
     if (bestaande.length > 0) {
       return NextResponse.json(
@@ -109,21 +111,22 @@ export async function POST(req: NextRequest) {
     }
 
     for (let kwartaal = 1; kwartaal <= 4; kwartaal++) {
-      await db.insert(btwAangiftes).values({
+      db.insert(btwAangiftes).values({
         kwartaal,
         jaar,
         btwOntvangen: 0,
         btwBetaald: 0,
         btwAfdragen: 0,
         status: "open",
-      });
+      }).run();
     }
 
-    const aangiftes = await db
+    const aangiftes = db
       .select()
       .from(btwAangiftes)
       .where(eq(btwAangiftes.jaar, jaar))
-      .orderBy(btwAangiftes.kwartaal);
+      .orderBy(btwAangiftes.kwartaal)
+      .all();
 
     return NextResponse.json({ aangiftes }, { status: 201 });
   } catch (error) {

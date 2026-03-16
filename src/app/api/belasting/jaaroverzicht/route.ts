@@ -79,29 +79,32 @@ export async function GET(req: NextRequest) {
     const jaarEind = `${jaar}-12-31`;
 
     // === OMZET ===
-    const [omzetResult] = await db
+    const omzetResult = db
       .select({ totaal: sql<number>`COALESCE(SUM(${facturen.bedragExclBtw}), 0)` })
       .from(facturen)
-      .where(and(eq(facturen.status, "betaald"), eq(facturen.isActief, 1), gte(facturen.betaaldOp, jaarStart), lte(facturen.betaaldOp, jaarEind)));
+      .where(and(eq(facturen.status, "betaald"), eq(facturen.isActief, 1), gte(facturen.betaaldOp, jaarStart), lte(facturen.betaaldOp, jaarEind)))
+      .get();
 
     const omzetTotaal = Math.round((omzetResult?.totaal ?? 0) * 100) / 100;
 
     const omzetPerKwartaal: KwartaalOmzet[] = [];
     for (let q = 1; q <= 4; q++) {
       const { start, end } = getQuarterDateRange(q, jaar);
-      const [r] = await db
+      const r = db
         .select({ totaal: sql<number>`COALESCE(SUM(${facturen.bedragExclBtw}), 0)` })
         .from(facturen)
-        .where(and(eq(facturen.status, "betaald"), eq(facturen.isActief, 1), gte(facturen.betaaldOp, start), lte(facturen.betaaldOp, end)));
+        .where(and(eq(facturen.status, "betaald"), eq(facturen.isActief, 1), gte(facturen.betaaldOp, start), lte(facturen.betaaldOp, end)))
+        .get();
       omzetPerKwartaal.push({ kwartaal: q, bedrag: Math.round((r?.totaal ?? 0) * 100) / 100 });
     }
 
     // === KOSTEN ===
-    const kostenRows = await db
+    const kostenRows = db
       .select({ categorie: uitgaven.categorie, totaal: sql<number>`COALESCE(SUM(${uitgaven.bedrag}), 0)` })
       .from(uitgaven)
       .where(and(gte(uitgaven.datum, jaarStart), lte(uitgaven.datum, jaarEind)))
-      .groupBy(uitgaven.categorie);
+      .groupBy(uitgaven.categorie)
+      .all();
 
     const kostenPerCategorie: Record<string, number> = {};
     let kostenTotaal = 0;
@@ -114,11 +117,12 @@ export async function GET(req: NextRequest) {
     kostenTotaal = Math.round(kostenTotaal * 100) / 100;
 
     // === BTW ===
-    const btwRecords = await db
+    const btwRecords = db
       .select()
       .from(btwAangiftes)
       .where(eq(btwAangiftes.jaar, jaar))
-      .orderBy(btwAangiftes.kwartaal);
+      .orderBy(btwAangiftes.kwartaal)
+      .all();
 
     // Enrich BTW from facturen/uitgaven
     const btwPerKwartaal: KwartaalBtw[] = [];
@@ -128,15 +132,17 @@ export async function GET(req: NextRequest) {
     for (let q = 1; q <= 4; q++) {
       const { start, end } = getQuarterDateRange(q, jaar);
 
-      const [fResult] = await db
+      const fResult = db
         .select({ totaal: sql<number>`COALESCE(SUM(${facturen.btwBedrag}), 0)` })
         .from(facturen)
-        .where(and(eq(facturen.status, "betaald"), eq(facturen.isActief, 1), gte(facturen.betaaldOp, start), lte(facturen.betaaldOp, end)));
+        .where(and(eq(facturen.status, "betaald"), eq(facturen.isActief, 1), gte(facturen.betaaldOp, start), lte(facturen.betaaldOp, end)))
+        .get();
 
-      const [uResult] = await db
+      const uResult = db
         .select({ totaal: sql<number>`COALESCE(SUM(${uitgaven.btwBedrag}), 0)` })
         .from(uitgaven)
-        .where(and(gte(uitgaven.datum, start), lte(uitgaven.datum, end)));
+        .where(and(gte(uitgaven.datum, start), lte(uitgaven.datum, end)))
+        .get();
 
       const ontvangen = Math.round((fResult?.totaal ?? 0) * 100) / 100;
       const betaald = Math.round((uResult?.totaal ?? 0) * 100) / 100;
@@ -156,28 +162,30 @@ export async function GET(req: NextRequest) {
     const btwAfgedragenTotaal = Math.round((btwOntvangenTotaal - btwBetaaldTotaal) * 100) / 100;
 
     // === UREN ===
-    const [urenRecord] = await db.select().from(urenCriterium).where(eq(urenCriterium.jaar, jaar)).limit(1);
+    const urenRecord = db.select().from(urenCriterium).where(eq(urenCriterium.jaar, jaar)).limit(1).get();
     let totaalUren = urenRecord?.behaaldUren ?? 0;
     if (!urenRecord) {
-      const [urenResult] = await db
+      const urenResult = db
         .select({ totaal: sql<number>`COALESCE(SUM(${tijdregistraties.duurMinuten}), 0)` })
         .from(tijdregistraties)
-        .where(and(gte(tijdregistraties.startTijd, jaarStart), lte(tijdregistraties.startTijd, jaarEind)));
+        .where(and(gte(tijdregistraties.startTijd, jaarStart), lte(tijdregistraties.startTijd, jaarEind)))
+        .get();
       totaalUren = Math.round(((urenResult?.totaal ?? 0) / 60) * 100) / 100;
     }
     const urenVoldoet = totaalUren >= 1225;
 
     // === KILOMETERS ===
-    const [kmResult] = await db
+    const kmResult = db
       .select({ totaalKm: sql<number>`COALESCE(SUM(${kilometerRegistraties.kilometers}), 0)` })
       .from(kilometerRegistraties)
-      .where(and(gte(kilometerRegistraties.datum, jaarStart), lte(kilometerRegistraties.datum, jaarEind)));
+      .where(and(gte(kilometerRegistraties.datum, jaarStart), lte(kilometerRegistraties.datum, jaarEind)))
+      .get();
 
     const totaalKm = Math.round((kmResult?.totaalKm ?? 0) * 100) / 100;
     const kmAftrekBedrag = Math.round(totaalKm * 0.23 * 100) / 100;
 
     // === INVESTERINGEN ===
-    const alleInvesteringen = await db.select().from(investeringen);
+    const alleInvesteringen = db.select().from(investeringen).all();
     const investeringenDitJaar = alleInvesteringen.filter(
       (inv) => inv.datum >= jaarStart && inv.datum <= jaarEind
     );
@@ -212,10 +220,11 @@ export async function GET(req: NextRequest) {
     // === RESERVERINGEN ===
     const maandStart = `${jaar}-01`;
     const maandEind = `${jaar}-12`;
-    const reserveringen = await db
+    const reserveringen = db
       .select()
       .from(belastingReserveringen)
-      .where(and(gte(belastingReserveringen.maand, maandStart), lte(belastingReserveringen.maand, maandEind)));
+      .where(and(gte(belastingReserveringen.maand, maandStart), lte(belastingReserveringen.maand, maandEind)))
+      .all();
 
     const totaalGereserveerd = Math.round(
       reserveringen.reduce((s, r) => s + r.bedrag, 0) * 100
@@ -227,10 +236,11 @@ export async function GET(req: NextRequest) {
     );
 
     // === VOORLOPIGE AANSLAGEN ===
-    const aanslagen = await db
+    const aanslagen = db
       .select()
       .from(voorlopigeAanslagen)
-      .where(eq(voorlopigeAanslagen.jaar, jaar));
+      .where(eq(voorlopigeAanslagen.jaar, jaar))
+      .all();
 
     const aanslagenTotaal = Math.round(aanslagen.reduce((s, a) => s + a.bedrag, 0) * 100) / 100;
     const aanslagenBetaald = Math.round(aanslagen.reduce((s, a) => s + (a.betaaldBedrag ?? 0), 0) * 100) / 100;

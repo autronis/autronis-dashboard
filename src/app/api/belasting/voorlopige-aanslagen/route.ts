@@ -12,11 +12,12 @@ export async function GET(req: NextRequest) {
     const jaarParam = searchParams.get("jaar");
     const jaar = jaarParam ? parseInt(jaarParam, 10) : new Date().getFullYear();
 
-    const aanslagen = await db
+    const aanslagen = db
       .select()
       .from(voorlopigeAanslagen)
       .where(eq(voorlopigeAanslagen.jaar, jaar))
-      .orderBy(sql`${voorlopigeAanslagen.vervaldatum} ASC`);
+      .orderBy(sql`${voorlopigeAanslagen.vervaldatum} ASC`)
+      .all();
 
     const totaalBedrag = aanslagen.reduce((sum, a) => sum + a.bedrag, 0);
     const totaalBetaald = aanslagen.reduce((sum, a) => sum + (a.betaaldBedrag ?? 0), 0);
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await db
+    const result = db
       .insert(voorlopigeAanslagen)
       .values({
         jaar,
@@ -70,15 +71,16 @@ export async function POST(req: NextRequest) {
         vervaldatum,
         notities,
       })
-      .returning();
+      .returning()
+      .all();
 
-    await db.insert(belastingAuditLog).values({
+    db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
       actie: "voorlopige_aanslag_aangemaakt",
       entiteitType: "voorlopige_aanslag",
       entiteitId: result[0]?.id,
       details: JSON.stringify({ jaar, bedrag, type }),
-    });
+    }).run();
 
     return NextResponse.json({ aanslag: result[0] }, { status: 201 });
   } catch (error) {

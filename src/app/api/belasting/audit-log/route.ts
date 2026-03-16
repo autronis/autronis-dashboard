@@ -16,12 +16,13 @@ export async function GET(req: NextRequest) {
       ? eq(belastingAuditLog.entiteitType, entiteitType)
       : undefined;
 
-    const logs = await db
+    const logs = db
       .select()
       .from(belastingAuditLog)
       .where(condition)
       .orderBy(sql`${belastingAuditLog.aangemaaktOp} DESC`)
-      .limit(limiet);
+      .limit(limiet)
+      .all();
 
     return NextResponse.json({ logs });
   } catch (error) {
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await db
+    const result = db
       .insert(belastingAuditLog)
       .values({
         gebruikerId: gebruiker.id,
@@ -61,7 +62,8 @@ export async function POST(req: NextRequest) {
         entiteitId,
         details: typeof details === "string" ? details : JSON.stringify(details),
       })
-      .returning();
+      .returning()
+      .all();
 
     return NextResponse.json({ log: result[0] }, { status: 201 });
   } catch (error) {

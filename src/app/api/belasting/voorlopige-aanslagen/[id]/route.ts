@@ -15,11 +15,12 @@ export async function PUT(
     const aanslagId = parseInt(id, 10);
     const body = await req.json();
 
-    const bestaand = await db
+    const bestaand = db
       .select()
       .from(voorlopigeAanslagen)
       .where(eq(voorlopigeAanslagen.id, aanslagId))
-      .limit(1);
+      .limit(1)
+      .all();
 
     if (bestaand.length === 0) {
       return NextResponse.json(
@@ -37,7 +38,7 @@ export async function PUT(
       type?: string;
     };
 
-    const updated = await db
+    const updated = db
       .update(voorlopigeAanslagen)
       .set({
         ...(bedrag !== undefined && { bedrag }),
@@ -48,15 +49,16 @@ export async function PUT(
         ...(type !== undefined && { type: type as "inkomstenbelasting" | "zvw" }),
       })
       .where(eq(voorlopigeAanslagen.id, aanslagId))
-      .returning();
+      .returning()
+      .all();
 
-    await db.insert(belastingAuditLog).values({
+    db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
       actie: "voorlopige_aanslag_bijgewerkt",
       entiteitType: "voorlopige_aanslag",
       entiteitId: aanslagId,
       details: JSON.stringify(body),
-    });
+    }).run();
 
     return NextResponse.json({ aanslag: updated[0] });
   } catch (error) {
@@ -77,11 +79,12 @@ export async function DELETE(
     const { id } = await params;
     const aanslagId = parseInt(id, 10);
 
-    const bestaand = await db
+    const bestaand = db
       .select()
       .from(voorlopigeAanslagen)
       .where(eq(voorlopigeAanslagen.id, aanslagId))
-      .limit(1);
+      .limit(1)
+      .all();
 
     if (bestaand.length === 0) {
       return NextResponse.json(
@@ -90,15 +93,15 @@ export async function DELETE(
       );
     }
 
-    await db.delete(voorlopigeAanslagen).where(eq(voorlopigeAanslagen.id, aanslagId));
+    db.delete(voorlopigeAanslagen).where(eq(voorlopigeAanslagen.id, aanslagId)).run();
 
-    await db.insert(belastingAuditLog).values({
+    db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
       actie: "voorlopige_aanslag_verwijderd",
       entiteitType: "voorlopige_aanslag",
       entiteitId: aanslagId,
       details: JSON.stringify({ jaar: bestaand[0]?.jaar, bedrag: bestaand[0]?.bedrag }),
-    });
+    }).run();
 
     return NextResponse.json({ succes: true });
   } catch (error) {

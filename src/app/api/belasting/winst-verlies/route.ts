@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
     const jaarEind = `${jaar}-12-31`;
 
     // Bruto omzet: betaalde facturen
-    const [omzetResult] = await db
+    const omzetResult = db
       .select({
         totaal: sql<number>`COALESCE(SUM(${facturen.bedragExclBtw}), 0)`,
       })
@@ -97,12 +97,13 @@ export async function GET(req: NextRequest) {
           gte(facturen.betaaldOp, jaarStart),
           lte(facturen.betaaldOp, jaarEind)
         )
-      );
+      )
+      .get();
 
     const brutoOmzet = Math.round((omzetResult?.totaal ?? 0) * 100) / 100;
 
     // Kosten per categorie
-    const kostenRows = await db
+    const kostenRows = db
       .select({
         categorie: uitgaven.categorie,
         totaal: sql<number>`COALESCE(SUM(${uitgaven.bedrag}), 0)`,
@@ -114,7 +115,8 @@ export async function GET(req: NextRequest) {
           lte(uitgaven.datum, jaarEind)
         )
       )
-      .groupBy(uitgaven.categorie);
+      .groupBy(uitgaven.categorie)
+      .all();
 
     const kostenPerCategorie: KostenPerCategorie = {};
     let totaleKosten = 0;
@@ -127,9 +129,10 @@ export async function GET(req: NextRequest) {
     totaleKosten = Math.round(totaleKosten * 100) / 100;
 
     // Afschrijvingen
-    const alleInvesteringen = await db
+    const alleInvesteringen = db
       .select()
-      .from(investeringen);
+      .from(investeringen)
+      .all();
 
     let totaleAfschrijvingen = 0;
     for (const inv of alleInvesteringen) {
@@ -144,7 +147,7 @@ export async function GET(req: NextRequest) {
     totaleAfschrijvingen = Math.round(totaleAfschrijvingen * 100) / 100;
 
     // Kilometer aftrek
-    const [kmResult] = await db
+    const kmResult = db
       .select({
         totaalKm: sql<number>`COALESCE(SUM(${kilometerRegistraties.kilometers}), 0)`,
       })
@@ -154,22 +157,24 @@ export async function GET(req: NextRequest) {
           gte(kilometerRegistraties.datum, jaarStart),
           lte(kilometerRegistraties.datum, jaarEind)
         )
-      );
+      )
+      .get();
 
     const totaalKm = kmResult?.totaalKm ?? 0;
     const kmAftrek = Math.round(totaalKm * 0.23 * 100) / 100;
 
     // Uren criterium check
-    const [urenRecord] = await db
+    const urenRecord = db
       .select()
       .from(urenCriterium)
       .where(eq(urenCriterium.jaar, jaar))
-      .limit(1);
+      .limit(1)
+      .get();
 
     // If no urenCriterium record, calculate from tijdregistraties
     let totaalUren = urenRecord?.behaaldUren ?? 0;
     if (!urenRecord) {
-      const [urenResult] = await db
+      const urenResult = db
         .select({
           totaal: sql<number>`COALESCE(SUM(${tijdregistraties.duurMinuten}), 0)`,
         })
@@ -179,7 +184,8 @@ export async function GET(req: NextRequest) {
             gte(tijdregistraties.startTijd, jaarStart),
             lte(tijdregistraties.startTijd, jaarEind)
           )
-        );
+        )
+        .get();
       totaalUren = Math.round(((urenResult?.totaal ?? 0) / 60) * 100) / 100;
     }
 
@@ -211,7 +217,7 @@ export async function GET(req: NextRequest) {
     for (let q = 1; q <= 4; q++) {
       const { start, end } = getQuarterDateRange(q, jaar);
 
-      const [qOmzet] = await db
+      const qOmzet = db
         .select({
           totaal: sql<number>`COALESCE(SUM(${facturen.bedragExclBtw}), 0)`,
         })
@@ -223,9 +229,10 @@ export async function GET(req: NextRequest) {
             gte(facturen.betaaldOp, start),
             lte(facturen.betaaldOp, end)
           )
-        );
+        )
+        .get();
 
-      const [qKosten] = await db
+      const qKosten = db
         .select({
           totaal: sql<number>`COALESCE(SUM(${uitgaven.bedrag}), 0)`,
         })
@@ -235,7 +242,8 @@ export async function GET(req: NextRequest) {
             gte(uitgaven.datum, start),
             lte(uitgaven.datum, end)
           )
-        );
+        )
+        .get();
 
       const qOmzetVal = Math.round((qOmzet?.totaal ?? 0) * 100) / 100;
       const qKostenVal = Math.round((qKosten?.totaal ?? 0) * 100) / 100;

@@ -16,10 +16,11 @@ export async function PUT(
     const body = await req.json();
 
     // Verify aangifte exists
-    const [bestaand] = await db
+    const bestaand = db
       .select()
       .from(btwAangiftes)
-      .where(eq(btwAangiftes.id, aangifteId));
+      .where(eq(btwAangiftes.id, aangifteId))
+      .get();
 
     if (!bestaand) {
       return NextResponse.json({ fout: "BTW aangifte niet gevonden." }, { status: 404 });
@@ -43,11 +44,12 @@ export async function PUT(
       return NextResponse.json({ fout: "Geen velden om bij te werken." }, { status: 400 });
     }
 
-    const [bijgewerkt] = await db
+    const [bijgewerkt] = db
       .update(btwAangiftes)
       .set(updateData)
       .where(eq(btwAangiftes.id, aangifteId))
-      .returning();
+      .returning()
+      .all();
 
     return NextResponse.json({ aangifte: bijgewerkt });
   } catch (error) {

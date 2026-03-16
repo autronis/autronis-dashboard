@@ -14,10 +14,11 @@ export async function POST() {
 
     for (const jaar of jaren) {
       // ---- DEADLINES ----
-      const bestaandeDeadlines = await db
+      const bestaandeDeadlines = db
         .select()
         .from(belastingDeadlines)
-        .where(eq(belastingDeadlines.jaar, jaar));
+        .where(eq(belastingDeadlines.jaar, jaar))
+        .all();
 
       if (bestaandeDeadlines.length === 0) {
         const deadlinesToCreate: {
@@ -100,27 +101,28 @@ export async function POST() {
         ];
 
         for (const deadline of deadlinesToCreate) {
-          await db.insert(belastingDeadlines).values(deadline);
+          db.insert(belastingDeadlines).values(deadline).run();
           resultaat.deadlines++;
         }
       }
 
       // ---- BTW AANGIFTES ----
-      const bestaandeAangiftes = await db
+      const bestaandeAangiftes = db
         .select()
         .from(btwAangiftes)
-        .where(eq(btwAangiftes.jaar, jaar));
+        .where(eq(btwAangiftes.jaar, jaar))
+        .all();
 
       if (bestaandeAangiftes.length === 0) {
         for (let kwartaal = 1; kwartaal <= 4; kwartaal++) {
-          await db.insert(btwAangiftes).values({
+          db.insert(btwAangiftes).values({
             kwartaal,
             jaar,
             btwOntvangen: 0,
             btwBetaald: 0,
             btwAfdragen: 0,
             status: "open",
-          });
+          }).run();
           resultaat.aangiftes++;
         }
       }
