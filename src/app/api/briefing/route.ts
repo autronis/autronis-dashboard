@@ -11,6 +11,8 @@ import {
   belastingDeadlines,
   gewoontes,
   gewoonteLogboek,
+  concurrentScans,
+  concurrenten as concurrentenTabel,
 } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth";
 import { eq, and, ne, gte, lte, desc, sql, asc } from "drizzle-orm";
@@ -310,6 +312,24 @@ export async function POST() {
         return dagen <= 30 && dagen >= -7;
       });
 
+    // 9. Concurrent updates afgelopen week
+    const weekGeleden = new Date();
+    weekGeleden.setDate(weekGeleden.getDate() - 7);
+    const concurrentUpdates = db
+      .select({
+        naam: concurrentenTabel.naam,
+        samenvatting: concurrentScans.aiSamenvatting,
+        highlights: concurrentScans.aiHighlights,
+        kansen: concurrentScans.kansen,
+      })
+      .from(concurrentScans)
+      .innerJoin(concurrentenTabel, eq(concurrentScans.concurrentId, concurrentenTabel.id))
+      .where(and(
+        eq(concurrentScans.status, "voltooid"),
+        gte(concurrentScans.aangemaaktOp, weekGeleden.toISOString())
+      ))
+      .all();
+
     // ============ AI Samenvatting ============
 
     const begroeting = getBegroeting();
@@ -341,7 +361,10 @@ ${alleBelastingDeadlines.map(d => {
   return `- ${d.omschrijving}: ${d.datum} (${dagen} dagen)`;
 }).join("\n")}` : ""}
 
-Schrijf een persoonlijke samenvatting van 2-3 zinnen. Begin met "${begroeting} ${gebruiker.naam}!" en geef een overzicht van de dag. Wees concreet en noem specifieke taken of afspraken als die er zijn. Houd het kort en motiverend.`;
+${concurrentUpdates.length > 0 ? `CONCURRENT UPDATES DEZE WEEK:
+${concurrentUpdates.map((u) => `- ${u.naam}: ${u.samenvatting ?? "Geen samenvatting"}`).join("\n")}` : ""}
+
+Schrijf een persoonlijke samenvatting van 2-3 zinnen. Begin met "${begroeting} ${gebruiker.naam}!" en geef een overzicht van de dag. Wees concreet en noem specifieke taken of afspraken als die er zijn. Houd het kort en motiverend.${concurrentUpdates.length > 0 ? " Neem de belangrijkste concurrent-update op in je briefing als die relevant is." : ""}`;
 
     const anthropic = new Anthropic();
 
