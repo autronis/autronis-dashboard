@@ -88,15 +88,28 @@ export async function POST(req: NextRequest) {
     const productiefPercentage = totaalSeconden > 0 ? Math.round((productiefSeconden / totaalSeconden) * 100) : 0;
     const topProject = Object.values(perApp).sort((a, b) => b.seconden - a.seconden)[0]?.project || null;
 
-    // Build context for Claude
+    // Build rich context for Claude with window titles
     const activiteitenLijst = Object.entries(perApp)
       .sort(([, a], [, b]) => b.seconden - a.seconden)
-      .map(([, v]) => {
+      .map(([key, v]) => {
         const uren = Math.floor(v.seconden / 3600);
         const minuten = Math.round((v.seconden % 3600) / 60);
         const duur = uren > 0 ? `${uren}u ${minuten}m` : `${minuten}m`;
-        const titels = Array.from(v.titels).slice(0, 5).join(", ");
-        return `- ${v.categorie}: ${duur} — App: ${v.project ? `${v.project} (via ` : ""}${titels}${v.project ? ")" : ""}`;
+        const titels = Array.from(v.titels).slice(0, 8);
+
+        // Extract project names from VS Code titles
+        const projecten = new Set<string>();
+        const bestanden = new Set<string>();
+        for (const t of titels) {
+          const vsMatch = t.match(/^(.+?)\s*[-—]\s*(.+?)\s*[-—]\s*Visual Studio Code$/);
+          if (vsMatch) { bestanden.add(vsMatch[1].trim()); projecten.add(vsMatch[2].trim()); }
+          const chromeMatch = t.match(/^(.+?)\s*[-—]\s*Google Chrome$/);
+          if (chromeMatch) projecten.add(chromeMatch[1].trim());
+        }
+
+        const projectStr = projecten.size > 0 ? ` (projecten: ${Array.from(projecten).join(", ")})` : "";
+        const bestandStr = bestanden.size > 0 ? ` bestanden: ${Array.from(bestanden).slice(0, 5).join(", ")}` : "";
+        return `- ${key.split("|")[0]} [${v.categorie}] ${duur}${projectStr}${bestandStr}`;
       })
       .join("\n");
 
@@ -111,19 +124,20 @@ export async function POST(req: NextRequest) {
       max_tokens: 1024,
       messages: [{
         role: "user",
-        content: `Je bent een productiviteitsassistent. Genereer een dagsamenvatting voor schermtijd data.
+        content: `Je bent een productiviteitsassistent voor Sem, developer bij Autronis (AI/automation bureau).
+Schrijf een nauwkeurige dagsamenvatting op basis van de schermtijd data. Wees SPECIFIEK over welke projecten en bestanden er aan gewerkt is.
 
 Datum: ${datum}
 Totale actieve tijd: ${Math.floor(totaalSeconden / 3600)}u ${Math.round((totaalSeconden % 3600) / 60)}m
 Productief: ${productiefPercentage}%
 
-Activiteiten:
+Activiteiten met details:
 ${activiteitenLijst}
 
-Genereer JSON met exact deze structuur:
+Genereer JSON:
 {
-  "kort": "1-2 zinnen samenvatting in het Nederlands",
-  "detail": "Markdown met per project/categorie een bullet met specifieke activiteiten. Gebruik **bold** voor projectnamen. Schrijf in het Nederlands."
+  "kort": "2-3 zinnen samenvatting. Noem SPECIFIEK welke projecten er aan gewerkt is en wat er gedaan is. Niet vaag. Voorbeeld: 'Gewerkt aan het Autronis Dashboard: belasting module uitgebreid, screen time tracker verbeterd. 2u development, 45m communicatie via Discord.'",
+  "detail": "Gedetailleerd overzicht per project/activiteit als markdown bullets. Per project: wat is er gedaan (op basis van bestandsnamen en venstertitels), hoelang. Wees concreet."
 }
 
 Alleen JSON, geen uitleg.`,
