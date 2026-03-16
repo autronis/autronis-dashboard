@@ -482,6 +482,7 @@ export function TabTijdlijn({ datum }: { datum: string }) {
         eindTijd: r.eindTijd ?? r.startTijd,
         duurSeconden: (r.duurMinuten ?? 0) * 60,
         beschrijving: r.omschrijving ?? "",
+        projectId: r.projectId ?? null,
         projectNaam: r.projectNaam ?? null,
         klantNaam: r.klantNaam ?? null,
         isIdle: false,

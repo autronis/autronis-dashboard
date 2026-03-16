@@ -9,6 +9,8 @@ import {
   facturen,
   screenTimeEntries,
   belastingDeadlines,
+  gewoontes,
+  gewoonteLogboek,
 } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth";
 import { eq, and, ne, gte, lte, desc, sql, asc } from "drizzle-orm";
@@ -274,7 +276,30 @@ export async function POST() {
       ? Math.round((screenTimeGisteren.totaal / 3600) * 10) / 10
       : 0;
 
-    // 7. Belasting deadlines komende 30 dagen
+    // 7. Gewoontes vandaag
+    const actieveGewoontes = db
+      .select()
+      .from(gewoontes)
+      .where(
+        and(eq(gewoontes.gebruikerId, gebruiker.id), eq(gewoontes.isActief, 1))
+      )
+      .all();
+
+    const vandaagLogs = db
+      .select()
+      .from(gewoonteLogboek)
+      .where(
+        and(
+          eq(gewoonteLogboek.gebruikerId, gebruiker.id),
+          eq(gewoonteLogboek.datum, datum)
+        )
+      )
+      .all();
+
+    const gewoonteVoltooid = vandaagLogs.filter((l) => l.voltooid === 1).length;
+    const gewoonteTotaal = actieveGewoontes.length;
+
+    // 8. Belasting deadlines komende 30 dagen
     const alleBelastingDeadlines = db
       .select()
       .from(belastingDeadlines)
@@ -305,6 +330,8 @@ ACTIEVE PROJECTEN (${briefingProjecten.length}):
 ${briefingProjecten.length > 0 ? briefingProjecten.map((p) => `- ${p.naam} voor ${p.klantNaam}: ${p.voortgang}% klaar${p.deadline ? ` — deadline: ${p.deadline}` : ""}`).join("\n") : "Geen actieve projecten."}
 
 OPENSTAANDE FACTUREN: ${aantalOpenFacturen} facturen, totaal €${openstaandBedrag.toFixed(2)}
+
+${gewoonteTotaal > 0 ? `GEWOONTES VANDAAG: ${gewoonteVoltooid}/${gewoonteTotaal} voltooid` : ""}
 
 ${screenTimeUren > 0 ? `SCHERMTIJD GISTEREN: ${screenTimeUren} uur` : ""}
 

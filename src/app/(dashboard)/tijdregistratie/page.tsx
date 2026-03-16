@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn, formatUren } from "@/lib/utils";
 import type { TijdCategorie } from "@/types";
-import { HandmatigModal } from "./handmatig-modal";
+import { HandmatigModal } from "../tijd/handmatig-modal";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
