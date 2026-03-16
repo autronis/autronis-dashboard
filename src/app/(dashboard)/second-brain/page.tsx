@@ -24,6 +24,7 @@ import {
   useUpdateSecondBrainItem,
   type SecondBrainItem,
 } from "@/hooks/queries/use-second-brain";
+import { AiZoekenTab } from "./ai-zoeken-tab";
 
 const typeConfig = {
   tekst: { icon: FileText, label: "Tekst", color: "text-blue-400" },
@@ -427,11 +428,9 @@ export default function SecondBrainPage() {
           </div>
         )}
 
-        {/* AI Zoeken tab placeholder */}
+        {/* AI Zoeken tab */}
         {activeTab === "zoeken" && (
-          <div className="bg-autronis-card border border-autronis-border rounded-2xl p-8 text-center text-autronis-text-secondary">
-            AI Zoeken tab wordt hier geladen
-          </div>
+          <AiZoekenTab onSelectItem={(item) => setSelectedItem(item)} />
         )}
 
         {/* Selected item detail (minimal inline preview) */}
