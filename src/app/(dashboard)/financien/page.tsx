@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Euro,
@@ -16,9 +16,13 @@ import {
   Receipt,
   Landmark,
   TrendingUp,
+  Bell,
+  RefreshCw,
+  Clock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, formatBedrag, formatDatum } from "@/lib/utils";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/ui/page-transition";
 import { SkeletonFacturen } from "@/components/ui/skeleton";
@@ -28,27 +32,13 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { UitgavenTab } from "./uitgaven-tab";
 import { BankImportTab } from "./bank-import-tab";
 import { LiquiditeitTab } from "./liquiditeit-tab";
-
-interface Factuur {
-  id: number;
-  factuurnummer: string;
-  klantId: number;
-  klantNaam: string;
-  status: string;
-  bedragExclBtw: number;
-  btwBedrag: number | null;
-  bedragInclBtw: number | null;
-  factuurdatum: string | null;
-  vervaldatum: string | null;
-  betaaldOp: string | null;
-}
-
-interface KPIs {
-  openstaand: number;
-  betaaldDezeMaand: number;
-  teLaat: number;
-  totaal: number;
-}
+import {
+  useFacturen,
+  useOuderdomsanalyse,
+  useVerstuurHerinneringen,
+  useGenereerPeriodiek,
+  type Factuur,
+} from "@/hooks/queries/use-facturen";
 
 const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
   concept: { bg: "bg-slate-500/15", text: "text-slate-400", label: "Concept" },
@@ -68,37 +58,22 @@ const TABS: { key: Tab; label: string; icon: typeof Euro }[] = [
 
 export default function FinancienPage() {
   const { addToast } = useToast();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<Tab>("facturen");
-  const [facturen, setFacturen] = useState<Factuur[]>([]);
-  const [kpis, setKpis] = useState<KPIs>({ openstaand: 0, betaaldDezeMaand: 0, teLaat: 0, totaal: 0 });
-  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("alle");
   const [zoek, setZoek] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [bulkActie, setBulkActie] = useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (statusFilter !== "alle") params.set("status", statusFilter);
-      if (zoek) params.set("zoek", zoek);
+  const { data: facturenData, isLoading: loading } = useFacturen(statusFilter, zoek);
+  const facturen = facturenData?.facturen ?? [];
+  const kpis = facturenData?.kpis ?? { openstaand: 0, betaaldDezeMaand: 0, teLaat: 0, totaal: 0 };
 
-      const res = await fetch(`/api/facturen?${params}`);
-      if (!res.ok) throw new Error();
-      const json = await res.json();
-      setFacturen(json.facturen);
-      setKpis(json.kpis);
-    } catch {
-      addToast("Kon facturen niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter, zoek, addToast]);
+  const { data: ouderdomData } = useOuderdomsanalyse();
+  const herinneringenMutation = useVerstuurHerinneringen();
+  const periodiekMutation = useGenereerPeriodiek();
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const invalidateFacturen = () => queryClient.invalidateQueries({ queryKey: ["facturen"] });
 
   // Clear selection when filter changes
   useEffect(() => {
@@ -137,56 +112,71 @@ export default function FinancienPage() {
   const allSelectedAreConcept = selectedFacturen.length > 0 && selectedFacturen.every((f) => f.status === "concept");
   const allSelectedAreVerzonden = selectedFacturen.length > 0 && selectedFacturen.every((f) => f.status === "verzonden");
 
-  const handleBulkVerzonden = async () => {
-    if (!allSelectedAreConcept) return;
-    setBulkActie(true);
-    try {
-      for (const id of selectedIds) {
+  const bulkVerzondenMutation = useMutation({
+    mutationFn: async (ids: Set<number>) => {
+      for (const id of ids) {
         await fetch(`/api/facturen/${id}/verstuur`, { method: "POST" });
       }
+    },
+    onSuccess: () => {
       addToast(`${selectedIds.size} facturen gemarkeerd als verzonden`, "succes");
       setSelectedIds(new Set());
-      await fetchData();
-    } catch {
+      invalidateFacturen();
+    },
+    onError: () => {
       addToast("Kon niet alle facturen bijwerken", "fout");
-    } finally {
-      setBulkActie(false);
-    }
-  };
+    },
+  });
 
-  const handleBulkBetaald = async () => {
-    if (!allSelectedAreVerzonden) return;
-    setBulkActie(true);
-    try {
-      for (const id of selectedIds) {
+  const bulkBetaaldMutation = useMutation({
+    mutationFn: async (ids: Set<number>) => {
+      for (const id of ids) {
         await fetch(`/api/facturen/${id}/betaald`, { method: "PUT" });
       }
+    },
+    onSuccess: () => {
       addToast(`${selectedIds.size} facturen gemarkeerd als betaald`, "succes");
       setSelectedIds(new Set());
-      await fetchData();
-    } catch {
+      invalidateFacturen();
+    },
+    onError: () => {
       addToast("Kon niet alle facturen bijwerken", "fout");
-    } finally {
-      setBulkActie(false);
-    }
-  };
+    },
+  });
 
-  const handleBulkDelete = async () => {
-    if (!allSelectedAreConcept) return;
-    setBulkActie(true);
-    try {
-      for (const id of selectedIds) {
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: Set<number>) => {
+      for (const id of ids) {
         await fetch(`/api/facturen/${id}`, { method: "DELETE" });
       }
+    },
+    onSuccess: () => {
       addToast(`${selectedIds.size} facturen verwijderd`, "succes");
       setSelectedIds(new Set());
-      await fetchData();
-    } catch {
-      addToast("Kon niet alle facturen verwijderen", "fout");
-    } finally {
-      setBulkActie(false);
+      invalidateFacturen();
       setBulkDeleteDialogOpen(false);
-    }
+    },
+    onError: () => {
+      addToast("Kon niet alle facturen verwijderen", "fout");
+      setBulkDeleteDialogOpen(false);
+    },
+  });
+
+  const bulkActie = bulkVerzondenMutation.isPending || bulkBetaaldMutation.isPending || bulkDeleteMutation.isPending;
+
+  const handleBulkVerzonden = () => {
+    if (!allSelectedAreConcept) return;
+    bulkVerzondenMutation.mutate(selectedIds);
+  };
+
+  const handleBulkBetaald = () => {
+    if (!allSelectedAreVerzonden) return;
+    bulkBetaaldMutation.mutate(selectedIds);
+  };
+
+  const handleBulkDelete = () => {
+    if (!allSelectedAreConcept) return;
+    bulkDeleteMutation.mutate(selectedIds);
   };
 
   if (loading) {
@@ -298,6 +288,117 @@ export default function FinancienPage() {
                   className="text-3xl font-bold text-autronis-text-primary tabular-nums"
                 />
                 <p className="text-sm text-autronis-text-secondary mt-1.5 uppercase tracking-wide">Totaal facturen</p>
+              </div>
+            </div>
+
+            {/* Quick actions + Ouderdomsanalyse */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              {/* Quick actions */}
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    herinneringenMutation.mutate(undefined, {
+                      onSuccess: (data) => {
+                        addToast(
+                          data.bijgewerkt > 0
+                            ? `${data.bijgewerkt} herinnering(en) verstuurd`
+                            : "Geen te late facturen gevonden",
+                          data.bijgewerkt > 0 ? "succes" : "fout"
+                        );
+                      },
+                      onError: (err) => {
+                        addToast(err.message, "fout");
+                      },
+                    });
+                  }}
+                  disabled={herinneringenMutation.isPending}
+                  className="inline-flex items-center gap-3 px-5 py-3.5 bg-autronis-card border border-autronis-border rounded-xl text-sm font-semibold text-autronis-text-primary hover:border-autronis-accent/50 hover:bg-autronis-accent/5 transition-colors disabled:opacity-50"
+                >
+                  <Bell className="w-4 h-4 text-orange-400" />
+                  {herinneringenMutation.isPending ? "Bezig..." : "Herinneringen versturen"}
+                </button>
+                <button
+                  onClick={() => {
+                    periodiekMutation.mutate(undefined, {
+                      onSuccess: (data) => {
+                        addToast(
+                          data.aangemaakt > 0
+                            ? `${data.aangemaakt} periodieke factuur/facturen aangemaakt`
+                            : "Geen periodieke facturen te genereren",
+                          data.aangemaakt > 0 ? "succes" : "fout"
+                        );
+                      },
+                      onError: (err) => {
+                        addToast(err.message, "fout");
+                      },
+                    });
+                  }}
+                  disabled={periodiekMutation.isPending}
+                  className="inline-flex items-center gap-3 px-5 py-3.5 bg-autronis-card border border-autronis-border rounded-xl text-sm font-semibold text-autronis-text-primary hover:border-autronis-accent/50 hover:bg-autronis-accent/5 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className="w-4 h-4 text-blue-400" />
+                  {periodiekMutation.isPending ? "Bezig..." : "Periodieke facturen genereren"}
+                </button>
+              </div>
+
+              {/* Ouderdomsanalyse */}
+              <div className="lg:col-span-2 bg-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className="w-4 h-4 text-autronis-accent" />
+                  <h3 className="text-sm font-semibold text-autronis-text-primary uppercase tracking-wide">
+                    Ouderdomsanalyse
+                  </h3>
+                </div>
+                {ouderdomData ? (
+                  <div className="space-y-3">
+                    {(["0-30", "31-60", "61-90", "90+"] as const).map((bucket) => {
+                      const data = ouderdomData.ouderdom[bucket];
+                      const totaal = ouderdomData.ouderdom.totaal.bedrag;
+                      const pct = totaal > 0 ? (data.bedrag / totaal) * 100 : 0;
+                      const kleuren: Record<string, string> = {
+                        "0-30": "bg-green-500",
+                        "31-60": "bg-yellow-500",
+                        "61-90": "bg-orange-500",
+                        "90+": "bg-red-500",
+                      };
+                      return (
+                        <div key={bucket} className="flex items-center gap-3">
+                          <span className="text-xs text-autronis-text-secondary w-12 text-right tabular-nums">
+                            {bucket}d
+                          </span>
+                          <div className="flex-1 h-5 bg-autronis-bg rounded-full overflow-hidden">
+                            <div
+                              className={cn("h-full rounded-full transition-all", kleuren[bucket])}
+                              style={{ width: `${Math.max(pct, data.aantal > 0 ? 2 : 0)}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-autronis-text-secondary w-8 tabular-nums">
+                            {data.aantal}
+                          </span>
+                          <span className="text-xs font-medium text-autronis-text-primary w-20 text-right tabular-nums">
+                            {formatBedrag(data.bedrag)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <div className="flex items-center gap-3 pt-2 border-t border-autronis-border">
+                      <span className="text-xs font-semibold text-autronis-text-primary w-12 text-right">
+                        Totaal
+                      </span>
+                      <div className="flex-1" />
+                      <span className="text-xs font-semibold text-autronis-text-primary w-8 tabular-nums">
+                        {ouderdomData.ouderdom.totaal.aantal}
+                      </span>
+                      <span className="text-xs font-bold text-autronis-accent w-20 text-right tabular-nums">
+                        {formatBedrag(ouderdomData.ouderdom.totaal.bedrag)}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-24">
+                    <div className="w-5 h-5 border-2 border-autronis-border border-t-autronis-accent rounded-full animate-spin" />
+                  </div>
+                )}
               </div>
             </div>
 
