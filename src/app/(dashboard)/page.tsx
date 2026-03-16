@@ -26,6 +26,12 @@ import {
   Loader2,
   Radar,
   ExternalLink,
+  Brain,
+  FileText,
+  Link2,
+  Image as ImageIcon,
+  FileDown,
+  Code,
 } from "lucide-react";
 import { cn, formatUren, formatBedrag, formatDatum } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +51,7 @@ import { HabitWidget } from "@/components/gewoontes/habit-widget";
 import { FocusWidget } from "@/components/focus/focus-widget";
 import { useIdeeen, useGenereerIdeeen, type Idee } from "@/hooks/queries/use-ideeen";
 import { useRadarItems, type RadarItem } from "@/hooks/queries/use-radar";
+import { useRecentSecondBrain } from "@/hooks/queries/use-second-brain";
 
 function getBegroeting(): string {
   const uur = new Date().getHours();
@@ -562,6 +569,7 @@ export default function DashboardPage() {
   const { data, isLoading: loading } = useDashboard();
   const { data: inzichtenData } = useInzichten();
   const inzichten = inzichtenData?.inzichten ?? [];
+  const { data: recentBrainItems } = useRecentSecondBrain(5);
 
   // Timer form state
   const [timerProjectId, setTimerProjectId] = useState<string>("");
@@ -717,6 +725,10 @@ export default function DashboardPage() {
   }
 
   if (!data) return null;
+
+  const secondBrainTypeIcons: Record<string, typeof FileText> = {
+    tekst: FileText, url: Link2, afbeelding: ImageIcon, pdf: FileDown, code: Code,
+  };
 
   const { gebruiker, kpis, mijnTaken, deadlines, teamgenoot, projecten } = data;
   const maxUrenDag = teamgenoot ? Math.max(...teamgenoot.urenPerDag, 1) : 1;
@@ -1163,6 +1175,39 @@ export default function DashboardPage() {
 
         {/* Documenten widget */}
         <DocumentWidget />
+
+        {/* Second Brain Widget */}
+        <div className="bg-autronis-card border border-autronis-accent/20 rounded-2xl p-6 lg:p-7">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Brain className="w-5 h-5 text-autronis-accent" />
+              <h3 className="text-autronis-text-primary font-semibold">Second Brain</h3>
+            </div>
+            <Link href="/second-brain" className="text-autronis-accent text-sm hover:text-autronis-accent-hover transition-colors">
+              Bekijk alles →
+            </Link>
+          </div>
+          {recentBrainItems && recentBrainItems.length > 0 ? (
+            <div className="space-y-3">
+              {recentBrainItems.map((item) => {
+                const TypeIcon = secondBrainTypeIcons[item.type] ?? FileText;
+                return (
+                  <Link key={item.id} href="/second-brain" className="flex items-center gap-3 group">
+                    <TypeIcon className="w-4 h-4 text-autronis-text-secondary" />
+                    <span className="text-sm text-autronis-text-primary group-hover:text-autronis-accent transition-colors truncate flex-1">
+                      {item.titel || "Zonder titel"}
+                    </span>
+                    <span className="text-xs text-autronis-text-secondary tabular-nums">
+                      {new Date(item.aangemaaktOp).toLocaleDateString("nl-NL", { day: "numeric", month: "short" })}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-autronis-text-secondary text-sm">Nog geen items opgeslagen</p>
+          )}
+        </div>
 
       </div>
     </PageTransition>
