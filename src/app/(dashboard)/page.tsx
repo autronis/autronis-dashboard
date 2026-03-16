@@ -38,6 +38,7 @@ import { Sparkline } from "@/components/ui/sparkline";
 import { CheckBurst } from "@/components/ui/confetti";
 import type { TijdCategorie } from "@/types";
 import { DocumentWidget } from "@/components/documenten/document-widget";
+import { useIdeeen, useGenereerIdeeen, type Idee } from "@/hooks/queries/use-ideeen";
 
 function getBegroeting(): string {
   const uur = new Date().getHours();
@@ -347,6 +348,92 @@ function DailyBriefing() {
   );
 }
 
+function IdeeVanDeDag() {
+  const { data: ideeen = [] } = useIdeeen();
+  const genereer = useGenereerIdeeen();
+  const { addToast } = useToast();
+
+  const vandaag = new Date().toISOString().slice(0, 10);
+  const aiIdeeenVandaag = ideeen.filter(
+    (i: Idee) => i.isAiSuggestie === 1 && i.aangemaaktOp?.slice(0, 10) === vandaag
+  );
+  const beste = aiIdeeenVandaag.length > 0
+    ? aiIdeeenVandaag.reduce((a: Idee, b: Idee) => ((a.aiScore ?? 0) >= (b.aiScore ?? 0) ? a : b))
+    : null;
+
+  const handleGenereer = () => {
+    genereer.mutate(undefined, {
+      onSuccess: () => addToast("Nieuwe ideeën gegenereerd", "succes"),
+      onError: () => addToast("Kon ideeën niet genereren", "fout"),
+    });
+  };
+
+  if (!beste) {
+    return (
+      <div className="bg-autronis-card border border-autronis-border rounded-2xl p-5 card-glow flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-amber-500/10 rounded-xl">
+            <Lightbulb className="w-5 h-5 text-amber-400" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-autronis-text-primary">Idee van de dag</p>
+            <p className="text-xs text-autronis-text-secondary">Nog geen AI-ideeën vandaag</p>
+          </div>
+        </div>
+        <button
+          onClick={handleGenereer}
+          disabled={genereer.isPending}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+        >
+          {genereer.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+          Genereer nieuwe ideeën
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-autronis-card border border-amber-500/20 rounded-2xl p-5 card-glow">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="p-2 bg-amber-500/10 rounded-xl flex-shrink-0 mt-0.5">
+            <Lightbulb className="w-5 h-5 text-amber-400" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs text-amber-400 font-semibold uppercase tracking-wide mb-1">Idee van de dag</p>
+            <p className="text-base font-semibold text-autronis-text-primary truncate">{beste.naam}</p>
+            {beste.omschrijving && (
+              <p className="text-sm text-autronis-text-secondary mt-1 line-clamp-2">{beste.omschrijving}</p>
+            )}
+            <div className="flex items-center gap-2 mt-2">
+              {beste.aiScore != null && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 tabular-nums">
+                  Score: {beste.aiScore}/10
+                </span>
+              )}
+              {beste.doelgroep && (
+                <span className={cn(
+                  "text-xs font-medium px-2 py-0.5 rounded-full",
+                  beste.doelgroep === "klant" ? "bg-blue-500/15 text-blue-400" : "bg-autronis-accent/15 text-autronis-accent"
+                )}>
+                  {beste.doelgroep === "klant" ? "Klant" : "Persoonlijk"}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        <Link
+          href="/ideeen"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-autronis-accent hover:text-autronis-accent-hover transition-colors flex-shrink-0"
+        >
+          Bekijken
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { addToast } = useToast();
   const timer = useTimer();
@@ -508,6 +595,9 @@ export default function DashboardPage() {
 
         {/* Dagbriefing */}
         <DailyBriefing />
+
+        {/* Idee van de dag */}
+        <IdeeVanDeDag />
 
         {/* KPI balk */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">

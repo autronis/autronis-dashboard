@@ -15,6 +15,14 @@ export interface Idee {
   notionPageId: string | null;
   aangemaaktOp: string;
   bijgewerktOp: string;
+  aiScore: number | null;
+  aiHaalbaarheid: number | null;
+  aiMarktpotentie: number | null;
+  aiFitAutronis: number | null;
+  doelgroep: string | null;
+  verdienmodel: string | null;
+  isAiSuggestie: number;
+  gepromoveerd: number;
 }
 
 // ============ FETCH FUNCTIONS ============
@@ -142,6 +150,41 @@ export function useStartProject() {
         throw new Error(err.fout || "Kon project niet starten");
       }
       return res.json() as Promise<{ project: { id: number; naam: string } }>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ideeen"] });
+    },
+  });
+}
+
+export function useGenereerIdeeen() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/ideeen/genereer", { method: "POST" });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.fout || "Fout bij genereren");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ideeen"] });
+    },
+  });
+}
+
+export function usePromoveerIdee() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/ideeen/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gepromoveerd: 1, isAiSuggestie: 0 }),
+      });
+      if (!res.ok) throw new Error("Promoveren mislukt");
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ideeen"] });

@@ -11,6 +11,12 @@ import {
   Edit,
   Loader2,
   ExternalLink,
+  Sparkles,
+  ArrowUpCircle,
+  Target,
+  TrendingUp,
+  Users,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +28,8 @@ import {
   useDeleteIdee,
   useStartProject,
   useSyncBacklog,
+  useGenereerIdeeen,
+  usePromoveerIdee,
   type Idee,
 } from "@/hooks/queries/use-ideeen";
 
@@ -84,9 +92,13 @@ function prioriteitLabel(key: string): string {
 export default function IdeeenPage() {
   const { addToast } = useToast();
 
+  // Tabs
+  const [activeTab, setActiveTab] = useState<"alle" | "ai">("alle");
+
   // Filters
   const [filterStatus, setFilterStatus] = useState("");
   const [filterCategorie, setFilterCategorie] = useState("");
+  const [filterDoelgroep, setFilterDoelgroep] = useState("");
 
   // Data
   const { data: ideeen = [], isLoading } = useIdeeen({
@@ -100,6 +112,8 @@ export default function IdeeenPage() {
   const deleteMutation = useDeleteIdee();
   const startProjectMutation = useStartProject();
   const syncBacklogMutation = useSyncBacklog();
+  const genereerMutation = useGenereerIdeeen();
+  const promoveerMutation = usePromoveerIdee();
 
   // Modal state
   const [detailIdee, setDetailIdee] = useState<Idee | null>(null);
@@ -116,11 +130,27 @@ export default function IdeeenPage() {
   const [formOmschrijving, setFormOmschrijving] = useState("");
   const [formUitwerking, setFormUitwerking] = useState("");
 
+  // Filtered lists
+  const alleIdeeen = ideeen.filter((i) => i.isAiSuggestie !== 1 || i.gepromoveerd === 1);
+  const aiSuggesties = ideeen.filter((i) => i.isAiSuggestie === 1 && i.gepromoveerd !== 1);
+  const aiFiltered = filterDoelgroep
+    ? aiSuggesties.filter((i) => i.doelgroep === filterDoelgroep)
+    : aiSuggesties;
+  const aiSorted = [...aiFiltered].sort((a, b) => (b.aiScore ?? 0) - (a.aiScore ?? 0));
+
   // KPIs
-  const totaal = ideeen.length;
-  const uitgewerkt = ideeen.filter((i) => i.status === "uitgewerkt").length;
-  const actief = ideeen.filter((i) => i.status === "actief").length;
-  const gebouwd = ideeen.filter((i) => i.status === "gebouwd").length;
+  const totaal = alleIdeeen.length;
+  const uitgewerkt = alleIdeeen.filter((i) => i.status === "uitgewerkt").length;
+  const actief = alleIdeeen.filter((i) => i.status === "actief").length;
+  const gebouwd = alleIdeeen.filter((i) => i.status === "gebouwd").length;
+
+  // AI KPIs
+  const aiTotaal = aiSuggesties.length;
+  const aiGemScore = aiTotaal > 0
+    ? Math.round((aiSuggesties.reduce((sum, i) => sum + (i.aiScore ?? 0), 0) / aiTotaal) * 10) / 10
+    : 0;
+  const aiKlant = aiSuggesties.filter((i) => i.doelgroep === "klant").length;
+  const aiPersoonlijk = aiSuggesties.filter((i) => i.doelgroep === "persoonlijk").length;
 
   // ============ HANDLERS ============
 
@@ -210,6 +240,34 @@ export default function IdeeenPage() {
     });
   }
 
+  function handleGenereer() {
+    genereerMutation.mutate(undefined, {
+      onSuccess: () => addToast("Nieuwe AI-ideeën gegenereerd", "succes"),
+      onError: (err) => addToast(err.message || "Genereren mislukt", "fout"),
+    });
+  }
+
+  function handlePromoveer(id: number) {
+    promoveerMutation.mutate(id, {
+      onSuccess: () => addToast("Idee gepromoveerd naar backlog", "succes"),
+      onError: () => addToast("Promoveren mislukt", "fout"),
+    });
+  }
+
+  function handleDeleteAi(idee: Idee) {
+    deleteMutation.mutate(idee.id, {
+      onSuccess: () => addToast("AI-suggestie verwijderd", "succes"),
+      onError: () => addToast("Kon niet verwijderen", "fout"),
+    });
+  }
+
+  function scoreKleur(score: number | null): string {
+    if (score == null) return "bg-gray-500/15 text-gray-400";
+    if (score >= 8) return "bg-emerald-500/15 text-emerald-400";
+    if (score >= 5) return "bg-amber-500/15 text-amber-400";
+    return "bg-red-500/15 text-red-400";
+  }
+
   function handleSyncBacklog() {
     syncBacklogMutation.mutate(undefined, {
       onSuccess: (data) => {
@@ -244,6 +302,42 @@ export default function IdeeenPage() {
         </p>
       </div>
 
+      {/* Tabs */}
+      <div className="flex items-center gap-1 bg-autronis-card border border-autronis-border rounded-xl p-1 w-fit">
+        <button
+          onClick={() => setActiveTab("alle")}
+          className={cn(
+            "px-5 py-2.5 rounded-lg text-sm font-medium transition-colors",
+            activeTab === "alle"
+              ? "bg-autronis-accent text-autronis-bg"
+              : "text-autronis-text-secondary hover:text-autronis-text-primary"
+          )}
+        >
+          Alle Ideeën
+        </button>
+        <button
+          onClick={() => setActiveTab("ai")}
+          className={cn(
+            "inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors",
+            activeTab === "ai"
+              ? "bg-autronis-accent text-autronis-bg"
+              : "text-autronis-text-secondary hover:text-autronis-text-primary"
+          )}
+        >
+          <Sparkles className="w-4 h-4" />
+          AI Suggesties
+          {aiTotaal > 0 && (
+            <span className={cn(
+              "text-xs font-bold px-1.5 py-0.5 rounded-full",
+              activeTab === "ai" ? "bg-autronis-bg/20 text-autronis-bg" : "bg-autronis-accent/15 text-autronis-accent"
+            )}>
+              {aiTotaal}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {activeTab === "alle" && (<>
       {/* KPI cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
@@ -336,14 +430,14 @@ export default function IdeeenPage() {
       </div>
 
       {/* Cards grid */}
-      {ideeen.length === 0 ? (
+      {alleIdeeen.length === 0 ? (
         <div className="text-center py-16">
           <Lightbulb className="w-12 h-12 text-autronis-text-secondary/30 mx-auto mb-4" />
           <p className="text-autronis-text-secondary">Geen ideeën gevonden</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {ideeen.map((idee) => (
+          {alleIdeeen.map((idee) => (
             <button
               key={idee.id}
               onClick={() => setDetailIdee(idee)}
@@ -379,6 +473,189 @@ export default function IdeeenPage() {
             </button>
           ))}
         </div>
+      )}
+
+      </>)}
+
+      {/* AI Suggesties Tab */}
+      {activeTab === "ai" && (
+        <>
+          {/* AI KPI cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 bg-purple-500/10 rounded-xl">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-autronis-text-primary tabular-nums">{aiTotaal}</p>
+              <p className="text-sm text-autronis-text-secondary mt-1.5 uppercase tracking-wide">Totaal suggesties</p>
+            </div>
+            <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 bg-emerald-500/10 rounded-xl">
+                  <Target className="w-5 h-5 text-emerald-400" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-emerald-400 tabular-nums">{aiGemScore}</p>
+              <p className="text-sm text-autronis-text-secondary mt-1.5 uppercase tracking-wide">Gem. score</p>
+            </div>
+            <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 bg-blue-500/10 rounded-xl">
+                  <Users className="w-5 h-5 text-blue-400" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-blue-400 tabular-nums">{aiKlant}</p>
+              <p className="text-sm text-autronis-text-secondary mt-1.5 uppercase tracking-wide">Klant ideeën</p>
+            </div>
+            <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 bg-autronis-accent/10 rounded-xl">
+                  <User className="w-5 h-5 text-autronis-accent" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-autronis-accent tabular-nums">{aiPersoonlijk}</p>
+              <p className="text-sm text-autronis-text-secondary mt-1.5 uppercase tracking-wide">Persoonlijke ideeën</p>
+            </div>
+          </div>
+
+          {/* AI Filter row */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-1 bg-autronis-card border border-autronis-border rounded-xl p-1">
+              {[
+                { key: "", label: "Alle" },
+                { key: "klant", label: "Klant" },
+                { key: "persoonlijk", label: "Persoonlijk" },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setFilterDoelgroep(opt.key)}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    filterDoelgroep === opt.key
+                      ? "bg-autronis-accent text-autronis-bg"
+                      : "text-autronis-text-secondary hover:text-autronis-text-primary"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex-1" />
+
+            <button
+              onClick={handleGenereer}
+              disabled={genereerMutation.isPending}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-autronis-accent/20 disabled:opacity-50"
+            >
+              {genereerMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+              Genereer nieuwe ideeën
+            </button>
+          </div>
+
+          {/* AI Cards */}
+          {aiSorted.length === 0 ? (
+            <div className="text-center py-16">
+              <Sparkles className="w-12 h-12 text-autronis-text-secondary/30 mx-auto mb-4" />
+              <p className="text-autronis-text-secondary mb-4">Nog geen AI-suggesties</p>
+              <button
+                onClick={handleGenereer}
+                disabled={genereerMutation.isPending}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors"
+              >
+                {genereerMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                Genereer ideeën
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {aiSorted.map((idee) => (
+                <div
+                  key={idee.id}
+                  className="bg-autronis-card border border-autronis-border rounded-2xl p-6 hover:border-autronis-accent/50 transition-all card-glow"
+                >
+                  {/* Score + naam */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <h3 className="text-base font-semibold text-autronis-text-primary truncate">
+                        {idee.naam}
+                      </h3>
+                      {idee.omschrijving && (
+                        <p className="text-sm text-autronis-text-secondary mt-1 line-clamp-2">
+                          {idee.omschrijving}
+                        </p>
+                      )}
+                    </div>
+                    {idee.aiScore != null && (
+                      <span className={cn(
+                        "text-lg font-bold px-3 py-1 rounded-xl flex-shrink-0 tabular-nums",
+                        scoreKleur(idee.aiScore)
+                      )}>
+                        {idee.aiScore}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Sub-scores */}
+                  <div className="flex items-center gap-4 text-xs text-autronis-text-secondary mb-3">
+                    {idee.aiHaalbaarheid != null && (
+                      <span>Haalbaarheid: <span className="text-autronis-text-primary font-medium">{idee.aiHaalbaarheid}/10</span></span>
+                    )}
+                    {idee.aiMarktpotentie != null && (
+                      <span>Markt: <span className="text-autronis-text-primary font-medium">{idee.aiMarktpotentie}/10</span></span>
+                    )}
+                    {idee.aiFitAutronis != null && (
+                      <span>Fit: <span className="text-autronis-text-primary font-medium">{idee.aiFitAutronis}/10</span></span>
+                    )}
+                  </div>
+
+                  {/* Badges */}
+                  <div className="flex items-center gap-2 mb-4 flex-wrap">
+                    {idee.doelgroep && (
+                      <span className={cn(
+                        "text-xs font-medium px-2.5 py-1 rounded-full",
+                        idee.doelgroep === "klant" ? "bg-blue-500/15 text-blue-400" : "bg-autronis-accent/15 text-autronis-accent"
+                      )}>
+                        {idee.doelgroep === "klant" ? "Klant" : "Persoonlijk"}
+                      </span>
+                    )}
+                    {idee.verdienmodel && (
+                      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-autronis-border/50 text-autronis-text-secondary">
+                        {idee.verdienmodel}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 pt-3 border-t border-autronis-border">
+                    <button
+                      onClick={() => handlePromoveer(idee.id)}
+                      disabled={promoveerMutation.isPending}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded-xl text-xs font-medium transition-colors disabled:opacity-50"
+                    >
+                      <ArrowUpCircle className="w-3.5 h-3.5" />
+                      Promoveer naar backlog
+                    </button>
+                    <div className="flex-1" />
+                    <button
+                      onClick={() => handleDeleteAi(idee)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 text-red-400 hover:bg-red-500/10 rounded-xl text-xs font-medium transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Verwijderen
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Detail Modal */}
