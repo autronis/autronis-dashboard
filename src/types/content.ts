@@ -125,6 +125,9 @@ export const BANNER_ILLUSTRATIONS = [
   "gear", "brain", "nodes", "chart", "target", "flow", "circuit", "lightbulb",
   "puzzle", "cloud", "rocket", "calendar", "magnet", "handshake",
   "globe", "shield", "infinity", "dna", "matrix", "wave",
+  "radar", "funnel", "server", "chatbot", "lock", "speedometer",
+  "hierarchy", "pipeline", "antenna", "microscope", "diamond",
+  "hourglass", "compass", "fingerprint", "telescope",
 ] as const;
 export type BannerIllustration = typeof BANNER_ILLUSTRATIONS[number];
 
@@ -161,6 +164,21 @@ export const BANNER_ILLUSTRATION_LABELS: Record<BannerIllustration, string> = {
   dna: "Structuur",
   matrix: "Data Matrix",
   wave: "Signaal",
+  radar: "Radar Scan",
+  funnel: "Sales Funnel",
+  server: "Server Rack",
+  chatbot: "Chatbot",
+  lock: "Slot & Encryptie",
+  speedometer: "Snelheidsmeter",
+  hierarchy: "Organogram",
+  pipeline: "Pipeline",
+  antenna: "Zendmast",
+  microscope: "Analyse",
+  diamond: "Premium",
+  hourglass: "Zandloper",
+  compass: "Kompas",
+  fingerprint: "Vingerafdruk",
+  telescope: "Telescoop",
 };
 
 export interface ContentBanner {

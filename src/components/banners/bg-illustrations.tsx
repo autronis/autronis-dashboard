@@ -858,6 +858,329 @@ function SimpleIllustration({ cx, cy, r, type }: { cx: number; cy: number; r: nu
         </>
       );
 
+    case "radar":
+      return (<>
+        {/* Radar sweep display */}
+        {ring(cx, cy, r * 0.9, 0.14, 2.5)}
+        {ring(cx, cy, r * 0.65, 0.10, 1.5)}
+        {ring(cx, cy, r * 0.4, 0.08, 1.5)}
+        {ring(cx, cy, r * 0.15, 0.12, 2)}
+        {/* Crosshair */}
+        {ln(cx - r, cy, cx + r, cy, 0.06, 0.8)}
+        {ln(cx, cy - r, cx, cy + r, 0.06, 0.8)}
+        {/* Sweep arc */}
+        {arc(cx, cy, r * 0.88, -20, 40, 0.18, 3)}
+        {/* Blips */}
+        {dot(cx + r * 0.3, cy - r * 0.5, 4, 0.2)}
+        {dot(cx - r * 0.5, cy + r * 0.2, 3, 0.15)}
+        {dot(cx + r * 0.6, cy + r * 0.3, 3.5, 0.18)}
+        {dot(cx - r * 0.2, cy - r * 0.6, 2.5, 0.12)}
+      </>);
+
+    case "funnel":
+      return (<>
+        {/* Sales funnel — wide top, narrow bottom */}
+        <path d={`M ${cx - r * 0.8} ${cy - r * 0.7} L ${cx + r * 0.8} ${cy - r * 0.7} L ${cx + r * 0.15} ${cy + r * 0.7} L ${cx - r * 0.15} ${cy + r * 0.7} Z`}
+          fill="none" stroke={N} strokeWidth="2.5" opacity="0.16" strokeLinejoin="round" />
+        {/* Horizontal stage lines */}
+        {ln(cx - r * 0.55, cy - r * 0.3, cx + r * 0.55, cy - r * 0.3, 0.10, 1.5)}
+        {ln(cx - r * 0.38, cy + r * 0.05, cx + r * 0.38, cy + r * 0.05, 0.10, 1.5)}
+        {ln(cx - r * 0.22, cy + r * 0.35, cx + r * 0.22, cy + r * 0.35, 0.10, 1.5)}
+        {/* Dots falling through */}
+        {dot(cx - r * 0.3, cy - r * 0.5, 4, 0.15)}
+        {dot(cx + r * 0.2, cy - r * 0.5, 3, 0.12)}
+        {dot(cx, cy - r * 0.15, 3.5, 0.14)}
+        {dot(cx + r * 0.05, cy + r * 0.2, 3, 0.16)}
+        {dot(cx, cy + r * 0.55, 4, 0.2)}
+        {/* Arrow at bottom */}
+        <path d={`M ${cx} ${cy + r * 0.7} L ${cx} ${cy + r * 0.9}`} fill="none" stroke={N} strokeWidth="2" opacity="0.14" />
+        <path d={`M ${cx - r * 0.05} ${cy + r * 0.85} L ${cx} ${cy + r * 0.9} L ${cx + r * 0.05} ${cy + r * 0.85}`} fill="none" stroke={N} strokeWidth="2" opacity="0.14" />
+      </>);
+
+    case "server":
+      return (<>
+        {/* Server rack — 3 stacked server units */}
+        {[- 0.4, -0.05, 0.3].map((yo, i) => (
+          <g key={`srv${i}`}>
+            <rect x={cx - r * 0.55} y={cy + yo * r} width={r * 1.1} height={r * 0.28} rx={4}
+              fill="none" stroke={N} strokeWidth="2" opacity="0.16" />
+            {/* Drive bays */}
+            {dot(cx - r * 0.4, cy + yo * r + r * 0.14, 3, 0.12)}
+            {dot(cx - r * 0.3, cy + yo * r + r * 0.14, 3, 0.10)}
+            {/* Status LEDs */}
+            {dot(cx + r * 0.35, cy + yo * r + r * 0.14, 2.5, 0.18)}
+            {dot(cx + r * 0.42, cy + yo * r + r * 0.14, 2.5, 0.12)}
+            {/* Ventilation lines */}
+            {ln(cx + r * 0.05, cy + yo * r + r * 0.06, cx + r * 0.25, cy + yo * r + r * 0.06, 0.06, 0.8)}
+            {ln(cx + r * 0.05, cy + yo * r + r * 0.11, cx + r * 0.25, cy + yo * r + r * 0.11, 0.06, 0.8)}
+            {ln(cx + r * 0.05, cy + yo * r + r * 0.16, cx + r * 0.25, cy + yo * r + r * 0.16, 0.06, 0.8)}
+          </g>
+        ))}
+        {/* Connection lines between servers */}
+        {ln(cx + r * 0.5, cy - r * 0.12, cx + r * 0.5, cy + r * 0.3, 0.08, 1, "3 3")}
+        {ln(cx - r * 0.45, cy - r * 0.12, cx - r * 0.45, cy + r * 0.3, 0.08, 1, "3 3")}
+      </>);
+
+    case "chatbot":
+      return (<>
+        {/* Chat bubble — large */}
+        <path d={`M ${cx - r * 0.6} ${cy - r * 0.5} Q ${cx - r * 0.6} ${cy - r * 0.8} ${cx} ${cy - r * 0.8} Q ${cx + r * 0.6} ${cy - r * 0.8} ${cx + r * 0.6} ${cy - r * 0.5} L ${cx + r * 0.6} ${cy + r * 0.1} Q ${cx + r * 0.6} ${cy + r * 0.35} ${cx} ${cy + r * 0.35} L ${cx - r * 0.15} ${cy + r * 0.35} L ${cx - r * 0.35} ${cy + r * 0.6} L ${cx - r * 0.25} ${cy + r * 0.35} Q ${cx - r * 0.6} ${cy + r * 0.35} ${cx - r * 0.6} ${cy + r * 0.1} Z`}
+          fill="none" stroke={N} strokeWidth="2.5" opacity="0.16" />
+        {/* Text lines inside */}
+        {ln(cx - r * 0.35, cy - r * 0.45, cx + r * 0.35, cy - r * 0.45, 0.10, 1.5)}
+        {ln(cx - r * 0.35, cy - r * 0.25, cx + r * 0.2, cy - r * 0.25, 0.08, 1.2)}
+        {ln(cx - r * 0.35, cy - r * 0.05, cx + r * 0.3, cy - r * 0.05, 0.10, 1.5)}
+        {/* Bot icon */}
+        {ring(cx, cy + r * 0.1, r * 0.08, 0.14, 1.5)}
+        {dot(cx - r * 0.03, cy + r * 0.08, 2, 0.18)}
+        {dot(cx + r * 0.03, cy + r * 0.08, 2, 0.18)}
+      </>);
+
+    case "lock":
+      return (<>
+        {/* Large padlock */}
+        <rect x={cx - r * 0.4} y={cy - r * 0.1} width={r * 0.8} height={r * 0.65} rx={8}
+          fill="none" stroke={N} strokeWidth="3" opacity="0.18" />
+        {/* Shackle */}
+        {arc(cx, cy - r * 0.1, r * 0.25, 180, 360, 0.16, 3)}
+        {ln(cx - r * 0.25, cy - r * 0.1, cx - r * 0.25, cy + r * 0.05, 0.16, 3)}
+        {ln(cx + r * 0.25, cy - r * 0.1, cx + r * 0.25, cy + r * 0.05, 0.16, 3)}
+        {/* Keyhole */}
+        {ring(cx, cy + r * 0.15, r * 0.08, 0.2, 2)}
+        {ln(cx, cy + r * 0.15, cx, cy + r * 0.35, 0.16, 2)}
+        {/* Encryption particles around */}
+        {[30, 75, 120, 165, 210, 255, 300, 345].map((deg, i) => {
+          const a = (deg * Math.PI) / 180;
+          return <g key={`ep${i}`}>
+            {dot(cx + Math.cos(a) * r * 0.7, cy + r * 0.15 + Math.sin(a) * r * 0.5, 2, 0.08)}
+          </g>;
+        })}
+      </>);
+
+    case "speedometer":
+      return (<>
+        {/* Gauge arc */}
+        {arc(cx, cy + r * 0.1, r * 0.8, 210, 330, 0.16, 3)}
+        {/* Inner arc */}
+        {arc(cx, cy + r * 0.1, r * 0.65, 215, 325, 0.10, 1.5)}
+        {/* Tick marks */}
+        {Array.from({ length: 9 }, (_, i) => {
+          const a = ((210 + i * 15) * Math.PI) / 180;
+          return <line key={`t${i}`}
+            x1={cx + Math.cos(a) * r * 0.7} y1={cy + r * 0.1 + Math.sin(a) * r * 0.7}
+            x2={cx + Math.cos(a) * r * 0.8} y2={cy + r * 0.1 + Math.sin(a) * r * 0.8}
+            stroke={N} strokeWidth={i % 2 === 0 ? 2 : 1} opacity={i % 2 === 0 ? 0.16 : 0.10} />;
+        })}
+        {/* Needle — pointing to ~75% */}
+        <line x1={cx} y1={cy + r * 0.1}
+          x2={cx + Math.cos((300 * Math.PI) / 180) * r * 0.55} y2={cy + r * 0.1 + Math.sin((300 * Math.PI) / 180) * r * 0.55}
+          stroke={N} strokeWidth="2.5" opacity="0.2" strokeLinecap="round" />
+        {/* Center hub */}
+        {ring(cx, cy + r * 0.1, r * 0.06, 0.18, 2)}
+        {dot(cx, cy + r * 0.1, r * 0.03, 0.2)}
+      </>);
+
+    case "hierarchy":
+      return (<>
+        {/* Org chart — top node, 2 middle, 4 bottom */}
+        {/* Top */}
+        <rect x={cx - r * 0.15} y={cy - r * 0.7} width={r * 0.3} height={r * 0.18} rx={4} fill="none" stroke={N} strokeWidth="2.5" opacity="0.18" />
+        {/* Middle */}
+        <rect x={cx - r * 0.55} y={cy - r * 0.2} width={r * 0.28} height={r * 0.15} rx={3} fill="none" stroke={N} strokeWidth="2" opacity="0.15" />
+        <rect x={cx + r * 0.27} y={cy - r * 0.2} width={r * 0.28} height={r * 0.15} rx={3} fill="none" stroke={N} strokeWidth="2" opacity="0.15" />
+        {/* Bottom */}
+        {[-0.7, -0.3, 0.1, 0.5].map((xo, i) => (
+          <rect key={`b${i}`} x={cx + xo * r} y={cy + r * 0.3} width={r * 0.22} height={r * 0.12} rx={3} fill="none" stroke={N} strokeWidth="1.5" opacity="0.12" />
+        ))}
+        {/* Connecting lines */}
+        {ln(cx, cy - r * 0.52, cx, cy - r * 0.35, 0.12, 1.5)}
+        {ln(cx, cy - r * 0.35, cx - r * 0.41, cy - r * 0.35, 0.10, 1.5)}
+        {ln(cx, cy - r * 0.35, cx + r * 0.41, cy - r * 0.35, 0.10, 1.5)}
+        {ln(cx - r * 0.41, cy - r * 0.35, cx - r * 0.41, cy - r * 0.2, 0.10, 1.5)}
+        {ln(cx + r * 0.41, cy - r * 0.35, cx + r * 0.41, cy - r * 0.2, 0.10, 1.5)}
+        {ln(cx - r * 0.41, cy - r * 0.05, cx - r * 0.41, cy + r * 0.15, 0.08, 1)}
+        {ln(cx + r * 0.41, cy - r * 0.05, cx + r * 0.41, cy + r * 0.15, 0.08, 1)}
+        {ln(cx - r * 0.41, cy + r * 0.15, cx - r * 0.59, cy + r * 0.15, 0.08, 1)}
+        {ln(cx - r * 0.41, cy + r * 0.15, cx - r * 0.19, cy + r * 0.15, 0.08, 1)}
+        {ln(cx + r * 0.41, cy + r * 0.15, cx + r * 0.21, cy + r * 0.15, 0.08, 1)}
+        {ln(cx + r * 0.41, cy + r * 0.15, cx + r * 0.61, cy + r * 0.15, 0.08, 1)}
+        {[-0.59, -0.19, 0.21, 0.61].map((xo, i) => ln(cx + xo * r, cy + r * 0.15, cx + xo * r, cy + r * 0.3, 0.08, 1))}
+      </>);
+
+    case "pipeline":
+      return (<>
+        {/* Horizontal pipeline with valves */}
+        {/* Main pipe */}
+        {ln(cx - r * 0.9, cy - r * 0.05, cx + r * 0.9, cy - r * 0.05, 0.14, 2.5)}
+        {ln(cx - r * 0.9, cy + r * 0.05, cx + r * 0.9, cy + r * 0.05, 0.14, 2.5)}
+        {/* Valve 1 */}
+        {ring(cx - r * 0.4, cy, r * 0.1, 0.16, 2)}
+        <path d={`M ${cx - r * 0.4} ${cy - r * 0.1} L ${cx - r * 0.4} ${cy - r * 0.25}`} fill="none" stroke={N} strokeWidth="2" opacity="0.14" />
+        {ln(cx - r * 0.47, cy - r * 0.25, cx - r * 0.33, cy - r * 0.25, 0.14, 2)}
+        {/* Valve 2 */}
+        {ring(cx + r * 0.3, cy, r * 0.1, 0.16, 2)}
+        <path d={`M ${cx + r * 0.3} ${cy - r * 0.1} L ${cx + r * 0.3} ${cy - r * 0.25}`} fill="none" stroke={N} strokeWidth="2" opacity="0.14" />
+        {ln(cx + r * 0.23, cy - r * 0.25, cx + r * 0.37, cy - r * 0.25, 0.14, 2)}
+        {/* Branch pipe going down */}
+        {ln(cx, cy + r * 0.05, cx, cy + r * 0.5, 0.12, 2)}
+        {ln(cx - r * 0.05, cy + r * 0.05, cx - r * 0.05, cy + r * 0.5, 0.12, 2)}
+        {/* Flow direction arrows */}
+        {[-0.65, -0.1, 0.55].map((xo, i) => (
+          <path key={`fa${i}`} d={`M ${cx + xo * r - r * 0.04} ${cy - r * 0.02} L ${cx + xo * r + r * 0.04} ${cy} L ${cx + xo * r - r * 0.04} ${cy + r * 0.02}`}
+            fill="none" stroke={N} strokeWidth="1.5" opacity="0.12" />
+        ))}
+      </>);
+
+    case "antenna":
+      return (<>
+        {/* Radio tower / zendmast */}
+        {/* Tower structure */}
+        {ln(cx, cy - r * 0.8, cx - r * 0.25, cy + r * 0.7, 0.14, 2)}
+        {ln(cx, cy - r * 0.8, cx + r * 0.25, cy + r * 0.7, 0.14, 2)}
+        {/* Cross braces */}
+        {[-0.3, 0, 0.3].map((yo, i) => (
+          <g key={`br${i}`}>
+            {ln(cx - r * (0.08 + (yo + 0.3) * 0.28), cy + yo * r, cx + r * (0.08 + (yo + 0.3) * 0.28), cy + yo * r, 0.10, 1.5)}
+          </g>
+        ))}
+        {/* Signal waves */}
+        {arc(cx, cy - r * 0.8, r * 0.2, 220, 320, 0.14, 2)}
+        {arc(cx, cy - r * 0.8, r * 0.35, 225, 315, 0.10, 1.5)}
+        {arc(cx, cy - r * 0.8, r * 0.5, 230, 310, 0.07, 1.2)}
+        {/* Top dot */}
+        {dot(cx, cy - r * 0.8, 4, 0.2)}
+      </>);
+
+    case "microscope":
+      return (<>
+        {/* Microscope — abstract scientific analysis */}
+        {/* Eyepiece */}
+        <rect x={cx - r * 0.06} y={cy - r * 0.75} width={r * 0.12} height={r * 0.2} rx={3} fill="none" stroke={N} strokeWidth="2" opacity="0.16" />
+        {/* Body tube */}
+        {ln(cx, cy - r * 0.55, cx, cy - r * 0.15, 0.14, 2.5)}
+        {/* Objective lens */}
+        <rect x={cx - r * 0.08} y={cy - r * 0.18} width={r * 0.16} height={r * 0.12} rx={3} fill="none" stroke={N} strokeWidth="2" opacity="0.16" />
+        {/* Stage */}
+        {ln(cx - r * 0.35, cy + r * 0.05, cx + r * 0.35, cy + r * 0.05, 0.16, 2.5)}
+        {/* Base arm */}
+        <path d={`M ${cx} ${cy - r * 0.35} Q ${cx + r * 0.3} ${cy - r * 0.35} ${cx + r * 0.3} ${cy + r * 0.05}`}
+          fill="none" stroke={N} strokeWidth="2" opacity="0.12" />
+        {/* Base */}
+        {ln(cx - r * 0.3, cy + r * 0.55, cx + r * 0.3, cy + r * 0.55, 0.16, 2.5)}
+        {ln(cx, cy + r * 0.05, cx, cy + r * 0.55, 0.12, 2)}
+        {/* Data particles */}
+        {[[-0.25, -0.3], [0.3, -0.5], [-0.35, 0.3], [0.35, 0.35]].map(([ox, oy], i) => (
+          <g key={`p${i}`}>{ring(cx + ox * r, cy + oy * r, 5, 0.06, 0.8)}{dot(cx + ox * r, cy + oy * r, 2, 0.08)}</g>
+        ))}
+      </>);
+
+    case "diamond":
+      return (<>
+        {/* Premium diamond — faceted gem */}
+        <path d={`M ${cx} ${cy - r * 0.7} L ${cx + r * 0.6} ${cy - r * 0.25} L ${cx + r * 0.35} ${cy + r * 0.7} L ${cx - r * 0.35} ${cy + r * 0.7} L ${cx - r * 0.6} ${cy - r * 0.25} Z`}
+          fill="none" stroke={N} strokeWidth="2.5" opacity="0.18" strokeLinejoin="round" />
+        {/* Horizontal facet line */}
+        {ln(cx - r * 0.6, cy - r * 0.25, cx + r * 0.6, cy - r * 0.25, 0.14, 1.5)}
+        {/* Facet lines from top */}
+        {ln(cx - r * 0.25, cy - r * 0.25, cx, cy - r * 0.7, 0.10, 1.2)}
+        {ln(cx + r * 0.25, cy - r * 0.25, cx, cy - r * 0.7, 0.10, 1.2)}
+        {/* Facet lines to bottom */}
+        {ln(cx - r * 0.25, cy - r * 0.25, cx, cy + r * 0.7, 0.08, 1)}
+        {ln(cx + r * 0.25, cy - r * 0.25, cx, cy + r * 0.7, 0.08, 1)}
+        {ln(cx - r * 0.6, cy - r * 0.25, cx, cy + r * 0.7, 0.06, 0.8)}
+        {ln(cx + r * 0.6, cy - r * 0.25, cx, cy + r * 0.7, 0.06, 0.8)}
+        {/* Sparkle */}
+        {dot(cx, cy - r * 0.7, 3, 0.2)}
+      </>);
+
+    case "hourglass":
+      return (<>
+        {/* Top and bottom frames */}
+        {ln(cx - r * 0.4, cy - r * 0.75, cx + r * 0.4, cy - r * 0.75, 0.18, 2.5)}
+        {ln(cx - r * 0.4, cy + r * 0.75, cx + r * 0.4, cy + r * 0.75, 0.18, 2.5)}
+        {/* Glass sides — X shape */}
+        {ln(cx - r * 0.35, cy - r * 0.75, cx - r * 0.05, cy, 0.14, 2)}
+        {ln(cx + r * 0.35, cy - r * 0.75, cx + r * 0.05, cy, 0.14, 2)}
+        {ln(cx - r * 0.05, cy, cx - r * 0.35, cy + r * 0.75, 0.14, 2)}
+        {ln(cx + r * 0.05, cy, cx + r * 0.35, cy + r * 0.75, 0.14, 2)}
+        {/* Sand dots in top */}
+        {[[-0.1, -0.35], [0.1, -0.35], [0, -0.45], [-0.15, -0.5], [0.15, -0.5]].map(([ox, oy], i) => (
+          dot(cx + ox * r, cy + oy * r, 2.5, 0.10)
+        ))}
+        {/* Sand stream through center */}
+        {dot(cx, cy - r * 0.1, 2, 0.15)}
+        {dot(cx, cy, 1.5, 0.18)}
+        {dot(cx, cy + r * 0.1, 2, 0.15)}
+        {/* Sand pile at bottom */}
+        {arc(cx, cy + r * 0.5, r * 0.2, 200, 340, 0.12, 1.5)}
+      </>);
+
+    case "compass":
+      return (<>
+        {/* Outer ring */}
+        {ring(cx, cy, r * 0.85, 0.16, 2.5)}
+        {ring(cx, cy, r * 0.75, 0.08, 1)}
+        {/* Cardinal direction marks */}
+        {[0, 90, 180, 270].map((deg, i) => {
+          const a = (deg * Math.PI) / 180 - Math.PI / 2;
+          return <line key={`cd${i}`}
+            x1={cx + Math.cos(a) * r * 0.65} y1={cy + Math.sin(a) * r * 0.65}
+            x2={cx + Math.cos(a) * r * 0.85} y2={cy + Math.sin(a) * r * 0.85}
+            stroke={N} strokeWidth="2.5" opacity="0.18" />;
+        })}
+        {/* Minor marks */}
+        {[45, 135, 225, 315].map((deg, i) => {
+          const a = (deg * Math.PI) / 180 - Math.PI / 2;
+          return <line key={`md${i}`}
+            x1={cx + Math.cos(a) * r * 0.7} y1={cy + Math.sin(a) * r * 0.7}
+            x2={cx + Math.cos(a) * r * 0.85} y2={cy + Math.sin(a) * r * 0.85}
+            stroke={N} strokeWidth="1.5" opacity="0.10" />;
+        })}
+        {/* Compass needle — north */}
+        <path d={`M ${cx} ${cy} L ${cx - r * 0.06} ${cy + r * 0.25} L ${cx} ${cy - r * 0.55} L ${cx + r * 0.06} ${cy + r * 0.25} Z`}
+          fill="none" stroke={N} strokeWidth="2" opacity="0.18" />
+        {/* Center */}
+        {ring(cx, cy, r * 0.05, 0.2, 2)}
+      </>);
+
+    case "fingerprint":
+      return (<>
+        {/* Fingerprint — concentric partial arcs */}
+        {[0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85].map((s, i) => (
+          <g key={`fp${i}`}>
+            {arc(cx, cy + r * 0.05, r * s, 200 + i * 5, 340 - i * 5, 0.08 + i * 0.012, 1.5)}
+          </g>
+        ))}
+        {/* Whorl center */}
+        {arc(cx + r * 0.02, cy - r * 0.05, r * 0.08, 0, 270, 0.16, 1.5)}
+        {dot(cx + r * 0.02, cy - r * 0.05, 2, 0.18)}
+        {/* Scan line */}
+        {ln(cx - r * 0.9, cy + r * 0.3, cx + r * 0.9, cy + r * 0.3, 0.12, 1, "6 4")}
+      </>);
+
+    case "telescope":
+      return (<>
+        {/* Telescope tube */}
+        <path d={`M ${cx - r * 0.5} ${cy + r * 0.3} L ${cx + r * 0.4} ${cy - r * 0.4}`}
+          fill="none" stroke={N} strokeWidth="3" opacity="0.16" strokeLinecap="round" />
+        {/* Lens */}
+        {ring(cx + r * 0.45, cy - r * 0.45, r * 0.12, 0.16, 2)}
+        {/* Eyepiece */}
+        <rect x={cx - r * 0.56} y={cy + r * 0.22} width={r * 0.14} height={r * 0.16} rx={2}
+          fill="none" stroke={N} strokeWidth="2" opacity="0.14" />
+        {/* Tripod legs */}
+        {ln(cx - r * 0.15, cy + r * 0.1, cx - r * 0.4, cy + r * 0.7, 0.12, 1.5)}
+        {ln(cx - r * 0.15, cy + r * 0.1, cx + r * 0.15, cy + r * 0.7, 0.12, 1.5)}
+        {ln(cx - r * 0.15, cy + r * 0.1, cx - r * 0.05, cy + r * 0.7, 0.10, 1.2)}
+        {/* Stars */}
+        {[[0.5, -0.7], [0.7, -0.55], [0.3, -0.75], [-0.4, -0.65], [-0.6, -0.5]].map(([ox, oy], i) => (
+          <g key={`st${i}`}>
+            {ln(cx + ox * r - 4, cy + oy * r, cx + ox * r + 4, cy + oy * r, 0.08, 0.8)}
+            {ln(cx + ox * r, cy + oy * r - 4, cx + ox * r, cy + oy * r + 4, 0.08, 0.8)}
+          </g>
+        ))}
+      </>);
+
     default:
       return <>{ring(cx, cy, r * 0.5, 0.07)}</>;
   }
