@@ -709,3 +709,35 @@ export const meetings = sqliteTable("meetings", {
   aangemaaktDoor: integer("aangemaakt_door").references(() => gebruikers.id),
   aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
 });
+
+// ============ LEARNING RADAR ============
+
+export const radarBronnen = sqliteTable("radar_bronnen", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  naam: text("naam").notNull(),
+  url: text("url").notNull(),
+  type: text("type", { enum: ["rss", "reddit", "twitter", "producthunt", "github"] }).default("rss"),
+  actief: integer("actief").default(1),
+  aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
+}, (table) => ({
+  uniekUrl: uniqueIndex("uniek_radar_bron_url").on(table.url),
+}));
+
+export const radarItems = sqliteTable("radar_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  bronId: integer("bron_id").references(() => radarBronnen.id),
+  titel: text("titel").notNull(),
+  url: text("url").notNull(),
+  beschrijving: text("beschrijving"),
+  auteur: text("auteur"),
+  gepubliceerdOp: text("gepubliceerd_op"),
+  score: integer("score"),
+  scoreRedenering: text("score_redenering"),
+  aiSamenvatting: text("ai_samenvatting"),
+  categorie: text("categorie", { enum: ["tools", "api_updates", "trends", "kansen", "must_reads"] }),
+  bewaard: integer("bewaard").default(0),
+  aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
+}, (table) => ({
+  uniekItemUrl: uniqueIndex("uniek_radar_item_url").on(table.url),
+  idxScore: index("idx_radar_score").on(table.score),
+}));
