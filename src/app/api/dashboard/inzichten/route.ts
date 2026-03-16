@@ -191,7 +191,7 @@ export async function GET() {
         prioriteit: 5,
         titel: `${stilleProjecten.length} actie${stilleProjecten.length > 1 ? "ve" : "f"} project${stilleProjecten.length > 1 ? "en" : ""} zonder uren deze week`,
         omschrijving: `Geen tijd geregistreerd voor: ${stilleProjecten.map((p) => `${p.naam} (${p.klantNaam})`).join(", ")}.`,
-        actie: { label: "Ga naar tijdregistratie", link: "/tijdregistratie" },
+        actie: { label: "Ga naar tijdregistratie", link: "/tijd" },
       });
     }
 

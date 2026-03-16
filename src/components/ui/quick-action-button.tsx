@@ -13,7 +13,7 @@ interface QuickAction {
 }
 
 const actions: QuickAction[] = [
-  { label: "Timer starten", icon: Timer, href: "/tijdregistratie" },
+  { label: "Timer starten", icon: Timer, href: "/tijd" },
   { label: "Taak aanmaken", icon: CheckSquare, href: "/taken?nieuw=true" },
   { label: "Lead toevoegen", icon: Target, href: "/crm?nieuw=true" },
   { label: "Factuur aanmaken", icon: FileText, href: "/financien/nieuw" },

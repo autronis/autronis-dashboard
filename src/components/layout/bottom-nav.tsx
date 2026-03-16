@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 
 const mainTabs = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
-  { label: "Timer", icon: Clock, href: "/tijdregistratie" },
+  { label: "Timer", icon: Clock, href: "/tijd" },
   { label: "Taken", icon: CheckSquare, href: "/taken" },
   { label: "CRM", icon: Target, href: "/crm" },
 ];

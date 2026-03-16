@@ -79,7 +79,7 @@ export function Header({ gebruiker }: HeaderProps) {
           {/* Timer indicator */}
           {timer.isRunning && (
             <Link
-              href="/tijdregistratie"
+              href="/tijd"
               className="flex items-center gap-2 bg-autronis-accent/10 border border-autronis-accent/30 rounded-lg px-3 py-1.5 hover:bg-autronis-accent/20 transition-colors"
             >
               <div className="w-2 h-2 rounded-full bg-autronis-accent animate-pulse" />

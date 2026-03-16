@@ -48,7 +48,7 @@ const DEBOUNCE_MS = 250;
 
 const pages = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
-  { label: "Tijdregistratie", icon: Clock, href: "/tijdregistratie" },
+  { label: "Tijd", icon: Clock, href: "/tijd" },
   { label: "Klanten", icon: Users, href: "/klanten" },
   { label: "Financiën", icon: Euro, href: "/financien" },
   { label: "Analytics", icon: BarChart3, href: "/analytics" },
