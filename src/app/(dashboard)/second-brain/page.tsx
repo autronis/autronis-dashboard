@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   Brain,
   FileText,
@@ -50,14 +50,22 @@ export default function SecondBrainPage() {
   const [selectedItem, setSelectedItem] = useState<SecondBrainItem | null>(null);
   const [nieuwInput, setNieuwInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [needsRefetch, setNeedsRefetch] = useState(false);
 
-  const { data, isLoading } = useSecondBrain(typeFilter, tagFilter, zoek, favoriet);
+  const { data, isLoading } = useSecondBrain(typeFilter, tagFilter, zoek, favoriet, needsRefetch ? 3000 : false);
   const createMutation = useCreateSecondBrainItem();
   const verwerkenMutation = useVerwerkenSecondBrain();
   const updateMutation = useUpdateSecondBrainItem();
 
   const items = data?.items ?? [];
   const kpis = data?.kpis;
+
+  // Stop polling when all visible items have AI tags
+  useEffect(() => {
+    if (needsRefetch && items.length > 0 && items.every((item) => item.aiTags !== null)) {
+      setNeedsRefetch(false);
+    }
+  }, [needsRefetch, items]);
 
   const handleSubmit = useCallback(async () => {
     const input = nieuwInput.trim();
@@ -75,6 +83,7 @@ export default function SecondBrainPage() {
     }
 
     setNieuwInput("");
+    setNeedsRefetch(true);
     addToast("Item opgeslagen", "succes");
   }, [nieuwInput, verwerkenMutation, createMutation, addToast]);
 

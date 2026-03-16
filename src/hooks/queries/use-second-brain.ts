@@ -51,12 +51,14 @@ export function useSecondBrain(
   type: string,
   tag: string,
   zoek: string,
-  favoriet: boolean
+  favoriet: boolean,
+  refetchInterval?: number | false
 ) {
   return useQuery({
     queryKey: ["second-brain", type, tag, zoek, favoriet],
     queryFn: () => fetchItems(type, tag, zoek, favoriet),
     staleTime: 30_000,
+    refetchInterval: refetchInterval || false,
   });
 }
 
