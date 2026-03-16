@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, createRef } from "react";
+import { toPng } from "html-to-image";
 import {
   Image as ImageIcon,
   Download,
@@ -229,6 +230,7 @@ export default function BannersPage() {
   const renderBanner = useRenderBanner();
   const analyzeTopic = useAnalyzeTopic();
 
+  const previewRef = useRef<HTMLDivElement>(null);
   const [onderwerp, setOnderwerp] = useState("");
   const [formaat, setFormaat] = useState<BannerFormaat>("instagram");
   const [icon, setIcon] = useState<BannerIcon>("cog");
@@ -319,21 +321,25 @@ export default function BannersPage() {
       addToast("Voer een onderwerp in", "info");
       return;
     }
+    const el = previewRef.current;
+    if (!el) {
+      addToast("Preview niet gevonden", "fout");
+      return;
+    }
     setIsSaving(true);
     try {
-      const result = await saveBanner.mutateAsync({
-        onderwerp: capsuleText || onderwerp.trim(),
-        icon,
-        illustration,
-        formaat,
-        illustrationScale,
-        illustrationOffsetX,
-        illustrationOffsetY,
+      const { width, height } = BANNER_FORMAAT_SIZES[formaat];
+      // Capture the preview div as PNG at full resolution
+      const dataUrl = await toPng(el, {
+        cacheBust: true,
+        pixelRatio: 1 / previewScale, // Scale up to full size
+        canvasWidth: width,
+        canvasHeight: height,
+        backgroundColor: "#0B1A1F",
       });
-      const rendered = await renderBanner.mutateAsync(result.banner.id);
       const a = document.createElement("a");
-      a.href = rendered.imagePath;
-      a.download = `banner-${onderwerp.trim()}-${formaat}.png`;
+      a.href = dataUrl;
+      a.download = `banner-${onderwerp.trim().replace(/\s+/g, "-")}-${formaat}.png`;
       a.click();
       addToast("Banner gedownload", "succes");
     } catch (err) {
@@ -597,6 +603,7 @@ export default function BannersPage() {
             <p className="text-xs text-autronis-text-secondary mb-3 font-medium">Live preview</p>
             <div className="flex justify-center overflow-hidden">
               <BannerCanvas
+                ref={previewRef}
                 onderwerp={displayText}
                 icon={icon}
                 illustration={illustration}
