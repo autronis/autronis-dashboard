@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { screenTimeEntries, projecten, klanten } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth";
-import { eq, and, gte, lte, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   try {
@@ -26,8 +26,9 @@ export async function GET(req: NextRequest) {
       conditions.push(eq(screenTimeEntries.gebruikerId, gebruiker.id));
     }
 
-    conditions.push(gte(screenTimeEntries.startTijd, `${startDatum}T00:00:00`));
-    conditions.push(lte(screenTimeEntries.startTijd, `${eindDatum}T23:59:59`));
+    // Timestamps have timezone offsets (+00:00). Use SUBSTR for date-only comparison.
+    conditions.push(sql`SUBSTR(${screenTimeEntries.startTijd}, 1, 10) >= ${startDatum}`);
+    conditions.push(sql`SUBSTR(${screenTimeEntries.startTijd}, 1, 10) <= ${eindDatum}`);
 
     if (categorie) {
       const geldige = ["development", "communicatie", "design", "administratie", "afleiding", "overig"] as const;
