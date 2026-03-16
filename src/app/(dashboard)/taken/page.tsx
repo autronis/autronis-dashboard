@@ -19,29 +19,9 @@ import { SkeletonTaken } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SwipeableTask } from "@/components/ui/swipeable-task";
 import { CheckBurst } from "@/components/ui/confetti";
-
-interface Taak {
-  id: number;
-  titel: string;
-  omschrijving: string | null;
-  status: string;
-  deadline: string | null;
-  prioriteit: string;
-  aangemaaktOp: string | null;
-  projectId: number | null;
-  projectNaam: string | null;
-  klantNaam: string | null;
-  toegewezenAanId: number | null;
-  toegewezenAanNaam: string | null;
-}
-
-interface KPIs {
-  totaal: number;
-  open: number;
-  bezig: number;
-  afgerond: number;
-  verlopen: number;
-}
+import { useTaken } from "@/hooks/queries/use-taken";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Taak } from "@/hooks/queries/use-taken";
 
 const statusConfig: Record<string, { icon: typeof Circle; color: string; bg: string; label: string }> = {
   open: { icon: Circle, color: "text-slate-400", bg: "bg-slate-500/15", label: "Open" },
@@ -57,9 +37,7 @@ const prioriteitConfig: Record<string, { color: string; bg: string; label: strin
 
 export default function TakenPage() {
   const { addToast } = useToast();
-  const [taken, setTaken] = useState<Taak[]>([]);
-  const [kpis, setKpis] = useState<KPIs>({ totaal: 0, open: 0, bezig: 0, afgerond: 0, verlopen: 0 });
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("alle");
   const [zoek, setZoek] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -67,31 +45,13 @@ export default function TakenPage() {
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const completedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const { data, isLoading: loading } = useTaken(statusFilter, zoek);
+  const taken = data?.taken ?? [];
+  const kpis = data?.kpis ?? { totaal: 0, open: 0, bezig: 0, afgerond: 0, verlopen: 0 };
+
   useEffect(() => {
     setIsTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0);
   }, []);
-
-  const fetchData = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (statusFilter !== "alle") params.set("status", statusFilter);
-      if (zoek) params.set("zoek", zoek);
-
-      const res = await fetch(`/api/taken?${params}`);
-      if (!res.ok) throw new Error();
-      const json = await res.json();
-      setTaken(json.taken);
-      setKpis(json.kpis);
-    } catch {
-      addToast("Kon taken niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter, zoek, addToast]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
 
   const showCheckBurst = useCallback((taskId: number) => {
     setCompletedTaskId(taskId);
@@ -101,51 +61,51 @@ export default function TakenPage() {
     }, 500);
   }, []);
 
-  const handleStatusToggle = async (taak: Taak) => {
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const res = await fetch(`/api/taken/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error();
+      return status;
+    },
+    onSuccess: (status, { id }) => {
+      if (status === "afgerond") showCheckBurst(id);
+      queryClient.invalidateQueries({ queryKey: ["taken"] });
+    },
+    onError: () => {
+      addToast("Kon status niet bijwerken", "fout");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (taakId: number) => {
+      const res = await fetch(`/api/taken/${taakId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+    },
+    onSuccess: () => {
+      addToast("Taak verwijderd", "succes");
+      queryClient.invalidateQueries({ queryKey: ["taken"] });
+    },
+    onError: () => {
+      addToast("Kon taak niet verwijderen", "fout");
+    },
+  });
+
+  const handleStatusToggle = (taak: Taak) => {
     const volgendeStatus =
       taak.status === "open" ? "bezig" : taak.status === "bezig" ? "afgerond" : "open";
-    try {
-      const res = await fetch(`/api/taken/${taak.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: volgendeStatus }),
-      });
-      if (!res.ok) throw new Error();
-      if (volgendeStatus === "afgerond") {
-        showCheckBurst(taak.id);
-      }
-      fetchData();
-    } catch {
-      addToast("Kon status niet bijwerken", "fout");
-    }
+    statusMutation.mutate({ id: taak.id, status: volgendeStatus });
   };
 
-  const handleComplete = async (taak: Taak) => {
-    try {
-      const res = await fetch(`/api/taken/${taak.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "afgerond" }),
-      });
-      if (!res.ok) throw new Error();
-      showCheckBurst(taak.id);
-      fetchData();
-    } catch {
-      addToast("Kon taak niet afronden", "fout");
-    }
+  const handleComplete = (taak: Taak) => {
+    statusMutation.mutate({ id: taak.id, status: "afgerond" });
   };
 
-  const handleDelete = async (taakId: number) => {
-    try {
-      const res = await fetch(`/api/taken/${taakId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error();
-      addToast("Taak verwijderd", "succes");
-      fetchData();
-    } catch {
-      addToast("Kon taak niet verwijderen", "fout");
-    }
+  const handleDelete = (taakId: number) => {
+    deleteMutation.mutate(taakId);
   };
 
   const vandaag = new Date().toISOString().slice(0, 10);

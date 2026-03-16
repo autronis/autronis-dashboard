@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import {
   Target,
   Plus,
@@ -14,41 +14,14 @@ import {
 import { motion } from "framer-motion";
 import { cn, formatBedrag } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useDoelen, useGebruikers, type Doel, type KeyResult, type GebruikerOptie } from "@/hooks/queries/use-doelen";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-
-// ---- Types ----
-
-interface KeyResult {
-  id?: number;
-  objectiveId?: number;
-  titel: string;
-  doelwaarde: number;
-  huidigeWaarde: number;
-  eenheid: string | null;
-  autoKoppeling: string | null;
-}
-
-interface Doel {
-  id: number;
-  titel: string;
-  omschrijving: string | null;
-  eigenaarId: number | null;
-  kwartaal: number;
-  jaar: number;
-  status: string | null;
-  keyResults: KeyResult[];
-  voortgang: number;
-}
-
-interface GebruikerOptie {
-  id: number;
-  naam: string;
-}
 
 // ---- Helpers ----
 
@@ -129,14 +102,17 @@ function emptyKr(): KeyResult {
 
 export default function DoelenPage() {
   const { addToast } = useToast();
-  const [doelen, setDoelen] = useState<Doel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [gebruikers, setGebruikers] = useState<GebruikerOptie[]>([]);
+  const queryClient = useQueryClient();
 
   // Kwartaal + jaar state
   const currentQuarter = Math.ceil((new Date().getMonth() + 1) / 3);
   const [kwartaal, setKwartaal] = useState(currentQuarter);
   const [jaar, setJaar] = useState(new Date().getFullYear());
+
+  // Data hooks
+  const { data: doelenData, isLoading: loading } = useDoelen(kwartaal, jaar);
+  const doelen = doelenData?.doelen ?? [];
+  const { data: gebruikers = [] } = useGebruikers();
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -159,46 +135,7 @@ export default function DoelenPage() {
   const [jaaroverzichtData, setJaaroverzichtData] = useState<Record<number, Doel[]>>({});
   const [jaaroverzichtLoading, setJaaroverzichtLoading] = useState(false);
 
-  const fetchDoelen = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/doelen?kwartaal=${kwartaal}&jaar=${jaar}`);
-      if (!res.ok) throw new Error("Laden mislukt");
-      const json = await res.json() as { doelen: Doel[] };
-      setDoelen(json.doelen);
-    } catch {
-      addToast("Kon doelen niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [kwartaal, jaar, addToast]);
-
-  const fetchGebruikers = useCallback(async () => {
-    try {
-      const res = await fetch("/api/profiel");
-      if (res.ok) {
-        const json = await res.json() as { gebruiker: GebruikerOptie };
-        // Fetch all users if we can
-        const allRes = await fetch("/api/analytics/vergelijk");
-        if (allRes.ok) {
-          const allJson = await allRes.json() as { gebruikers: GebruikerOptie[] };
-          setGebruikers(allJson.gebruikers || [json.gebruiker]);
-        } else {
-          setGebruikers([json.gebruiker]);
-        }
-      }
-    } catch {
-      // Non-critical, ignore
-    }
-  }, []);
-
-  useEffect(() => {
-    setLoading(true);
-    fetchDoelen();
-  }, [fetchDoelen]);
-
-  useEffect(() => {
-    fetchGebruikers();
-  }, [fetchGebruikers]);
+  const invalidateDoelen = () => queryClient.invalidateQueries({ queryKey: ["doelen"] });
 
   // Open modal for new/edit
   function openNieuw() {
@@ -224,7 +161,32 @@ export default function DoelenPage() {
   }
 
   // Save
-  async function handleOpslaan() {
+  const opslaanMutation = useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      const url = editDoel ? `/api/doelen/${editDoel.id}` : "/api/doelen";
+      const method = editDoel ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const d = await res.json() as { fout: string };
+        throw new Error(d.fout || "Opslaan mislukt");
+      }
+      return !!editDoel;
+    },
+    onSuccess: (wasEdit) => {
+      addToast(wasEdit ? "Doel bijgewerkt" : "Doel aangemaakt", "succes");
+      setModalOpen(false);
+      invalidateDoelen();
+    },
+    onError: (error) => {
+      addToast(error instanceof Error ? error.message : "Opslaan mislukt", "fout");
+    },
+  });
+
+  function handleOpslaan() {
     if (!formTitel.trim()) {
       addToast("Titel is verplicht", "fout");
       return;
@@ -235,77 +197,68 @@ export default function DoelenPage() {
       return;
     }
     setOpslaan(true);
-    try {
-      const payload = {
-        titel: formTitel.trim(),
-        omschrijving: formOmschrijving.trim() || undefined,
-        eigenaarId: formEigenaarId || undefined,
-        kwartaal,
-        jaar,
-        keyResults: validKrs.map((kr) => ({
-          id: kr.id,
-          titel: kr.titel,
-          doelwaarde: kr.doelwaarde,
-          huidigeWaarde: kr.huidigeWaarde || 0,
-          eenheid: kr.eenheid,
-          autoKoppeling: kr.autoKoppeling || "geen",
-        })),
-      };
-
-      const url = editDoel ? `/api/doelen/${editDoel.id}` : "/api/doelen";
-      const method = editDoel ? "PUT" : "POST";
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const d = await res.json() as { fout: string };
-        throw new Error(d.fout || "Opslaan mislukt");
-      }
-
-      addToast(editDoel ? "Doel bijgewerkt" : "Doel aangemaakt", "succes");
-      setModalOpen(false);
-      fetchDoelen();
-    } catch (error) {
-      addToast(error instanceof Error ? error.message : "Opslaan mislukt", "fout");
-    } finally {
-      setOpslaan(false);
-    }
+    opslaanMutation.mutate({
+      titel: formTitel.trim(),
+      omschrijving: formOmschrijving.trim() || undefined,
+      eigenaarId: formEigenaarId || undefined,
+      kwartaal,
+      jaar,
+      keyResults: validKrs.map((kr) => ({
+        id: kr.id,
+        titel: kr.titel,
+        doelwaarde: kr.doelwaarde,
+        huidigeWaarde: kr.huidigeWaarde || 0,
+        eenheid: kr.eenheid,
+        autoKoppeling: kr.autoKoppeling || "geen",
+      })),
+    }, { onSettled: () => setOpslaan(false) });
   }
 
   // Delete
-  async function handleVerwijderen() {
-    if (!verwijderDoel) return;
-    try {
-      const res = await fetch(`/api/doelen/${verwijderDoel.id}`, { method: "DELETE" });
+  const verwijderMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/doelen/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Verwijderen mislukt");
+    },
+    onSuccess: () => {
       addToast("Doel verwijderd", "succes");
       setVerwijderDoel(null);
-      fetchDoelen();
-    } catch {
+      invalidateDoelen();
+    },
+    onError: () => {
       addToast("Kon doel niet verwijderen", "fout");
-    }
+    },
+  });
+
+  function handleVerwijderen() {
+    if (!verwijderDoel) return;
+    verwijderMutation.mutate(verwijderDoel.id);
   }
 
   // Inline KR update
-  async function handleKrUpdate(doelId: number, krId: number) {
-    const waarde = Number(editKrWaarde);
-    if (isNaN(waarde)) return;
-    try {
+  const krUpdateMutation = useMutation({
+    mutationFn: async ({ doelId, krId, waarde }: { doelId: number; krId: number; waarde: number }) => {
       const res = await fetch(`/api/doelen/${doelId}/key-results/${krId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ huidigeWaarde: waarde }),
       });
       if (!res.ok) throw new Error("Update mislukt");
+    },
+    onSuccess: () => {
       addToast("Voortgang bijgewerkt", "succes");
       setEditKrId(null);
-      fetchDoelen();
-    } catch {
+      invalidateDoelen();
+    },
+    onError: () => {
       addToast("Kon waarde niet bijwerken", "fout");
-    }
+    },
+  });
+
+  function handleKrUpdate(doelId: number, krId: number) {
+    const waarde = Number(editKrWaarde);
+    if (isNaN(waarde)) return;
+    krUpdateMutation.mutate({ doelId, krId, waarde });
   }
 
   // Jaaroverzicht

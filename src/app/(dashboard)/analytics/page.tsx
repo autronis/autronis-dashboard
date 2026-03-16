@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import {
   Euro,
   Clock,
@@ -13,59 +13,12 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn, formatBedrag } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+import { useAnalytics, useHeatmap, useVergelijk, type VergelijkGebruiker } from "@/hooks/queries/use-analytics";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Skeleton, SkeletonKPI } from "@/components/ui/skeleton";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { ActivityHeatmap } from "@/components/ui/activity-heatmap";
 import { ProgressRing } from "@/components/ui/progress-ring";
-
-interface MaandData {
-  maand: string;
-  label: string;
-  omzet: number;
-  uren: number;
-}
-
-interface ProjectData {
-  projectNaam: string;
-  klantNaam: string;
-  uren: number;
-  omzet: number;
-}
-
-interface GebruikerData {
-  naam: string;
-  uren: number;
-  omzet: number;
-}
-
-interface AnalyticsData {
-  kpis: {
-    omzetDitJaar: number;
-    omzetVorigJaar: number;
-    urenDitJaar: number;
-    gemiddeldUurtarief: number;
-    actieveKlanten: number;
-  };
-  maanden: MaandData[];
-  topProjecten: ProjectData[];
-  perGebruiker: GebruikerData[];
-}
-
-interface HeatmapItem {
-  datum: string;
-  uren: number;
-}
-
-interface VergelijkGebruiker {
-  id: number;
-  naam: string;
-  urenDezeMaand: number;
-  omzetDezeMaand: number;
-  takenAfgerond: number;
-  actieveProjecten: number;
-}
 
 // --- Skeleton for analytics loading state ---
 function AnalyticsSkeleton() {
@@ -257,47 +210,13 @@ function TeamVergelijking({ gebruikers }: { gebruikers: VergelijkGebruiker[] }) 
 
 // --- Main page ---
 export default function AnalyticsPage() {
-  const { addToast } = useToast();
-  const [data, setData] = useState<AnalyticsData | null>(null);
-  const [heatmapData, setHeatmapData] = useState<HeatmapItem[]>([]);
-  const [vergelijkData, setVergelijkData] = useState<VergelijkGebruiker[]>([]);
-  const [loading, setLoading] = useState(true);
   const [jaar, setJaar] = useState(new Date().getFullYear());
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [analyticsRes, heatmapRes, vergelijkRes] = await Promise.all([
-        fetch(`/api/analytics?jaar=${jaar}`),
-        fetch("/api/analytics/heatmap"),
-        fetch("/api/analytics/vergelijk"),
-      ]);
+  const { data, isLoading } = useAnalytics(jaar);
+  const { data: heatmapData } = useHeatmap();
+  const { data: vergelijkData } = useVergelijk();
 
-      if (!analyticsRes.ok) throw new Error("Analytics laden mislukt");
-      const analyticsJson = await analyticsRes.json() as AnalyticsData;
-      setData(analyticsJson);
-
-      if (heatmapRes.ok) {
-        const heatmapJson = await heatmapRes.json() as { data: HeatmapItem[] };
-        setHeatmapData(heatmapJson.data || []);
-      }
-
-      if (vergelijkRes.ok) {
-        const vergelijkJson = await vergelijkRes.json() as { gebruikers: VergelijkGebruiker[] };
-        setVergelijkData(vergelijkJson.gebruikers || []);
-      }
-    } catch {
-      addToast("Kon analytics niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [jaar, addToast]);
-
-  useEffect(() => {
-    setLoading(true);
-    fetchData();
-  }, [fetchData]);
-
-  if (loading || !data) {
+  if (isLoading || !data) {
     return <AnalyticsSkeleton />;
   }
 
@@ -569,14 +488,14 @@ export default function AnalyticsPage() {
             <span className="text-xs text-autronis-text-secondary ml-auto">laatste 365 dagen</span>
           </div>
           <div className="overflow-x-auto">
-            <ActivityHeatmap data={heatmapData} />
+            <ActivityHeatmap data={heatmapData ?? []} />
           </div>
         </div>
 
         {/* Doelen + Team vergelijking */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <DoelenSectie urenDezeMaand={urenDezeMaand} omzetDezeMaand={omzetDezeMaand} />
-          <TeamVergelijking gebruikers={vergelijkData} />
+          <TeamVergelijking gebruikers={vergelijkData ?? []} />
         </div>
       </div>
     </PageTransition>

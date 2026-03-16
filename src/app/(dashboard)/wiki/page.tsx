@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   BookOpen,
@@ -13,28 +13,10 @@ import {
   FileText,
 } from "lucide-react";
 import { cn, formatDatum } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-
-interface Artikel {
-  id: number;
-  titel: string;
-  inhoud: string | null;
-  categorie: string | null;
-  tags: string | null;
-  gepubliceerd: number | null;
-  auteurId: number | null;
-  auteurNaam: string | null;
-  aangemaaktOp: string | null;
-  bijgewerktOp: string | null;
-}
-
-interface CategorieCount {
-  categorie: string | null;
-  aantal: number;
-}
+import { useWiki } from "@/hooks/queries/use-wiki";
 
 const categorieConfig: Record<string, { label: string; color: string; bg: string }> = {
   processen: { label: "Processen", color: "text-blue-400", bg: "bg-blue-500/15" },
@@ -69,38 +51,16 @@ function parseTags(tagsJson: string | null): string[] {
 }
 
 export default function WikiPage() {
-  const { addToast } = useToast();
-  const [artikelen, setArtikelen] = useState<Artikel[]>([]);
-  const [categorieCounts, setCategorieCounts] = useState<CategorieCount[]>([]);
-  const [loading, setLoading] = useState(true);
   const [zoek, setZoek] = useState("");
   const [activeCategorie, setActiveCategorie] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (activeCategorie) params.set("categorie", activeCategorie);
-      if (zoek) params.set("zoek", zoek);
-
-      const res = await fetch(`/api/wiki?${params}`);
-      if (!res.ok) throw new Error();
-      const json = await res.json();
-      setArtikelen(json.artikelen);
-      setCategorieCounts(json.categorieCounts);
-    } catch {
-      addToast("Kon artikelen niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [activeCategorie, zoek, addToast]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const { data, isLoading } = useWiki(activeCategorie, zoek);
+  const artikelen = data?.artikelen ?? [];
+  const categorieCounts = data?.categorieCounts ?? [];
 
   const totaalArtikelen = categorieCounts.reduce((sum, c) => sum + c.aantal, 0);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-8">
         <div>

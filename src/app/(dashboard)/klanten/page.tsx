@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Building2,
@@ -19,51 +19,20 @@ import { KlantModal } from "./klant-modal";
 import { PageTransition } from "@/components/ui/page-transition";
 import { SkeletonKlanten } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
-
-// ============ TYPES ============
-
-interface Klant {
-  id: number;
-  bedrijfsnaam: string;
-  contactpersoon: string | null;
-  email: string | null;
-  telefoon: string | null;
-  adres: string | null;
-  notities: string | null;
-  uurtarief: number | null;
-  isActief: number;
-  aantalProjecten: number;
-  totaalMinuten: number;
-}
+import { useKlanten } from "@/hooks/queries/use-klanten";
+import { useQueryClient } from "@tanstack/react-query";
 
 // ============ MAIN PAGE ============
 
 export default function KlantenPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const [klanten, setKlanten] = useState<Klant[]>([]);
-  const [laden, setLaden] = useState(true);
+  const { data: klanten = [], isLoading: laden } = useKlanten();
   const [zoekterm, setZoekterm] = useState("");
   const [toonInactief, setToonInactief] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [bewerkKlant, setBewerkKlant] = useState<Klant | null>(null);
-
-  // Fetch klanten
-  const laadKlanten = () => {
-    fetch("/api/klanten")
-      .then((r) => r.json())
-      .then((data) => {
-        setKlanten(data.klanten || []);
-        setLaden(false);
-      })
-      .catch(() => {
-        setLaden(false);
-      });
-  };
-
-  useEffect(() => {
-    laadKlanten();
-  }, []);
+  const [bewerkKlant, setBewerkKlant] = useState<typeof klanten[number] | null>(null);
 
   // Filtered & sorted klanten
   const gefilterdeKlanten = useMemo(() => {
@@ -274,7 +243,7 @@ export default function KlantenPage() {
           onOpgeslagen={() => {
             setModalOpen(false);
             setBewerkKlant(null);
-            laadKlanten();
+            queryClient.invalidateQueries({ queryKey: ["klanten"] });
           }}
         />
       </div>

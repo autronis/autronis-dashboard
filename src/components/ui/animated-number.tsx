@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useRef } from "react";
-import { useMotionValue, useSpring, useTransform, motion } from "framer-motion";
+import { useEffect, useRef, useCallback } from "react";
+import { useMotionValue, useSpring, motion } from "framer-motion";
 
 interface AnimatedNumberProps {
   value: number;
@@ -18,22 +18,26 @@ export function AnimatedNumber({
   const spring = useSpring(motionValue, {
     stiffness: 100,
     damping: 20,
-    restDelta: 0.01,
+    restDelta: 1,
   });
-  const display = useTransform(spring, (current) => format(current));
+
+  const updateDisplay = useCallback(
+    (latest: number) => {
+      if (ref.current) {
+        ref.current.textContent = format(Math.round(latest));
+      }
+    },
+    [format]
+  );
 
   useEffect(() => {
     motionValue.set(value);
   }, [motionValue, value]);
 
   useEffect(() => {
-    const unsubscribe = display.on("change", (latest) => {
-      if (ref.current) {
-        ref.current.textContent = latest;
-      }
-    });
+    const unsubscribe = spring.on("change", updateDisplay);
     return unsubscribe;
-  }, [display]);
+  }, [spring, updateDisplay]);
 
   return <motion.span ref={ref} className={className} />;
 }

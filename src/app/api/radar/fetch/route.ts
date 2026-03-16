@@ -2,226 +2,155 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { radarBronnen, radarItems } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth";
-import { eq, isNull, isNotNull, desc } from "drizzle-orm";
-import Anthropic from "@anthropic-ai/sdk";
+import { eq } from "drizzle-orm";
 
-// ============ XML PARSE HELPERS ============
+// ============ SUPABASE CONFIG ============
 
-function extractTag(xml: string, tag: string): string {
-  const match = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
-  return match ? match[1].replace(/<!\[CDATA\[|\]\]>/g, "").trim() : "";
-}
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
 
-function extractLink(xml: string): string {
-  const hrefMatch = xml.match(/<link[^>]+href=["']([^"']+)["']/i);
-  if (hrefMatch) return hrefMatch[1];
-  const contentMatch = xml.match(/<link[^>]*>([^<]+)<\/link>/i);
-  return contentMatch ? contentMatch[1].trim() : "";
-}
-
-function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").trim();
-}
-
-interface ParsedFeedItem {
-  titel: string;
+interface SupabaseItem {
+  id: string;
+  title: string;
   url: string;
-  beschrijving: string;
-  auteur: string;
-  gepubliceerdOp: string;
+  description: string | null;
+  author: string | null;
+  published_at: string | null;
+  score: number | null;
+  score_reasoning: string | null;
+  ai_summary: string | null;
+  category: string | null;
+  source_id: string;
+  sources: { name: string; url: string } | null;
 }
 
-function parseFeed(xml: string): ParsedFeedItem[] {
-  const entries = xml.match(/<item[\s>][\s\S]*?<\/item>|<entry[\s>][\s\S]*?<\/entry>/gi) || [];
+// ============ CATEGORY MAPPING ============
 
-  return entries.map((entry) => {
-    const titel = extractTag(entry, "title");
-    const url = extractLink(entry) || extractTag(entry, "link");
-    const beschrijving = stripHtml(
-      extractTag(entry, "description") || extractTag(entry, "summary") || extractTag(entry, "content")
-    );
-    const auteur = extractTag(entry, "author") || extractTag(entry, "dc:creator");
-    const rawDatum = extractTag(entry, "pubDate") || extractTag(entry, "published") || extractTag(entry, "updated");
-
-    let gepubliceerdOp = "";
-    if (rawDatum) {
-      try {
-        gepubliceerdOp = new Date(rawDatum).toISOString();
-      } catch {
-        gepubliceerdOp = rawDatum;
-      }
-    }
-
-    return { titel, url, beschrijving, auteur, gepubliceerdOp };
-  });
+// Supabase gebruikt "opportunities", dashboard gebruikt "kansen"
+function mapCategory(cat: string | null): "tools" | "api_updates" | "trends" | "kansen" | "must_reads" | null {
+  if (!cat) return null;
+  if (cat === "opportunities") return "kansen";
+  const valid = ["tools", "api_updates", "trends", "kansen", "must_reads"];
+  return valid.includes(cat) ? cat as "tools" | "api_updates" | "trends" | "kansen" | "must_reads" : null;
 }
 
-// ============ AI SCORING ============
+// ============ MAIN SYNC ============
 
-interface AiScoreResult {
-  index: number;
-  score: number;
-  categorie: "tools" | "api_updates" | "trends" | "kansen" | "must_reads";
-  samenvatting: string;
-}
-
-async function scoreItemsMetAi(
-  items: { id: number; titel: string; beschrijving: string | null }[]
-): Promise<AiScoreResult[]> {
-  const anthropic = new Anthropic();
-
-  const prompt = `Je bent een AI/automation nieuws-curator voor Autronis, een AI- en automatiseringsbureau.
-Score en categoriseer deze nieuwsitems op relevantie voor een klein AI/automation bedrijf.
-
-Items:
-${items.map((item, i) => `${i + 1}. "${item.titel}" - ${item.beschrijving?.substring(0, 200) || "geen beschrijving"}`).join("\n")}
-
-Geef per item:
-- score: 1-10 (10 = extreem relevant voor AI/automation bureau)
-- categorie: tools | api_updates | trends | kansen | must_reads
-- samenvatting: 1-2 zinnen waarom dit relevant is (of niet)
-
-Antwoord als JSON array:
-[{"index": 1, "score": 8, "categorie": "tools", "samenvatting": "..."}]
-Alleen JSON.`;
-
-  const message = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 2048,
-    messages: [{ role: "user", content: prompt }],
-  });
-
-  const content = message.content[0];
-  if (content.type !== "text") return [];
-
-  const jsonMatch = content.text.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) return [];
-
-  return JSON.parse(jsonMatch[0]) as AiScoreResult[];
-}
-
-// ============ MAIN PIPELINE ============
-
-// POST /api/radar/fetch — RSS ophalen + AI scoren
+// POST /api/radar/fetch — Sync items vanuit Supabase (Learning Radar pipeline)
 export async function POST() {
   try {
     await requireAuth();
 
-    // Step 1: Haal actieve bronnen op
-    const bronnen = db
-      .select()
-      .from(radarBronnen)
-      .where(eq(radarBronnen.actief, 1))
-      .all();
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      return NextResponse.json(
+        { fout: "Supabase configuratie ontbreekt (SUPABASE_URL / SUPABASE_ANON_KEY)" },
+        { status: 500 }
+      );
+    }
+
+    // Haal gescoorde items op uit Supabase (score >= 1)
+    const supabaseRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/items?score=not.is.null&select=*,sources(name,url)&order=created_at.desc&limit=200`,
+      {
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`,
+        },
+      }
+    );
+
+    if (!supabaseRes.ok) {
+      const err = await supabaseRes.text();
+      return NextResponse.json(
+        { fout: `Supabase sync mislukt: ${err}` },
+        { status: 500 }
+      );
+    }
+
+    const supabaseItems: SupabaseItem[] = await supabaseRes.json();
 
     let nieuweItems = 0;
-    const fouten: string[] = [];
+    let bijgewerkt = 0;
 
-    // Step 2: Fetch en parse elke bron
-    for (const bron of bronnen) {
-      try {
-        const response = await fetch(bron.url, {
-          headers: { "User-Agent": "Autronis-Radar/1.0" },
-          signal: AbortSignal.timeout(10000),
-        });
+    for (const item of supabaseItems) {
+      // Zorg dat de bron bestaat in lokale DB
+      let bronId: number | null = null;
+      if (item.sources?.name) {
+        const bestaandeBron = db
+          .select({ id: radarBronnen.id })
+          .from(radarBronnen)
+          .where(eq(radarBronnen.naam, item.sources.name))
+          .get();
 
-        if (!response.ok) {
-          fouten.push(`${bron.naam}: HTTP ${response.status}`);
-          continue;
-        }
-
-        const xml = await response.text();
-        const feedItems = parseFeed(xml);
-
-        for (const feedItem of feedItems) {
-          if (!feedItem.url || !feedItem.titel) continue;
-
-          // Check duplicaat op URL
-          const bestaand = db
-            .select({ id: radarItems.id })
-            .from(radarItems)
-            .where(eq(radarItems.url, feedItem.url))
-            .get();
-
-          if (bestaand) continue;
-
-          db.insert(radarItems)
+        if (bestaandeBron) {
+          bronId = bestaandeBron.id;
+        } else {
+          const result = db
+            .insert(radarBronnen)
             .values({
-              bronId: bron.id,
-              titel: feedItem.titel,
-              url: feedItem.url,
-              beschrijving: feedItem.beschrijving || null,
-              auteur: feedItem.auteur || null,
-              gepubliceerdOp: feedItem.gepubliceerdOp || null,
+              naam: item.sources.name,
+              url: item.sources.url,
+              type: "rss",
+              actief: 1,
             })
             .run();
-
-          nieuweItems++;
+          bronId = Number(result.lastInsertRowid);
         }
-      } catch (err) {
-        fouten.push(`${bron.naam}: ${err instanceof Error ? err.message : "Onbekende fout"}`);
       }
-    }
 
-    // Step 3: AI scoring voor ongescoorde items (max 10)
-    const ongescoord = db
-      .select({
-        id: radarItems.id,
-        titel: radarItems.titel,
-        beschrijving: radarItems.beschrijving,
-      })
-      .from(radarItems)
-      .where(isNull(radarItems.score))
-      .limit(10)
-      .all();
+      // Check of item al bestaat (op URL)
+      const bestaand = db
+        .select({ id: radarItems.id, score: radarItems.score })
+        .from(radarItems)
+        .where(eq(radarItems.url, item.url))
+        .get();
 
-    let gescoord = 0;
-
-    if (ongescoord.length > 0) {
-      try {
-        const scores = await scoreItemsMetAi(ongescoord);
-
-        for (const scoreResult of scores) {
-          const item = ongescoord[scoreResult.index - 1];
-          if (!item) continue;
-
+      if (bestaand) {
+        // Update score/samenvatting als die er nog niet was
+        if (!bestaand.score && item.score) {
           db.update(radarItems)
             .set({
-              score: scoreResult.score,
-              categorie: scoreResult.categorie,
-              aiSamenvatting: scoreResult.samenvatting,
+              score: item.score,
+              scoreRedenering: item.score_reasoning,
+              aiSamenvatting: item.ai_summary,
+              categorie: mapCategory(item.category),
             })
-            .where(eq(radarItems.id, item.id))
+            .where(eq(radarItems.id, bestaand.id))
             .run();
-
-          gescoord++;
+          bijgewerkt++;
         }
-      } catch (err) {
-        fouten.push(`AI scoring: ${err instanceof Error ? err.message : "Onbekende fout"}`);
+        continue;
       }
+
+      // Nieuw item invoegen
+      db.insert(radarItems)
+        .values({
+          bronId,
+          titel: item.title,
+          url: item.url,
+          beschrijving: item.description,
+          auteur: item.author,
+          gepubliceerdOp: item.published_at,
+          score: item.score,
+          scoreRedenering: item.score_reasoning,
+          aiSamenvatting: item.ai_summary,
+          categorie: mapCategory(item.category),
+        })
+        .run();
+
+      nieuweItems++;
     }
 
-    // Step 4: Top items ophalen
-    const topItems = db
-      .select({
-        titel: radarItems.titel,
-        score: radarItems.score,
-      })
+    const totaal = db
+      .select({ id: radarItems.id })
       .from(radarItems)
-      .where(isNotNull(radarItems.score))
-      .orderBy(desc(radarItems.score))
-      .limit(5)
-      .all()
-      .reverse();
+      .all().length;
 
     return NextResponse.json({
-      resultaat: {
-        bronnenGescand: bronnen.length,
-        nieuweItems,
-        gescoord,
-        topItems,
-        ...(fouten.length > 0 ? { fouten } : {}),
-      },
+      nieuw: nieuweItems,
+      totaal,
+      bijgewerkt,
+      bron: "supabase",
     });
   } catch (error) {
     return NextResponse.json(

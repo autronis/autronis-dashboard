@@ -54,8 +54,9 @@ export function formatBedrag(bedrag: number): string {
  * e.g. 150 -> "2:30"
  */
 export function formatUren(minuten: number): string {
-  const uren = Math.floor(minuten / 60);
-  const mins = minuten % 60;
+  const afgerond = Math.round(minuten);
+  const uren = Math.floor(afgerond / 60);
+  const mins = afgerond % 60;
   return `${uren}:${mins.toString().padStart(2, "0")}`;
 }
 

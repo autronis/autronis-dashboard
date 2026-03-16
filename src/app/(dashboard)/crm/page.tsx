@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -30,49 +30,11 @@ import {
   Calendar,
 } from "lucide-react";
 import { cn, formatBedrag, formatDatum } from "@/lib/utils";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmailComposer } from "@/components/ui/email-composer";
-
-// ============ TYPES ============
-
-interface Lead {
-  id: number;
-  bedrijfsnaam: string;
-  contactpersoon: string | null;
-  email: string | null;
-  telefoon: string | null;
-  waarde: number | null;
-  status: string;
-  bron: string | null;
-  notities: string | null;
-  volgendeActie: string | null;
-  volgendeActieDatum: string | null;
-  aangemaaktOp: string | null;
-}
-
-interface KPIs {
-  totaal: number;
-  nieuw: number;
-  contact: number;
-  offerte: number;
-  gewonnen: number;
-  verloren: number;
-  pipelineWaarde: number;
-  gewonnenWaarde: number;
-}
-
-interface Activiteit {
-  id: number;
-  leadId: number;
-  gebruikerId: number | null;
-  type: string;
-  titel: string;
-  omschrijving: string | null;
-  oudeStatus: string | null;
-  nieuweStatus: string | null;
-  aangemaaktOp: string | null;
-}
+import { useLeads, useLeadActiviteiten, useAfzenderEmail, type Lead, type Activiteit } from "@/hooks/queries/use-leads";
 
 // ============ CONSTANTS ============
 
@@ -280,13 +242,15 @@ function ActiviteitenTimeline({ activiteiten }: { activiteiten: Activiteit[] }) 
 
 export default function CrmPage() {
   const { addToast } = useToast();
-  const [allLeads, setAllLeads] = useState<Lead[]>([]);
-  const [kpis, setKpis] = useState<KPIs>({
+  const queryClient = useQueryClient();
+  const [zoek, setZoek] = useState("");
+
+  const { data: leadsData, isLoading: loading } = useLeads(zoek);
+  const allLeads = leadsData?.leads ?? [];
+  const kpis = leadsData?.kpis ?? {
     totaal: 0, nieuw: 0, contact: 0, offerte: 0,
     gewonnen: 0, verloren: 0, pipelineWaarde: 0, gewonnenWaarde: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [zoek, setZoek] = useState("");
+  };
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -295,11 +259,13 @@ export default function CrmPage() {
 
   // Email composer state
   const [emailOpen, setEmailOpen] = useState(false);
-  const [afzenderEmail, setAfzenderEmail] = useState("");
 
-  // Activiteiten state
-  const [activiteiten, setActiviteiten] = useState<Activiteit[]>([]);
-  const [activiteitenLaden, setActiviteitenLaden] = useState(false);
+  // Afzender email
+  const { data: afzenderEmail } = useAfzenderEmail();
+
+  // Activiteiten
+  const [activiteitenLeadId, setActiviteitenLeadId] = useState<number | null>(null);
+  const { data: activiteiten = [], isLoading: activiteitenLaden } = useLeadActiviteiten(activiteitenLeadId);
 
   // Drag state
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -316,7 +282,6 @@ export default function CrmPage() {
   const [notities, setNotities] = useState("");
   const [volgendeActie, setVolgendeActie] = useState("");
   const [volgendeActieDatum, setVolgendeActieDatum] = useState("");
-  const [formLaden, setFormLaden] = useState(false);
 
   // Sensors - pointer with activation distance to allow clicks
   const sensors = useSensors(
@@ -325,53 +290,52 @@ export default function CrmPage() {
     })
   );
 
-  const fetchData = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (zoek) params.set("zoek", zoek);
-      const res = await fetch(`/api/leads?${params}`);
+  const invalidateLeads = () => queryClient.invalidateQueries({ queryKey: ["leads"] });
+  const invalidateActiviteiten = () => queryClient.invalidateQueries({ queryKey: ["lead-activiteiten"] });
+
+  const saveMutation = useMutation({
+    mutationFn: async ({ id, body }: { id: number | null; body: Record<string, unknown> }) => {
+      if (id) {
+        const res = await fetch(`/api/leads/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error();
+      } else {
+        const res = await fetch("/api/leads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error();
+      }
+    },
+    onSuccess: (_data, variables) => {
+      addToast(variables.id ? "Lead bijgewerkt" : "Lead aangemaakt", "succes");
+      setModalOpen(false);
+      invalidateLeads();
+    },
+    onError: () => {
+      addToast("Kon lead niet opslaan", "fout");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/leads/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      const json = await res.json();
-      setAllLeads(json.leads);
-      setKpis(json.kpis);
-    } catch {
-      addToast("Kon leads niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [zoek, addToast]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // Fetch afzender email voor email composer
-  useEffect(() => {
-    fetch("/api/instellingen")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.instellingen?.email) {
-          setAfzenderEmail(data.instellingen.email);
-        }
-      })
-      .catch(() => {
-        // stil falen
-      });
-  }, []);
-
-  const fetchActiviteiten = useCallback(async (leadId: number) => {
-    setActiviteitenLaden(true);
-    try {
-      const res = await fetch(`/api/leads/${leadId}/activiteiten`);
-      if (!res.ok) throw new Error();
-      const json = await res.json();
-      setActiviteiten(json.activiteiten);
-    } catch {
-      setActiviteiten([]);
-    } finally {
-      setActiviteitenLaden(false);
-    }
-  }, []);
+    },
+    onSuccess: () => {
+      addToast("Lead verwijderd");
+      setModalOpen(false);
+      setDeleteDialogOpen(false);
+      invalidateLeads();
+    },
+    onError: () => {
+      addToast("Kon lead niet verwijderen", "fout");
+    },
+  });
 
   function openNieuwModal() {
     setSelectedLead(null);
@@ -385,7 +349,7 @@ export default function CrmPage() {
     setNotities("");
     setVolgendeActie("");
     setVolgendeActieDatum("");
-    setActiviteiten([]);
+    setActiviteitenLeadId(null);
     setModalOpen(true);
   }
 
@@ -402,76 +366,36 @@ export default function CrmPage() {
     setVolgendeActie(lead.volgendeActie || "");
     setVolgendeActieDatum(lead.volgendeActieDatum || "");
     setModalOpen(true);
-    fetchActiviteiten(lead.id);
+    setActiviteitenLeadId(lead.id);
   }
 
-  async function handleOpslaan() {
+  function handleOpslaan() {
     if (!bedrijfsnaam.trim()) {
       addToast("Bedrijfsnaam is verplicht", "fout");
       return;
     }
-    setFormLaden(true);
-    try {
-      const body = {
-        bedrijfsnaam,
-        contactpersoon,
-        email,
-        telefoon,
-        waarde: waarde ? Number(waarde) : null,
-        status,
-        bron,
-        notities,
-        volgendeActie,
-        volgendeActieDatum: volgendeActieDatum || null,
-      };
-
-      if (selectedLead) {
-        const res = await fetch(`/api/leads/${selectedLead.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) throw new Error();
-        addToast("Lead bijgewerkt", "succes");
-      } else {
-        const res = await fetch("/api/leads", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!res.ok) throw new Error();
-        addToast("Lead aangemaakt", "succes");
-      }
-      setModalOpen(false);
-      fetchData();
-    } catch {
-      addToast("Kon lead niet opslaan", "fout");
-    } finally {
-      setFormLaden(false);
-    }
+    const body = {
+      bedrijfsnaam,
+      contactpersoon,
+      email,
+      telefoon,
+      waarde: waarde ? Number(waarde) : null,
+      status,
+      bron,
+      notities,
+      volgendeActie,
+      volgendeActieDatum: volgendeActieDatum || null,
+    };
+    saveMutation.mutate({ id: selectedLead?.id ?? null, body });
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     if (!selectedLead) return;
-    try {
-      const res = await fetch(`/api/leads/${selectedLead.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      addToast("Lead verwijderd");
-      setModalOpen(false);
-      setDeleteDialogOpen(false);
-      fetchData();
-    } catch {
-      addToast("Kon lead niet verwijderen", "fout");
-    }
+    deleteMutation.mutate(selectedLead.id);
   }
 
-  async function handleStatusChange(leadId: number, oudeStatus: string, nieuweStatus: string) {
-    try {
-      // Optimistic update
-      setAllLeads((prev) =>
-        prev.map((l) => (l.id === leadId ? { ...l, status: nieuweStatus } : l))
-      );
-
+  const statusChangeMutation = useMutation({
+    mutationFn: async ({ leadId, oudeStatus, nieuweStatus }: { leadId: number; oudeStatus: string; nieuweStatus: string }) => {
       const res = await fetch(`/api/leads/${leadId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -479,7 +403,6 @@ export default function CrmPage() {
       });
       if (!res.ok) throw new Error();
 
-      // Create activity
       const oudeLabel = statusKolommen.find((k) => k.key === oudeStatus)?.label || oudeStatus;
       const nieuweLabel = statusKolommen.find((k) => k.key === nieuweStatus)?.label || nieuweStatus;
 
@@ -494,12 +417,25 @@ export default function CrmPage() {
           nieuweStatus,
         }),
       });
-
-      fetchData();
-    } catch {
+    },
+    onSuccess: () => {
+      invalidateLeads();
+    },
+    onError: () => {
       addToast("Kon status niet bijwerken", "fout");
-      fetchData(); // Revert optimistic update
-    }
+      invalidateLeads();
+    },
+  });
+
+  function handleStatusChange(leadId: number, oudeStatus: string, nieuweStatus: string) {
+    queryClient.setQueryData(["leads", zoek], (old: typeof leadsData) => {
+      if (!old) return old;
+      return {
+        ...old,
+        leads: old.leads.map((l: Lead) => (l.id === leadId ? { ...l, status: nieuweStatus } : l)),
+      };
+    });
+    statusChangeMutation.mutate({ leadId, oudeStatus, nieuweStatus });
   }
 
   // ============ DND HANDLERS ============
@@ -805,10 +741,10 @@ export default function CrmPage() {
               </button>
               <button
                 onClick={handleOpslaan}
-                disabled={formLaden}
+                disabled={saveMutation.isPending}
                 className="px-6 py-2.5 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-autronis-accent/20 disabled:opacity-50"
               >
-                {formLaden ? "Opslaan..." : selectedLead ? "Bijwerken" : "Toevoegen"}
+                {saveMutation.isPending ? "Opslaan..." : selectedLead ? "Bijwerken" : "Toevoegen"}
               </button>
             </div>
           </div>
@@ -823,7 +759,7 @@ export default function CrmPage() {
           leadId={selectedLead.id}
           leadEmail={selectedLead.email}
           afzenderEmail={afzenderEmail || "noreply@autronis.nl"}
-          onVerstuurd={() => fetchActiviteiten(selectedLead.id)}
+          onVerstuurd={() => invalidateActiviteiten()}
         />
       )}
 

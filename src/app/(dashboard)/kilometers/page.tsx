@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import {
   Car,
   Plus,
@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { cn, formatBedrag, formatDatumKort } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useRitten, useKlantenProjecten, type Rit } from "@/hooks/queries/use-kilometers";
 import { PageTransition } from "@/components/ui/page-transition";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -20,31 +22,6 @@ import { Modal } from "@/components/ui/modal";
 import { FormField, SelectField } from "@/components/ui/form-field";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface Rit {
-  id: number;
-  datum: string;
-  vanLocatie: string;
-  naarLocatie: string;
-  kilometers: number;
-  zakelijkDoel: string | null;
-  klantId: number | null;
-  projectId: number | null;
-  tariefPerKm: number | null;
-  klantNaam: string | null;
-  projectNaam: string | null;
-}
-
-interface KlantOptie {
-  id: number;
-  bedrijfsnaam: string;
-}
-
-interface ProjectOptie {
-  id: number;
-  naam: string;
-  klantId: number | null;
-}
 
 interface RitForm {
   datum: string;
@@ -75,9 +52,7 @@ const MAAND_NAMEN = [
 
 export default function KilometersPage() {
   const { addToast } = useToast();
-  const [ritten, setRitten] = useState<Rit[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
   const [modalOpen, setModalOpen] = useState(false);
   const [editRit, setEditRit] = useState<Rit | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -87,55 +62,15 @@ export default function KilometersPage() {
   const [maand, setMaand] = useState(new Date().getMonth() + 1);
   const [jaar, setJaar] = useState(new Date().getFullYear());
 
-  const [totaalKm, setTotaalKm] = useState(0);
-  const [totaalBedrag, setTotaalBedrag] = useState(0);
-  const [aantalRitten, setAantalRitten] = useState(0);
+  const { data: rittenData, isLoading: loading } = useRitten(maand, jaar);
+  const ritten = rittenData?.ritten ?? [];
+  const totaalKm = rittenData?.totaalKm ?? 0;
+  const totaalBedrag = rittenData?.totaalBedrag ?? 0;
+  const aantalRitten = rittenData?.aantalRitten ?? 0;
 
-  const [klanten, setKlanten] = useState<KlantOptie[]>([]);
-  const [projecten, setProjecten] = useState<ProjectOptie[]>([]);
-
-  const fetchRitten = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/kilometers?maand=${maand}&jaar=${jaar}`);
-      if (!res.ok) throw new Error();
-      const json = await res.json();
-      setRitten(json.ritten);
-      setTotaalKm(json.totaalKm);
-      setTotaalBedrag(json.totaalBedrag);
-      setAantalRitten(json.aantalRitten);
-    } catch {
-      addToast("Kon ritten niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [maand, jaar, addToast]);
-
-  const fetchKlantenProjecten = useCallback(async () => {
-    try {
-      const [kRes, pRes] = await Promise.all([
-        fetch("/api/klanten"),
-        fetch("/api/projecten"),
-      ]);
-      if (kRes.ok) {
-        const kJson = await kRes.json();
-        setKlanten(kJson.klanten || []);
-      }
-      if (pRes.ok) {
-        const pJson = await pRes.json();
-        setProjecten(pJson.projecten || []);
-      }
-    } catch {
-      // Silent fail for supporting data
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchRitten();
-  }, [fetchRitten]);
-
-  useEffect(() => {
-    fetchKlantenProjecten();
-  }, [fetchKlantenProjecten]);
+  const { data: kpData } = useKlantenProjecten();
+  const klanten = kpData?.klanten ?? [];
+  const projecten = kpData?.projecten ?? [];
 
   const handlePrevMonth = () => {
     if (maand === 1) {
@@ -176,62 +111,71 @@ export default function KilometersPage() {
     setModalOpen(true);
   };
 
-  const handleSubmit = async () => {
-    if (!form.datum || !form.vanLocatie.trim() || !form.naarLocatie.trim() || !form.kilometers) {
-      addToast("Vul alle verplichte velden in", "fout");
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const payload = {
-        datum: form.datum,
-        vanLocatie: form.vanLocatie,
-        naarLocatie: form.naarLocatie,
-        kilometers: parseFloat(form.kilometers),
-        zakelijkDoel: form.zakelijkDoel || null,
-        klantId: form.klantId ? parseInt(form.klantId) : null,
-        projectId: form.projectId ? parseInt(form.projectId) : null,
-        tariefPerKm: parseFloat(form.tariefPerKm) || 0.23,
-      };
-
-      const url = editRit ? `/api/kilometers/${editRit.id}` : "/api/kilometers";
-      const method = editRit ? "PUT" : "POST";
-
+  const saveMutation = useMutation({
+    mutationFn: async ({ payload, isEdit, editId }: { payload: Record<string, unknown>; isEdit: boolean; editId?: number }) => {
+      const url = isEdit ? `/api/kilometers/${editId}` : "/api/kilometers";
+      const method = isEdit ? "PUT" : "POST";
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-
       if (!res.ok) {
         const json = await res.json();
         throw new Error(json.fout || "Onbekende fout");
       }
-
-      addToast(editRit ? "Rit bijgewerkt" : "Rit toegevoegd", "succes");
+      return isEdit;
+    },
+    onSuccess: (isEdit) => {
+      addToast(isEdit ? "Rit bijgewerkt" : "Rit toegevoegd", "succes");
       setModalOpen(false);
-      await fetchRitten();
-    } catch (err) {
+      queryClient.invalidateQueries({ queryKey: ["kilometers"] });
+    },
+    onError: (err) => {
       addToast(err instanceof Error ? err.message : "Kon rit niet opslaan", "fout");
-    } finally {
-      setSaving(false);
-    }
-  };
+    },
+  });
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    try {
-      const res = await fetch(`/api/kilometers/${deleteId}`, { method: "DELETE" });
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/kilometers/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
+    },
+    onSuccess: () => {
       addToast("Rit verwijderd", "succes");
       setDeleteDialogOpen(false);
       setDeleteId(null);
-      await fetchRitten();
-    } catch {
+      queryClient.invalidateQueries({ queryKey: ["kilometers"] });
+    },
+    onError: () => {
       addToast("Kon rit niet verwijderen", "fout");
+    },
+  });
+
+  const handleSubmit = () => {
+    if (!form.datum || !form.vanLocatie.trim() || !form.naarLocatie.trim() || !form.kilometers) {
+      addToast("Vul alle verplichte velden in", "fout");
+      return;
     }
+    const payload = {
+      datum: form.datum,
+      vanLocatie: form.vanLocatie,
+      naarLocatie: form.naarLocatie,
+      kilometers: parseFloat(form.kilometers),
+      zakelijkDoel: form.zakelijkDoel || null,
+      klantId: form.klantId ? parseInt(form.klantId) : null,
+      projectId: form.projectId ? parseInt(form.projectId) : null,
+      tariefPerKm: parseFloat(form.tariefPerKm) || 0.23,
+    };
+    saveMutation.mutate({ payload, isEdit: !!editRit, editId: editRit?.id });
   };
+
+  const handleDelete = () => {
+    if (!deleteId) return;
+    deleteMutation.mutate(deleteId);
+  };
+
+  const saving = saveMutation.isPending;
 
   const handleExport = () => {
     window.open(`/api/kilometers/export?maand=${maand}&jaar=${jaar}`, "_blank");

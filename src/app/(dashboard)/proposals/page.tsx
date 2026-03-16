@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   FileText,
@@ -16,31 +16,13 @@ import {
 } from "lucide-react";
 import { cn, formatBedrag, formatDatum } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useProposals } from "@/hooks/queries/use-proposals";
 import { PageTransition } from "@/components/ui/page-transition";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { SkeletonFacturen } from "@/components/ui/skeleton";
-
-interface Proposal {
-  id: number;
-  klantId: number;
-  klantNaam: string;
-  titel: string;
-  status: string;
-  totaalBedrag: number | null;
-  geldigTot: string | null;
-  token: string | null;
-  ondertekendOp: string | null;
-  aangemaaktOp: string | null;
-}
-
-interface KPIs {
-  openstaand: number;
-  verzonden: number;
-  ondertekendDezeMaand: number;
-  totaleWaarde: number;
-}
 
 const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
   concept: { bg: "bg-slate-500/15", text: "text-slate-400", label: "Concept" },
@@ -52,61 +34,51 @@ const statusConfig: Record<string, { bg: string; text: string; label: string }> 
 
 export default function ProposalsPage() {
   const { addToast } = useToast();
-  const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [kpis, setKpis] = useState<KPIs>({
-    openstaand: 0,
-    verzonden: 0,
-    ondertekendDezeMaand: 0,
-    totaleWaarde: 0,
-  });
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("alle");
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (statusFilter !== "alle") params.set("status", statusFilter);
+  const { data, isLoading: loading } = useProposals(statusFilter);
+  const proposals = data?.proposals ?? [];
+  const kpis = data?.kpis ?? { openstaand: 0, verzonden: 0, ondertekendDezeMaand: 0, totaleWaarde: 0 };
 
-      const res = await fetch(`/api/proposals?${params}`);
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/proposals/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      const json = await res.json();
-      setProposals(json.proposals);
-      setKpis(json.kpis);
-    } catch {
-      addToast("Kon proposals niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter, addToast]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    try {
-      const res = await fetch(`/api/proposals/${deleteId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+    },
+    onSuccess: () => {
       addToast("Proposal verwijderd", "succes");
-      fetchData();
-    } catch {
+      setDeleteId(null);
+      queryClient.invalidateQueries({ queryKey: ["proposals"] });
+    },
+    onError: () => {
       addToast("Kon proposal niet verwijderen", "fout");
-    }
-    setDeleteId(null);
+    },
+  });
+
+  const verstuurMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/proposals/${id}/verstuur`, { method: "POST" });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.fout || "Onbekende fout");
+    },
+    onSuccess: () => {
+      addToast("Proposal verstuurd per e-mail", "succes");
+      queryClient.invalidateQueries({ queryKey: ["proposals"] });
+    },
+    onError: (error) => {
+      addToast(error instanceof Error ? error.message : "Kon niet versturen", "fout");
+    },
+  });
+
+  const handleDelete = () => {
+    if (!deleteId) return;
+    deleteMutation.mutate(deleteId);
   };
 
-  const handleVerstuur = async (id: number) => {
-    try {
-      const res = await fetch(`/api/proposals/${id}/verstuur`, { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.fout || "Onbekende fout");
-      addToast("Proposal verstuurd per e-mail", "succes");
-      fetchData();
-    } catch (error) {
-      addToast(error instanceof Error ? error.message : "Kon niet versturen", "fout");
-    }
+  const handleVerstuur = (id: number) => {
+    verstuurMutation.mutate(id);
   };
 
   const handleCopyLink = (token: string | null) => {

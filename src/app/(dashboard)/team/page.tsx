@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import {
   Calendar,
   Plus,
@@ -20,72 +20,23 @@ import {
 } from "lucide-react";
 import { cn, formatBedrag, formatDatumKort } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import {
+  useCurrentUser,
+  useVerlof,
+  useDeclaraties,
+  useCapaciteit,
+  type VerlofEntry,
+  type Feestdag,
+  type Declaratie,
+  type CapaciteitData,
+  type CurrentUser,
+} from "@/hooks/queries/use-team";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Skeleton, SkeletonCard } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";
 import { FormField, SelectField, TextareaField } from "@/components/ui/form-field";
-
-// ============ TYPES ============
-
-interface VerlofEntry {
-  id: number;
-  gebruikerId: number | null;
-  gebruikerNaam: string | null;
-  startDatum: string;
-  eindDatum: string;
-  type: string | null;
-  status: string | null;
-  notities: string | null;
-  beoordeeldDoor: number | null;
-  aangemaaktOp: string | null;
-}
-
-interface Feestdag {
-  id: number;
-  naam: string;
-  datum: string;
-  jaar: number;
-}
-
-interface Declaratie {
-  id: number;
-  gebruikerId: number | null;
-  gebruikerNaam: string | null;
-  datum: string;
-  omschrijving: string;
-  bedrag: number;
-  categorie: string | null;
-  bonnetjeUrl: string | null;
-  status: string | null;
-  beoordeeldDoor: number | null;
-  aangemaaktOp: string | null;
-}
-
-interface CapaciteitUser {
-  gebruikerId: number;
-  naam: string;
-  basisUren: number;
-  feestdagUren: number;
-  verlofUren: number;
-  beschikbaarUren: number;
-  geplandUren: number;
-  percentage: number;
-}
-
-interface CapaciteitData {
-  capaciteit: CapaciteitUser[];
-  week: number;
-  jaar: number;
-  maandag: string;
-  zondag: string;
-  feestdagen: Feestdag[];
-}
-
-interface CurrentUser {
-  id: number;
-  naam: string;
-}
 
 // ============ HELPERS ============
 
@@ -158,21 +109,8 @@ const verlofTypeConfig: Record<string, { icon: typeof Palmtree; color: string; l
 // ============ MAIN COMPONENT ============
 
 export default function TeamPage() {
-  const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState<"verlof" | "declaraties" | "capaciteit">("verlof");
-  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-
-  // Fetch current user
-  useEffect(() => {
-    fetch("/api/profiel")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.gebruiker) {
-          setCurrentUser({ id: data.gebruiker.id, naam: data.gebruiker.naam });
-        }
-      })
-      .catch(() => {});
-  }, []);
+  const { data: currentUser } = useCurrentUser();
 
   const tabs = [
     { key: "verlof" as const, label: "Verlof", icon: Calendar },
@@ -224,15 +162,12 @@ export default function TeamPage() {
 
 // ============ VERLOF TAB ============
 
-function VerlofTab({ currentUser }: { currentUser: CurrentUser | null }) {
+function VerlofTab({ currentUser }: { currentUser: CurrentUser | null | undefined }) {
   const { addToast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [verlofList, setVerlofList] = useState<VerlofEntry[]>([]);
-  const [feestdagenList, setFeestdagenList] = useState<Feestdag[]>([]);
+  const queryClient = useQueryClient();
   const [jaar, setJaar] = useState(new Date().getFullYear());
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
 
   // Form state
   const [form, setForm] = useState({
@@ -242,91 +177,68 @@ function VerlofTab({ currentUser }: { currentUser: CurrentUser | null }) {
     notities: "",
   });
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [verlofRes, feestdagenRes] = await Promise.all([
-        fetch(`/api/team/verlof?jaar=${jaar}`),
-        fetch(`/api/team/feestdagen?jaar=${jaar}`),
-      ]);
+  const { data, isLoading: loading } = useVerlof(jaar);
+  const verlofList = data?.verlof ?? [];
+  const feestdagenList = data?.feestdagen ?? [];
 
-      if (verlofRes.ok) {
-        const data = await verlofRes.json();
-        setVerlofList(data.verlof);
-      }
-      if (feestdagenRes.ok) {
-        const data = await feestdagenRes.json();
-        setFeestdagenList(data.feestdagen);
-      } else {
-        // Try to seed feestdagen
-        const seedRes = await fetch("/api/team/feestdagen", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ jaar }),
-        });
-        if (seedRes.ok) {
-          const data = await seedRes.json();
-          setFeestdagenList(data.feestdagen);
-        }
-      }
-    } catch {
-      addToast("Kon verlofdata niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [jaar, addToast]);
-
-  useEffect(() => {
-    setLoading(true);
-    fetchData();
-  }, [fetchData]);
-
-  const handleSubmit = async () => {
-    if (!form.startDatum || !form.eindDatum) {
-      addToast("Vul start- en einddatum in", "fout");
-      return;
-    }
-    setSaving(true);
-    try {
+  const submitMutation = useMutation({
+    mutationFn: async (formData: typeof form) => {
       const res = await fetch("/api/team/verlof", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(formData),
       });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.fout || "Kon verlof niet aanvragen");
+        const d = await res.json();
+        throw new Error(d.fout || "Kon verlof niet aanvragen");
       }
+    },
+    onSuccess: () => {
       addToast("Verlof aangevraagd", "succes");
       setModalOpen(false);
       setForm({ startDatum: "", eindDatum: "", type: "vakantie", notities: "" });
-      fetchData();
-    } catch (err) {
+      queryClient.invalidateQueries({ queryKey: ["team", "verlof"] });
+    },
+    onError: (err) => {
       addToast(err instanceof Error ? err.message : "Fout bij aanvragen", "fout");
-    } finally {
-      setSaving(false);
-    }
-  };
+    },
+  });
 
-  const handleStatusUpdate = async (id: number, status: "goedgekeurd" | "afgewezen") => {
-    try {
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: "goedgekeurd" | "afgewezen" }) => {
       const res = await fetch(`/api/team/verlof/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.fout || "Kon status niet bijwerken");
+        const d = await res.json();
+        throw new Error(d.fout || "Kon status niet bijwerken");
       }
-      addToast(
-        status === "goedgekeurd" ? "Verlof goedgekeurd" : "Verlof afgewezen",
-        "succes"
-      );
-      fetchData();
-    } catch (err) {
+      return status;
+    },
+    onSuccess: (status) => {
+      addToast(status === "goedgekeurd" ? "Verlof goedgekeurd" : "Verlof afgewezen", "succes");
+      queryClient.invalidateQueries({ queryKey: ["team", "verlof"] });
+    },
+    onError: (err) => {
       addToast(err instanceof Error ? err.message : "Fout bij bijwerken", "fout");
+    },
+  });
+
+  const handleSubmit = () => {
+    if (!form.startDatum || !form.eindDatum) {
+      addToast("Vul start- en einddatum in", "fout");
+      return;
     }
+    submitMutation.mutate(form);
   };
+
+  const handleStatusUpdate = (id: number, status: "goedgekeurd" | "afgewezen") => {
+    statusMutation.mutate({ id, status });
+  };
+
+  const saving = submitMutation.isPending;
 
   // Build lookup maps
   const feestdagMap = new Map<string, string>();
@@ -718,14 +630,11 @@ function VerlofTab({ currentUser }: { currentUser: CurrentUser | null }) {
 
 // ============ DECLARATIES TAB ============
 
-function DeclaratiesTab({ currentUser }: { currentUser: CurrentUser | null }) {
+function DeclaratiesTab({ currentUser }: { currentUser: CurrentUser | null | undefined }) {
   const { addToast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [declaraties, setDeclaraties] = useState<Declaratie[]>([]);
-  const [totaalUitstaand, setTotaalUitstaand] = useState(0);
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("alle");
   const [modalOpen, setModalOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
     datum: new Date().toISOString().slice(0, 10),
@@ -735,71 +644,68 @@ function DeclaratiesTab({ currentUser }: { currentUser: CurrentUser | null }) {
     bonnetjeUrl: "",
   });
 
-  const fetchData = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (statusFilter !== "alle") params.set("status", statusFilter);
-      const res = await fetch(`/api/team/declaraties?${params}`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setDeclaraties(data.declaraties);
-      setTotaalUitstaand(data.totaalUitstaand);
-    } catch {
-      addToast("Kon declaraties niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter, addToast]);
+  const { data, isLoading: loading } = useDeclaraties(statusFilter);
+  const declaraties = data?.declaraties ?? [];
+  const totaalUitstaand = data?.totaalUitstaand ?? 0;
 
-  useEffect(() => {
-    setLoading(true);
-    fetchData();
-  }, [fetchData]);
-
-  const handleSubmit = async () => {
-    if (!form.omschrijving.trim() || !form.bedrag) {
-      addToast("Vul alle verplichte velden in", "fout");
-      return;
-    }
-    setSaving(true);
-    try {
+  const submitMutation = useMutation({
+    mutationFn: async (formData: typeof form) => {
       const res = await fetch("/api/team/declaraties", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, bedrag: Number(form.bedrag) }),
+        body: JSON.stringify({ ...formData, bedrag: Number(formData.bedrag) }),
       });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.fout || "Kon declaratie niet indienen");
+        const d = await res.json();
+        throw new Error(d.fout || "Kon declaratie niet indienen");
       }
+    },
+    onSuccess: () => {
       addToast("Declaratie ingediend", "succes");
       setModalOpen(false);
       setForm({ datum: new Date().toISOString().slice(0, 10), omschrijving: "", bedrag: "", categorie: "overig", bonnetjeUrl: "" });
-      fetchData();
-    } catch (err) {
+      queryClient.invalidateQueries({ queryKey: ["team", "declaraties"] });
+    },
+    onError: (err) => {
       addToast(err instanceof Error ? err.message : "Fout bij indienen", "fout");
-    } finally {
-      setSaving(false);
-    }
-  };
+    },
+  });
 
-  const handleStatusUpdate = async (id: number, status: "goedgekeurd" | "afgewezen" | "uitbetaald") => {
-    try {
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: "goedgekeurd" | "afgewezen" | "uitbetaald" }) => {
       const res = await fetch(`/api/team/declaraties/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.fout || "Kon status niet bijwerken");
+        const d = await res.json();
+        throw new Error(d.fout || "Kon status niet bijwerken");
       }
+      return status;
+    },
+    onSuccess: (status) => {
       addToast(`Declaratie ${status}`, "succes");
-      fetchData();
-    } catch (err) {
+      queryClient.invalidateQueries({ queryKey: ["team", "declaraties"] });
+    },
+    onError: (err) => {
       addToast(err instanceof Error ? err.message : "Fout bij bijwerken", "fout");
+    },
+  });
+
+  const handleSubmit = () => {
+    if (!form.omschrijving.trim() || !form.bedrag) {
+      addToast("Vul alle verplichte velden in", "fout");
+      return;
     }
+    submitMutation.mutate(form);
   };
+
+  const handleStatusUpdate = (id: number, status: "goedgekeurd" | "afgewezen" | "uitbetaald") => {
+    statusMutation.mutate({ id, status });
+  };
+
+  const saving = submitMutation.isPending;
 
   if (loading) {
     return (
@@ -1037,32 +943,12 @@ function DeclaratiesTab({ currentUser }: { currentUser: CurrentUser | null }) {
 // ============ CAPACITEIT TAB ============
 
 function CapaciteitTab() {
-  const { addToast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<CapaciteitData | null>(null);
-
   const now = new Date();
   const currentWeekInfo = getISOWeek(now);
   const [week, setWeek] = useState(currentWeekInfo.week);
   const [jaar, setJaar] = useState(currentWeekInfo.jaar);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/team/capaciteit?week=${week}&jaar=${jaar}`);
-      if (!res.ok) throw new Error();
-      const json = await res.json();
-      setData(json);
-    } catch {
-      addToast("Kon capaciteit niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [week, jaar, addToast]);
-
-  useEffect(() => {
-    setLoading(true);
-    fetchData();
-  }, [fetchData]);
+  const { data, isLoading: loading } = useCapaciteit(week, jaar);
 
   const navigateWeek = (direction: number) => {
     let newWeek = week + direction;

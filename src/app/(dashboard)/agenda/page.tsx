@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -18,19 +18,9 @@ import { cn, formatDatum } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface AgendaItem {
-  id: number;
-  gebruikerId: number | null;
-  gebruikerNaam: string | null;
-  titel: string;
-  omschrijving: string | null;
-  type: string;
-  startDatum: string;
-  eindDatum: string | null;
-  heleDag: number | null;
-  herinneringMinuten: number | null;
-}
+import { useAgenda } from "@/hooks/queries/use-agenda";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { AgendaItem } from "@/hooks/queries/use-agenda";
 
 const typeConfig: Record<string, { icon: typeof Calendar; color: string; bg: string; label: string }> = {
   afspraak: { icon: CalendarCheck, color: "text-blue-400", bg: "bg-blue-500/15 border-blue-500/30", label: "Afspraak" },
@@ -47,7 +37,6 @@ const MAANDEN = [
 
 function getMaandDagen(jaar: number, maand: number) {
   const eersteDag = new Date(jaar, maand, 1);
-  // Get day of week (0=Sun), convert to Mon=0
   let startDag = eersteDag.getDay() - 1;
   if (startDag < 0) startDag = 6;
 
@@ -56,7 +45,6 @@ function getMaandDagen(jaar: number, maand: number) {
 
   const cellen: { dag: number; maand: number; jaar: number; isHuidigeMaand: boolean }[] = [];
 
-  // Vorige maand
   for (let i = startDag - 1; i >= 0; i--) {
     const d = vorigeMaandDagen - i;
     const m = maand === 0 ? 11 : maand - 1;
@@ -64,12 +52,10 @@ function getMaandDagen(jaar: number, maand: number) {
     cellen.push({ dag: d, maand: m, jaar: j, isHuidigeMaand: false });
   }
 
-  // Huidige maand
   for (let d = 1; d <= aantalDagen; d++) {
     cellen.push({ dag: d, maand, jaar, isHuidigeMaand: true });
   }
 
-  // Volgende maand — vul tot 42 cellen (6 rijen)
   const rest = 42 - cellen.length;
   for (let d = 1; d <= rest; d++) {
     const m = maand === 11 ? 0 : maand + 1;
@@ -86,16 +72,14 @@ function datumStr(jaar: number, maand: number, dag: number) {
 
 export default function AgendaPage() {
   const { addToast } = useToast();
+  const queryClient = useQueryClient();
   const vandaag = new Date();
   const [jaar, setJaar] = useState(vandaag.getFullYear());
   const [maand, setMaand] = useState(vandaag.getMonth());
-  const [items, setItems] = useState<AgendaItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<AgendaItem | null>(null);
 
-  // Nieuw item form
   const [titel, setTitel] = useState("");
   const [omschrijving, setOmschrijving] = useState("");
   const [type, setType] = useState<string>("afspraak");
@@ -103,31 +87,45 @@ export default function AgendaPage() {
   const [startTijd, setStartTijd] = useState("09:00");
   const [eindTijd, setEindTijd] = useState("10:00");
   const [heleDag, setHeleDag] = useState(false);
-  const [formLaden, setFormLaden] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    try {
-      // Fetch range: vorige maand start tot volgende maand eind
-      const van = datumStr(maand === 0 ? jaar - 1 : jaar, maand === 0 ? 11 : maand - 1, 1);
-      const totJaar = maand === 11 ? jaar + 1 : jaar;
-      const totMaand = maand === 11 ? 0 : maand + 1;
-      const totDagen = new Date(totJaar, totMaand + 1, 0).getDate();
-      const tot = datumStr(totJaar, totMaand, totDagen);
+  const { data: items = [], isLoading: loading } = useAgenda(jaar, maand);
 
-      const res = await fetch(`/api/agenda?van=${van}&tot=${tot}`);
+  const saveMutation = useMutation({
+    mutationFn: async (payload: { item: AgendaItem | null; body: Record<string, unknown> }) => {
+      const url = payload.item ? `/api/agenda/${payload.item.id}` : "/api/agenda";
+      const method = payload.item ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload.body),
+      });
       if (!res.ok) throw new Error();
-      const json = await res.json();
-      setItems(json.items);
-    } catch {
-      addToast("Kon agenda niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [jaar, maand, addToast]);
+      return payload.item !== null;
+    },
+    onSuccess: (wasUpdate) => {
+      addToast(wasUpdate ? "Item bijgewerkt" : "Item aangemaakt", "succes");
+      setModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["agenda"] });
+    },
+    onError: () => {
+      addToast("Kon item niet opslaan", "fout");
+    },
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/agenda/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+    },
+    onSuccess: () => {
+      addToast("Item verwijderd");
+      setModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["agenda"] });
+    },
+    onError: () => {
+      addToast("Kon item niet verwijderen", "fout");
+    },
+  });
 
   const cellen = useMemo(() => getMaandDagen(jaar, maand), [jaar, maand]);
 
@@ -174,74 +172,34 @@ export default function AgendaPage() {
     setModalOpen(true);
   }
 
-  async function handleOpslaan() {
+  function handleOpslaan() {
     if (!titel.trim()) {
       addToast("Titel is verplicht", "fout");
       return;
     }
-    setFormLaden(true);
-    try {
-      const startFull = heleDag ? startDatum : `${startDatum}T${startTijd}:00`;
-      const eindFull = heleDag ? null : `${startDatum}T${eindTijd}:00`;
+    const startFull = heleDag ? startDatum : `${startDatum}T${startTijd}:00`;
+    const eindFull = heleDag ? null : `${startDatum}T${eindTijd}:00`;
 
-      if (selectedItem) {
-        // Update
-        const res = await fetch(`/api/agenda/${selectedItem.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            titel: titel.trim(),
-            omschrijving: omschrijving.trim() || null,
-            type,
-            startDatum: startFull,
-            eindDatum: eindFull,
-            heleDag,
-          }),
-        });
-        if (!res.ok) throw new Error();
-        addToast("Item bijgewerkt", "succes");
-      } else {
-        // Create
-        const res = await fetch("/api/agenda", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            titel: titel.trim(),
-            omschrijving: omschrijving.trim() || null,
-            type,
-            startDatum: startFull,
-            eindDatum: eindFull,
-            heleDag,
-          }),
-        });
-        if (!res.ok) throw new Error();
-        addToast("Item aangemaakt", "succes");
-      }
-      setModalOpen(false);
-      fetchData();
-    } catch {
-      addToast("Kon item niet opslaan", "fout");
-    } finally {
-      setFormLaden(false);
-    }
+    saveMutation.mutate({
+      item: selectedItem,
+      body: {
+        titel: titel.trim(),
+        omschrijving: omschrijving.trim() || null,
+        type,
+        startDatum: startFull,
+        eindDatum: eindFull,
+        heleDag,
+      },
+    });
   }
 
-  async function handleVerwijder() {
+  function handleVerwijder() {
     if (!selectedItem) return;
-    try {
-      const res = await fetch(`/api/agenda/${selectedItem.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      addToast("Item verwijderd");
-      setModalOpen(false);
-      fetchData();
-    } catch {
-      addToast("Kon item niet verwijderen", "fout");
-    }
+    deleteMutation.mutate(selectedItem.id);
   }
 
   const vandaagStr = datumStr(vandaag.getFullYear(), vandaag.getMonth(), vandaag.getDate());
 
-  // Upcoming items for sidebar
   const aankomend = items
     .filter((i) => i.startDatum.slice(0, 10) >= vandaagStr)
     .sort((a, b) => a.startDatum.localeCompare(b.startDatum))
@@ -553,10 +511,10 @@ export default function AgendaPage() {
               </button>
               <button
                 onClick={handleOpslaan}
-                disabled={formLaden}
+                disabled={saveMutation.isPending}
                 className="px-6 py-2.5 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-autronis-accent/20 disabled:opacity-50"
               >
-                {formLaden ? "Opslaan..." : selectedItem ? "Bijwerken" : "Toevoegen"}
+                {saveMutation.isPending ? "Opslaan..." : selectedItem ? "Bijwerken" : "Toevoegen"}
               </button>
             </div>
           </div>

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Play, Square, Plus, Pencil, Trash2, Download, RotateCcw, Clock, Timer } from "lucide-react";
 import { useTimer, loadTimerFromStorage } from "@/hooks/use-timer";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn, formatUren } from "@/lib/utils";
@@ -12,29 +13,7 @@ import { HandmatigModal } from "./handmatig-modal";
 import { PageTransition } from "@/components/ui/page-transition";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
-
-// ============ TYPES ============
-
-interface Project {
-  id: number;
-  naam: string;
-  klantId: number;
-  klantNaam: string;
-  status: string;
-}
-
-interface Registratie {
-  id: number;
-  projectId: number;
-  omschrijving: string | null;
-  startTijd: string;
-  eindTijd: string | null;
-  duurMinuten: number | null;
-  categorie: string;
-  isHandmatig: number;
-  projectNaam: string | null;
-  klantNaam: string | null;
-}
+import { useProjecten, useRegistraties, type Project, type Registratie } from "@/hooks/queries/use-tijdregistraties";
 
 type Periode = "dag" | "week" | "maand";
 
@@ -261,11 +240,9 @@ export default function TijdregistratiePage() {
   const router = useRouter();
   const timer = useTimer();
   const { addToast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [projecten, setProjecten] = useState<Project[]>([]);
-  const [registraties, setRegistraties] = useState<Registratie[]>([]);
   const [periode, setPeriode] = useState<Periode>("week");
-  const [laden, setLaden] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [bewerkRegistratie, setBewerkRegistratie] = useState<Registratie | null>(null);
   const [verwijderConfirm, setVerwijderConfirm] = useState<number | null>(null);
@@ -282,35 +259,19 @@ export default function TijdregistratiePage() {
   const range = getPeriodeRange(periode, new Date());
 
   // Load projects
+  const { data: projecten = [] } = useProjecten();
+
+  // Set default project when projecten load
   useEffect(() => {
-    fetch("/api/projecten")
-      .then((r) => r.json())
-      .then((data) => {
-        setProjecten(data.projecten || []);
-        if (data.projecten?.length > 0 && !timerProjectId) {
-          setTimerProjectId(data.projecten[0].id);
-        }
-      })
-      .catch(() => addToast("Kon projecten niet laden", "fout"));
-  }, []);
+    if (projecten.length > 0 && !timerProjectId) {
+      setTimerProjectId(projecten[0].id);
+    }
+  }, [projecten, timerProjectId]);
 
   // Load registrations
-  const laadRegistraties = useCallback(() => {
-    fetch(`/api/tijdregistraties?van=${range.van}&tot=${range.tot}`)
-      .then((r) => r.json())
-      .then((data) => {
-        setRegistraties(data.registraties || []);
-        setLaden(false);
-      })
-      .catch(() => {
-        addToast("Kon registraties niet laden", "fout");
-        setLaden(false);
-      });
-  }, [range.van, range.tot]);
+  const { data: registraties = [], isLoading: laden } = useRegistraties(range.van, range.tot);
 
-  useEffect(() => {
-    laadRegistraties();
-  }, [laadRegistraties]);
+  const invalidateRegistraties = () => queryClient.invalidateQueries({ queryKey: ["registraties"] });
 
   // Restore timer from localStorage / active DB entry on mount
   useEffect(() => {
@@ -397,7 +358,7 @@ export default function TijdregistratiePage() {
 
       const { registratie } = await res.json();
       timer.start(timerProjectId, timerOmschrijving, timerCategorie, registratie.id);
-      laadRegistraties();
+      invalidateRegistraties();
     } catch (error) {
       addToast(error instanceof Error ? error.message : "Kon timer niet starten", "fout");
     }
@@ -426,7 +387,7 @@ export default function TijdregistratiePage() {
 
       timer.stop();
       setTimerOmschrijving("");
-      laadRegistraties();
+      invalidateRegistraties();
       addToast("Timer gestopt");
     } catch {
       addToast("Kon timer niet stoppen", "fout");
@@ -438,7 +399,7 @@ export default function TijdregistratiePage() {
     try {
       const res = await fetch(`/api/tijdregistraties/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      laadRegistraties();
+      invalidateRegistraties();
       addToast("Registratie verwijderd");
     } catch {
       addToast("Kon registratie niet verwijderen", "fout");
@@ -465,7 +426,7 @@ export default function TijdregistratiePage() {
       if (!res.ok) throw new Error();
       const { registratie } = await res.json();
       timer.start(reg.projectId, reg.omschrijving || "", reg.categorie as TijdCategorie, registratie.id);
-      laadRegistraties();
+      invalidateRegistraties();
       addToast("Timer gestart");
     } catch {
       addToast("Kon timer niet starten", "fout");
@@ -896,7 +857,7 @@ export default function TijdregistratiePage() {
         onOpgeslagen={() => {
           setModalOpen(false);
           setBewerkRegistratie(null);
-          laadRegistraties();
+          invalidateRegistraties();
         }}
       />
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
   FileWarning,
@@ -10,26 +11,28 @@ import {
   UserPlus,
   X,
   CheckCheck,
+  Calendar,
+  Plane,
+  ThumbsUp,
+  MessageSquare,
+  FileSignature,
+  FileCheck,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-
-interface Notificatie {
-  id: number;
-  gebruikerId: number;
-  type: "factuur_te_laat" | "deadline_nadert" | "factuur_betaald" | "taak_toegewezen";
-  titel: string;
-  omschrijving: string | null;
-  link: string | null;
-  gelezen: number;
-  aangemaaktOp: string;
-}
+import { useNotificaties, type Notificatie } from "@/hooks/queries/use-notificaties";
 
 const typeIcons: Record<Notificatie["type"], typeof Bell> = {
   factuur_te_laat: FileWarning,
   deadline_nadert: Clock,
   factuur_betaald: CheckCircle,
   taak_toegewezen: UserPlus,
+  belasting_deadline: Calendar,
+  verlof_aangevraagd: Plane,
+  verlof_goedgekeurd: ThumbsUp,
+  client_bericht: MessageSquare,
+  proposal_ondertekend: FileSignature,
+  offerte_geaccepteerd: FileCheck,
 };
 
 const typeKleuren: Record<Notificatie["type"], string> = {
@@ -37,6 +40,12 @@ const typeKleuren: Record<Notificatie["type"], string> = {
   deadline_nadert: "text-amber-400",
   factuur_betaald: "text-emerald-400",
   taak_toegewezen: "text-autronis-accent",
+  belasting_deadline: "text-orange-400",
+  verlof_aangevraagd: "text-blue-400",
+  verlof_goedgekeurd: "text-emerald-400",
+  client_bericht: "text-purple-400",
+  proposal_ondertekend: "text-emerald-400",
+  offerte_geaccepteerd: "text-autronis-accent",
 };
 
 function tijdGeleden(datum: string): string {
@@ -60,35 +69,20 @@ function tijdGeleden(datum: string): string {
 
 export function NotificationCenter() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [notificaties, setNotificaties] = useState<Notificatie[]>([]);
-  const [ongelezen, setOngelezen] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const fetchNotificaties = useCallback(async () => {
-    try {
-      const res = await fetch("/api/notificaties");
-      if (!res.ok) return;
-      const data = await res.json();
-      setNotificaties(data.notificaties || []);
-      setOngelezen(data.ongelezen || 0);
-    } catch {
-      // Silently fail
-    }
-  }, []);
+  const { data } = useNotificaties();
+  const notificaties = data?.notificaties ?? [];
+  const ongelezen = data?.ongelezen ?? 0;
 
-  // Initial fetch + genereer notificaties
+  // Genereer notificaties bij mount
   useEffect(() => {
     fetch("/api/notificaties/genereer", { method: "POST" }).then(() => {
-      fetchNotificaties();
+      queryClient.invalidateQueries({ queryKey: ["notificaties"] });
     });
-  }, [fetchNotificaties]);
-
-  // Poll elke 30 seconden
-  useEffect(() => {
-    const interval = setInterval(fetchNotificaties, 30000);
-    return () => clearInterval(interval);
-  }, [fetchNotificaties]);
+  }, [queryClient]);
 
   // Sluit panel als je buiten klikt
   useEffect(() => {
@@ -103,27 +97,30 @@ export function NotificationCenter() {
     }
   }, [open]);
 
-  async function markeerAllesGelezen() {
-    try {
-      await fetch("/api/notificaties", { method: "PUT" });
-      setNotificaties((prev) => prev.map((n) => ({ ...n, gelezen: 1 })));
-      setOngelezen(0);
-    } catch {
-      // Silently fail
-    }
-  }
+  const markeerAllesMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/notificaties", { method: "PUT" });
+      if (!res.ok) throw new Error();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notificaties"] });
+    },
+  });
 
-  async function handleNotificatieKlik(notificatie: Notificatie) {
+  const markeerGelezenMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/notificaties/${id}`, { method: "PUT" });
+      if (!res.ok) throw new Error();
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notificaties"] });
+    },
+  });
+
+  function handleNotificatieKlik(notificatie: Notificatie) {
     if (notificatie.gelezen === 0) {
-      try {
-        await fetch(`/api/notificaties/${notificatie.id}`, { method: "PUT" });
-        setNotificaties((prev) =>
-          prev.map((n) => (n.id === notificatie.id ? { ...n, gelezen: 1 } : n))
-        );
-        setOngelezen((prev) => Math.max(0, prev - 1));
-      } catch {
-        // Silently fail
-      }
+      markeerGelezenMutation.mutate(notificatie.id);
     }
     if (notificatie.link) {
       setOpen(false);
@@ -133,7 +130,6 @@ export function NotificationCenter() {
 
   return (
     <div className="relative" ref={panelRef}>
-      {/* Bell button */}
       <button
         onClick={() => setOpen(!open)}
         className="relative p-2 rounded-lg hover:bg-autronis-border text-autronis-text-secondary transition-colors"
@@ -147,7 +143,6 @@ export function NotificationCenter() {
         )}
       </button>
 
-      {/* Dropdown panel */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -157,7 +152,6 @@ export function NotificationCenter() {
             transition={{ duration: 0.15 }}
             className="absolute right-0 top-full mt-2 w-80 bg-autronis-card border border-autronis-border rounded-xl shadow-2xl overflow-hidden z-50"
           >
-            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-autronis-border">
               <h3 className="text-sm font-semibold text-autronis-text-primary">
                 Notificaties
@@ -165,7 +159,7 @@ export function NotificationCenter() {
               <div className="flex items-center gap-1">
                 {ongelezen > 0 && (
                   <button
-                    onClick={markeerAllesGelezen}
+                    onClick={() => markeerAllesMutation.mutate()}
                     className="flex items-center gap-1 text-xs text-autronis-accent hover:text-autronis-accent-hover transition-colors px-2 py-1 rounded-lg hover:bg-autronis-accent/10"
                     title="Alles als gelezen markeren"
                   >
@@ -182,7 +176,6 @@ export function NotificationCenter() {
               </div>
             </div>
 
-            {/* Lijst */}
             <div className="max-h-96 overflow-y-auto">
               {notificaties.length === 0 ? (
                 <div className="px-4 py-8 text-center text-sm text-autronis-text-secondary">

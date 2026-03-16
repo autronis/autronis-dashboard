@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -21,74 +21,15 @@ import {
   ExternalLink,
   Trash2,
 } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn, formatUren, formatBedrag, formatDatum } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useKlantDetail, NotFoundError } from "@/hooks/queries/use-klant-detail";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { KlantModal } from "../klant-modal";
 import { ProjectModal } from "./project-modal";
 import { NoteModal } from "./note-modal";
 import { DocumentModal } from "./document-modal";
-
-interface Klant {
-  id: number;
-  bedrijfsnaam: string;
-  contactpersoon: string | null;
-  email: string | null;
-  telefoon: string | null;
-  adres: string | null;
-  uurtarief: number | null;
-  notities: string | null;
-}
-
-interface Project {
-  id: number;
-  naam: string;
-  omschrijving: string | null;
-  status: string;
-  voortgangPercentage: number | null;
-  werkelijkeMinuten: number;
-  geschatteUren: number | null;
-  deadline: string | null;
-  isActief: number;
-}
-
-interface Notitie {
-  id: number;
-  inhoud: string;
-  type: string;
-  aangemaaktOp: string;
-}
-
-interface DocumentItem {
-  id: number;
-  naam: string;
-  url: string | null;
-  type: string;
-  aangemaaktOp: string;
-}
-
-interface Tijdregistratie {
-  id: number;
-  omschrijving: string;
-  projectNaam: string | null;
-  startTijd: string;
-  duurMinuten: number;
-  categorie: string | null;
-}
-
-interface KlantData {
-  klant: Klant;
-  projecten: Project[];
-  notities: Notitie[];
-  documenten: DocumentItem[];
-  recenteTijdregistraties: Tijdregistratie[];
-  kpis: {
-    aantalProjecten: number;
-    totaalMinuten: number;
-    omzet: number;
-    uurtarief: number;
-  };
-}
 
 const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
   actief: { bg: "bg-green-500/15", text: "text-green-400", label: "Actief" },
@@ -126,11 +67,10 @@ export default function KlantDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { addToast } = useToast();
+  const queryClient = useQueryClient();
   const id = Number(params.id);
 
-  const [data, setData] = useState<KlantData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  const { data, isLoading, error } = useKlantDetail(id);
 
   const [klantModalOpen, setKlantModalOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
@@ -139,54 +79,41 @@ export default function KlantDetailPage() {
   const [documentModalOpen, setDocumentModalOpen] = useState(false);
   const [deleteDocId, setDeleteDocId] = useState<number | null>(null);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/klanten/${id}`);
-      if (res.status === 404) {
-        setNotFound(true);
-        setLoading(false);
-        return;
-      }
-      if (!res.ok) throw new Error("Fout bij ophalen klantgegevens");
-      const json = await res.json();
-      setData(json);
-    } catch {
-      addToast("Kon klantgegevens niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [id, addToast]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const handleArchive = async () => {
-    try {
+  const archiveMutation = useMutation({
+    mutationFn: async () => {
       const res = await fetch(`/api/klanten/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
+    },
+    onSuccess: () => {
       addToast("Klant gearchiveerd", "succes");
       router.push("/klanten");
-    } catch {
+    },
+    onError: () => {
       addToast("Kon klant niet archiveren", "fout");
-    }
-  };
+    },
+  });
 
-  const handleDeleteDoc = async () => {
-    if (!deleteDocId) return;
-    try {
-      const res = await fetch(`/api/documenten/${deleteDocId}`, { method: "DELETE" });
+  const deleteDocMutation = useMutation({
+    mutationFn: async (docId: number) => {
+      const res = await fetch(`/api/documenten/${docId}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
+    },
+    onSuccess: () => {
       addToast("Document verwijderd");
       setDeleteDocId(null);
-      fetchData();
-    } catch {
+      queryClient.invalidateQueries({ queryKey: ["klant", id] });
+    },
+    onError: () => {
       addToast("Kon document niet verwijderen", "fout");
-    }
+    },
+  });
+
+  const invalidateKlant = () => {
+    queryClient.invalidateQueries({ queryKey: ["klant", id] });
   };
 
   // Loading state
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="w-12 h-12 border-2 border-autronis-accent/30 border-t-autronis-accent rounded-full animate-spin" />
@@ -195,6 +122,7 @@ export default function KlantDetailPage() {
   }
 
   // 404 state
+  const notFound = error instanceof NotFoundError;
   if (notFound || !data) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
@@ -312,7 +240,7 @@ export default function KlantDetailPage() {
                 <div>
                   <p className="text-xs text-autronis-text-secondary uppercase tracking-wide">Contactpersoon</p>
                   <p className="text-base text-autronis-text-primary mt-0.5">
-                    {klant.contactpersoon || "—"}
+                    {klant.contactpersoon || "\u2014"}
                   </p>
                 </div>
               </div>
@@ -328,7 +256,7 @@ export default function KlantDetailPage() {
                       {klant.email}
                     </a>
                   ) : (
-                    <p className="text-base text-autronis-text-primary mt-0.5">—</p>
+                    <p className="text-base text-autronis-text-primary mt-0.5">\u2014</p>
                   )}
                 </div>
               </div>
@@ -344,7 +272,7 @@ export default function KlantDetailPage() {
                       {klant.telefoon}
                     </a>
                   ) : (
-                    <p className="text-base text-autronis-text-primary mt-0.5">—</p>
+                    <p className="text-base text-autronis-text-primary mt-0.5">\u2014</p>
                   )}
                 </div>
               </div>
@@ -353,7 +281,7 @@ export default function KlantDetailPage() {
                 <div>
                   <p className="text-xs text-autronis-text-secondary uppercase tracking-wide">Adres</p>
                   <p className="text-base text-autronis-text-primary mt-0.5">
-                    {klant.adres || "—"}
+                    {klant.adres || "\u2014"}
                   </p>
                 </div>
               </div>
@@ -395,7 +323,7 @@ export default function KlantDetailPage() {
                             {doc.naam}
                           </p>
                           <p className="text-sm text-autronis-text-secondary mt-0.5">
-                            {doc.type.charAt(0).toUpperCase() + doc.type.slice(1)} — {formatDatum(doc.aangemaaktOp)}
+                            {doc.type.charAt(0).toUpperCase() + doc.type.slice(1)} \u2014 {formatDatum(doc.aangemaaktOp)}
                           </p>
                         </div>
                       </div>
@@ -606,14 +534,14 @@ export default function KlantDetailPage() {
         klant={klant}
         onOpgeslagen={() => {
           setKlantModalOpen(false);
-          fetchData();
+          invalidateKlant();
         }}
       />
 
       <ConfirmDialog
         open={archiveDialogOpen}
         onClose={() => setArchiveDialogOpen(false)}
-        onBevestig={handleArchive}
+        onBevestig={() => archiveMutation.mutate()}
         titel="Klant archiveren?"
         bericht={`Weet je zeker dat je "${klant.bedrijfsnaam}" wilt archiveren? Deze actie kan niet ongedaan worden gemaakt.`}
         bevestigTekst="Archiveren"
@@ -626,7 +554,7 @@ export default function KlantDetailPage() {
         klantId={id}
         onOpgeslagen={() => {
           setProjectModalOpen(false);
-          fetchData();
+          invalidateKlant();
         }}
       />
 
@@ -636,7 +564,7 @@ export default function KlantDetailPage() {
         klantId={id}
         onOpgeslagen={() => {
           setNoteModalOpen(false);
-          fetchData();
+          invalidateKlant();
         }}
       />
 
@@ -646,14 +574,14 @@ export default function KlantDetailPage() {
         klantId={id}
         onOpgeslagen={() => {
           setDocumentModalOpen(false);
-          fetchData();
+          invalidateKlant();
         }}
       />
 
       <ConfirmDialog
         open={deleteDocId !== null}
         onClose={() => setDeleteDocId(null)}
-        onBevestig={handleDeleteDoc}
+        onBevestig={() => deleteDocId && deleteDocMutation.mutate(deleteDocId)}
         titel="Document verwijderen?"
         bericht="Weet je zeker dat je dit document wilt verwijderen?"
         bevestigTekst="Verwijderen"

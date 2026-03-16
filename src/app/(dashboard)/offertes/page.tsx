@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   FileText,
@@ -15,33 +15,13 @@ import {
 } from "lucide-react";
 import { cn, formatBedrag, formatDatumKort } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useOffertes } from "@/hooks/queries/use-offertes";
 import { PageTransition } from "@/components/ui/page-transition";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface Offerte {
-  id: number;
-  offertenummer: string;
-  titel: string | null;
-  klantId: number;
-  klantNaam: string;
-  status: string;
-  datum: string | null;
-  geldigTot: string | null;
-  bedragExclBtw: number | null;
-  btwBedrag: number | null;
-  bedragInclBtw: number | null;
-  aangemaaktOp: string | null;
-}
-
-interface KPIs {
-  openstaandCount: number;
-  openstaandWaarde: number;
-  geaccepteerdDezeMaand: number;
-  winRate: number;
-}
 
 const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
   concept: { bg: "bg-slate-500/15", text: "text-slate-400", label: "Concept" },
@@ -73,51 +53,33 @@ function OffertesSkeleton() {
 
 export default function OffertesPage() {
   const { addToast } = useToast();
-  const [offertes, setOffertes] = useState<Offerte[]>([]);
-  const [kpis, setKpis] = useState<KPIs>({
-    openstaandCount: 0,
-    openstaandWaarde: 0,
-    geaccepteerdDezeMaand: 0,
-    winRate: 0,
-  });
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string>("alle");
   const [zoek, setZoek] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (statusFilter !== "alle") params.set("status", statusFilter);
-      if (zoek) params.set("zoek", zoek);
+  const { data, isLoading: loading } = useOffertes(statusFilter, zoek);
+  const offertes = data?.offertes ?? [];
+  const kpis = data?.kpis ?? { openstaandCount: 0, openstaandWaarde: 0, geaccepteerdDezeMaand: 0, winRate: 0 };
 
-      const res = await fetch(`/api/offertes?${params}`);
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/offertes/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      const json = await res.json();
-      setOffertes(json.offertes);
-      setKpis(json.kpis);
-    } catch {
-      addToast("Kon offertes niet laden", "fout");
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter, zoek, addToast]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    try {
-      const res = await fetch(`/api/offertes/${deleteId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
+    },
+    onSuccess: () => {
       addToast("Offerte verwijderd", "succes");
       setDeleteId(null);
-      await fetchData();
-    } catch {
+      queryClient.invalidateQueries({ queryKey: ["offertes"] });
+    },
+    onError: () => {
       addToast("Kon offerte niet verwijderen", "fout");
-    }
+    },
+  });
+
+  const handleDelete = () => {
+    if (!deleteId) return;
+    deleteMutation.mutate(deleteId);
   };
 
   const deleteOfferte = offertes.find((o) => o.id === deleteId);
