@@ -3,6 +3,7 @@
 @theme inline {
   --color-autronis-bg: var(--bg);
   --color-autronis-card: var(--card);
+  --color-autronis-card-hover: var(--card-hover);
   --color-autronis-accent: var(--accent);
   --color-autronis-accent-hover: var(--accent-hover);
   --color-autronis-success: var(--success);
@@ -10,13 +11,16 @@
   --color-autronis-danger: var(--danger);
   --color-autronis-text-primary: var(--text-primary);
   --color-autronis-text-secondary: var(--text-secondary);
+  --color-autronis-text-tertiary: var(--text-tertiary);
   --color-autronis-border: var(--border);
+  --color-autronis-border-hover: var(--border-hover);
 }
 
 @layer base {
   :root {
     --bg: #FAFAFA;
     --card: #FFFFFF;
+    --card-hover: #F8FAFB;
     --accent: #128C7E;
     --accent-hover: #0E6B5F;
     --success: #16A34A;
@@ -24,20 +28,25 @@
     --danger: #DC2626;
     --text-primary: #1F2529;
     --text-secondary: #64748B;
+    --text-tertiary: #94A3B8;
     --border: #E2E8F0;
+    --border-hover: rgba(18,140,126,0.3);
   }
 
   .dark {
-    --bg: #0E1719;
-    --card: #192225;
-    --accent: #17B8A5;
-    --accent-hover: #4DC9B4;
+    --bg: #0B1A1F;
+    --card: #112B34;
+    --card-hover: #153540;
+    --accent: #2DD4A8;
+    --accent-hover: #5EEAD4;
     --success: #22C55E;
     --warning: #F97316;
     --danger: #EF4444;
-    --text-primary: #F5F5F5;
+    --text-primary: #F1F5F9;
     --text-secondary: #94A3B8;
-    --border: #273134;
+    --text-tertiary: #64748B;
+    --border: #1E3A45;
+    --border-hover: rgba(45,212,168,0.3);
   }
 
   body {
@@ -61,14 +70,20 @@
   animation: slide-in 0.3s ease-out;
 }
 
-.card-glow {
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+/* Card gradient */
+.card-gradient {
+  background: linear-gradient(135deg, var(--card) 0%, #0F2830 100%);
 }
 
+/* Improved card-glow */
+.card-glow {
+  transition: all 0.2s ease;
+  border-color: var(--border);
+}
 .card-glow:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 15%, transparent),
-              0 0 40px color-mix(in srgb, var(--accent) 8%, transparent);
+  transform: translateY(-2px);
+  border-color: rgba(45,212,168,0.3);
+  box-shadow: 0 8px 32px rgba(45,212,168,0.08), 0 4px 16px rgba(0,0,0,0.2);
 }
 
 /* Gradient KPI kaarten */
@@ -101,10 +116,12 @@
   -webkit-backdrop-filter: blur(12px);
 }
 
+/* Glassmorphism for modals/dropdowns only */
 .glass-modal {
-  background: color-mix(in srgb, var(--card) 90%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  background: rgba(11,26,31,0.85);
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
 /* Focus states */
@@ -146,6 +163,43 @@ button:focus-visible {
 /* Theme transition */
 body {
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Icon glow for KPI cards */
+.icon-glow {
+  filter: drop-shadow(0 0 8px rgba(45,212,168,0.4));
+}
+
+/* Button press micro-interaction */
+.btn-press:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .card-glow:hover {
+    transform: none;
+  }
+  .btn-press:active {
+    transform: none;
+  }
+}
+
+/* Table styling */
+.table-row-hover:hover {
+  background: rgba(255,255,255,0.03);
+}
+.table-row-alt:nth-child(even) {
+  background: rgba(255,255,255,0.01);
+}
+.table-header-sticky {
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(11,26,31,0.9);
+  z-index: 10;
 }
 
 /* Safe area for mobile */
