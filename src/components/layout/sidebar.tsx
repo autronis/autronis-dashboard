@@ -29,6 +29,7 @@ import {
   Mic,
   Radar,
   Lightbulb,
+  Megaphone,
 } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { cn } from "@/lib/utils";
@@ -51,6 +52,7 @@ const navItems = [
   { label: "Team", icon: Users2, href: "/team" },
   { label: "Kilometers", icon: Car, href: "/kilometers" },
   { label: "Wiki", icon: BookOpen, href: "/wiki" },
+  { label: "Content", icon: Megaphone, href: "/content" },
   { label: "Documenten", icon: FileText, href: "/documenten" },
   { label: "Learning Radar", icon: Radar, href: "/radar" },
   { label: "AI Assistent", icon: Sparkles, href: "/ai-assistent" },
