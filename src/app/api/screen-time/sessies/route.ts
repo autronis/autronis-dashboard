@@ -230,11 +230,11 @@ export async function GET(req: NextRequest) {
       .orderBy(asc(screenTimeEntries.startTijd))
       .all();
 
-    // Filter out system/lock screen apps
-    const SYSTEM_APPS = ["LockApp", "SearchHost", "ShellHost", "ShellExperienceHost", "StartMenuExperienceHost", "ApplicationFrameHost"];
+    // Filter out system apps AND idle entries (idle = gaps in timeline)
+    const SYSTEM_APPS = ["LockApp", "SearchHost", "ShellHost", "ShellExperienceHost", "StartMenuExperienceHost", "ApplicationFrameHost", "Inactief"];
 
     const filteredEntries = entries
-      .filter(e => !SYSTEM_APPS.includes(e.app))
+      .filter(e => !SYSTEM_APPS.includes(e.app) && e.categorie !== "inactief")
       .map(e => ({
         ...e,
         categorie: e.categorie ?? "overig",
@@ -242,11 +242,13 @@ export async function GET(req: NextRequest) {
 
     const sessies = groupIntoSessions(filteredEntries);
 
-    // Compute stats: productief = development + design + administratie
-    // Productief % = productief / (productief + communicatie + afleiding) — excludes "overig" and idle
-    const actiefSessies = sessies.filter(s => !s.isIdle);
-    const totaalActief = actiefSessies.reduce((sum, s) => sum + s.duurSeconden, 0);
-    const totaalIdle = sessies.filter(s => s.isIdle).reduce((sum, s) => sum + s.duurSeconden, 0);
+    // Compute stats from sessions (all are active since idle was filtered pre-grouping)
+    const totaalActief = sessies.reduce((sum, s) => sum + s.duurSeconden, 0);
+    // Calculate idle from original entries (before filtering)
+    const totaalIdle = entries
+      .filter(e => e.app === "Inactief" || (e.categorie ?? "overig") === "inactief")
+      .reduce((sum, e) => sum + e.duurSeconden, 0);
+    const actiefSessies = sessies;
     const productiefSeconden = actiefSessies
       .filter(s => ["development", "design", "administratie"].includes(s.categorie))
       .reduce((sum, s) => sum + s.duurSeconden, 0);
