@@ -7,8 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { DocumentBase, DocumentType, SortOption, DOCUMENT_TYPE_CONFIG, DOCUMENT_TYPE_LABELS, SORT_LABELS } from "@/types/documenten";
 import { DocumentPreview } from "./document-preview";
 import { DocumentModal } from "./document-modal";
+import { DocumentKanban } from "./document-kanban";
 import { SavedFilters } from "./saved-filters";
-import { FileText, ExternalLink, Search, ArrowUpDown, Loader2, ChevronLeft, ChevronRight, Pin, X, Clock, Archive } from "lucide-react";
+import { FileText, ExternalLink, Search, ArrowUpDown, Loader2, ChevronLeft, ChevronRight, Pin, X, Clock, Archive, List, LayoutGrid } from "lucide-react";
 
 export function DocumentList() {
   const [zoekterm, setZoekterm] = useState("");
@@ -22,6 +23,7 @@ export function DocumentList() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [duplicateDoc, setDuplicateDoc] = useState<DocumentBase | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
 
   const { data, isLoading, error } = useDocumenten(sortBy, cursor);
   const documenten = data?.documenten;
@@ -169,13 +171,31 @@ export function DocumentList() {
             setZoekterm(f.zoekterm);
           }}
         />
-        <button
-          onClick={() => setShowArchived(!showArchived)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showArchived ? "bg-autronis-accent/10 text-autronis-accent" : "text-autronis-text-secondary hover:text-autronis-text-primary"}`}
-        >
-          <Archive className="w-3.5 h-3.5" />
-          {showArchived ? "Toon actief" : "Toon gearchiveerd"}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* View toggle */}
+          <div className="flex items-center rounded-lg border border-autronis-border overflow-hidden">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-1.5 transition-colors ${viewMode === "list" ? "bg-autronis-accent/10 text-autronis-accent" : "text-autronis-text-secondary hover:text-autronis-text-primary"}`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={`p-1.5 transition-colors ${viewMode === "kanban" ? "bg-autronis-accent/10 text-autronis-accent" : "text-autronis-text-secondary hover:text-autronis-text-primary"}`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+          </div>
+
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${showArchived ? "bg-autronis-accent/10 text-autronis-accent" : "text-autronis-text-secondary hover:text-autronis-text-primary"}`}
+          >
+            <Archive className="w-3.5 h-3.5" />
+            {showArchived ? "Toon actief" : "Toon gearchiveerd"}
+          </button>
+        </div>
       </div>
 
       {/* Filters + Sort */}
@@ -230,8 +250,15 @@ export function DocumentList() {
         </div>
       </div>
 
-      {/* Document list */}
-      {!gefilterd?.length ? (
+      {/* Document list / kanban */}
+      {viewMode === "kanban" && gefilterd?.length ? (
+        <DocumentKanban
+          documenten={gefilterd}
+          onSelect={openPreview}
+          isPinned={isPinned}
+          onTogglePin={togglePin}
+        />
+      ) : !gefilterd?.length ? (
         <div className="rounded-xl bg-autronis-card border border-autronis-border p-12 text-center">
           <FileText className="w-12 h-12 mx-auto mb-3 text-autronis-text-secondary opacity-50" />
           <p className="text-autronis-text-secondary">

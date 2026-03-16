@@ -37,6 +37,7 @@ import { AnimatedNumber } from "@/components/ui/animated-number";
 import { Sparkline } from "@/components/ui/sparkline";
 import { CheckBurst } from "@/components/ui/confetti";
 import type { TijdCategorie } from "@/types";
+import { DocumentWidget } from "@/components/documenten/document-widget";
 
 function getBegroeting(): string {
   const uur = new Date().getHours();
@@ -940,6 +941,9 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+
+        {/* Documenten widget */}
+        <DocumentWidget />
 
       </div>
     </PageTransition>
