@@ -47,7 +47,7 @@ export function FocusReflectieModal() {
     <Modal
       open={focus.showReflectie}
       onClose={handleOverslaan}
-      titel="Focus sessie voltooid!"
+      titel={focus.resterend <= 0 ? "Focus sessie voltooid!" : "Focus sessie gestopt"}
       breedte="md"
     >
       <div className="space-y-5">

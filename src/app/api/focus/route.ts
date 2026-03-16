@@ -12,9 +12,12 @@ export async function GET(req: NextRequest) {
     const van = searchParams.get("van");
     const tot = searchParams.get("tot");
 
+    // Convert ISO dates to SQLite datetime format (YYYY-MM-DD HH:MM:SS)
+    const toSqliteDate = (iso: string) => iso.replace("T", " ").replace(/\.\d{3}Z$/, "");
+
     const conditions: SQL[] = [eq(focusSessies.gebruikerId, gebruiker.id)];
     if (van && tot) {
-      conditions.push(between(focusSessies.aangemaaktOp, van, tot));
+      conditions.push(between(focusSessies.aangemaaktOp, toSqliteDate(van), toSqliteDate(tot)));
     }
 
     const sessies = await db

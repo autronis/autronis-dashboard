@@ -170,7 +170,11 @@ export const useFocus = create<FocusState & FocusActions>((set, get) => ({
       }),
     });
     const focusData = await focusRes.json();
-    if (!focusRes.ok) throw new Error(focusData.fout || "Focus sessie aanmaken mislukt");
+    if (!focusRes.ok) {
+      // Cleanup orphaned tijdregistratie
+      await fetch(`/api/tijdregistraties/${regData.registratie.id}`, { method: "DELETE" });
+      throw new Error(focusData.fout || "Focus sessie aanmaken mislukt");
+    }
 
     const geplandeDuur = duurMinuten * 60;
     const startTimestamp = Date.now();
@@ -311,6 +315,8 @@ export const useFocus = create<FocusState & FocusActions>((set, get) => ({
   tick: () => {
     const state = get();
     if (!state.isActive || state.isPaused || !state.startTimestamp) return;
+    // Prevent re-triggering after completion
+    if (state.showReflectie) return;
 
     const resterend = calculateResterend(
       state.geplandeDuur,
@@ -323,10 +329,10 @@ export const useFocus = create<FocusState & FocusActions>((set, get) => ({
     set({ resterend });
 
     if (resterend <= 0) {
-      // Timer complete
+      // Timer complete — set isPaused to stop further ticks
       playFocusDing();
       showFocusNotification(state.projectNaam);
-      set({ showReflectie: true, showOverlay: false });
+      set({ showReflectie: true, showOverlay: false, isPaused: true });
     }
   },
 

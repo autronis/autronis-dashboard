@@ -10,6 +10,9 @@ function getAudioContext(): AudioContext {
 export function playFocusDing(): void {
   try {
     const ctx = getAudioContext();
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
     const oscillator = ctx.createOscillator();
     const gainNode = ctx.createGain();
 

@@ -4,6 +4,12 @@ import { db } from "@/lib/db";
 import { focusSessies, projecten } from "@/lib/db/schema";
 import { eq, and, between, inArray } from "drizzle-orm";
 
+// SQLite datetime('now') produces 'YYYY-MM-DD HH:MM:SS' format (no T, no Z)
+// All date comparisons must use this format
+function toSqliteDate(d: Date): string {
+  return d.toISOString().replace("T", " ").replace(/\.\d{3}Z$/, "");
+}
+
 function getWeekRange(offset = 0): { van: string; tot: string } {
   const now = new Date();
   const dag = now.getDay();
@@ -13,14 +19,14 @@ function getWeekRange(offset = 0): { van: string; tot: string } {
   const zondag = new Date(maandag);
   zondag.setDate(maandag.getDate() + 6);
   zondag.setHours(23, 59, 59, 999);
-  return { van: maandag.toISOString(), tot: zondag.toISOString() };
+  return { van: toSqliteDate(maandag), tot: toSqliteDate(zondag) };
 }
 
 function getVandaagRange(): { van: string; tot: string } {
   const now = new Date();
-  const van = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-  const tot = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).toISOString();
-  return { van, tot };
+  const van = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tot = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  return { van: toSqliteDate(van), tot: toSqliteDate(tot) };
 }
 
 export async function GET() {
@@ -109,7 +115,7 @@ export async function GET() {
         and(
           eq(focusSessies.gebruikerId, gebruiker.id),
           inArray(focusSessies.status, ["voltooid", "afgebroken"]),
-          between(focusSessies.aangemaaktOp, streakLookback.toISOString(), new Date().toISOString())
+          between(focusSessies.aangemaaktOp, toSqliteDate(streakLookback), toSqliteDate(new Date()))
         )
       );
 
@@ -120,6 +126,11 @@ export async function GET() {
     let streak = 0;
     const vandaagStr = new Date().toISOString().substring(0, 10);
     const checkDag = new Date(vandaagStr);
+    // If today has no sessions yet, start checking from yesterday
+    // so the streak doesn't reset to 0 every morning
+    if (!dagenMetSessie.has(vandaagStr)) {
+      checkDag.setDate(checkDag.getDate() - 1);
+    }
     while (dagenMetSessie.has(checkDag.toISOString().substring(0, 10))) {
       streak++;
       checkDag.setDate(checkDag.getDate() - 1);
