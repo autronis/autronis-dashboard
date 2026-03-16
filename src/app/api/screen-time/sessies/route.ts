@@ -36,78 +36,99 @@ function generateBeschrijving(sessie: Omit<Sessie, "beschrijving">): string {
   const titles = sessie.venstertitels;
   if (titles.length === 0) return sessie.app;
 
-  const projects = new Set<string>();
-  const files = new Set<string>();
-  const websites = new Set<string>();
-  const activities = new Set<string>();
+  // Collect context from window titles
+  const codeProjects = new Set<string>();
+  const codeFiles = new Set<string>();
+  const browseActivities: string[] = [];
+  const chatContexts = new Set<string>();
+  let hadClaudeCode = false;
+  let hadTrading = false;
 
   for (const title of titles) {
-    // VS Code: "file.tsx — project-name — Visual Studio Code"
+    // VS Code: "file — project — Visual Studio Code"
     const vscodeMatch = title.match(/^(.+?)\s*[-—]\s*(.+?)\s*[-—]\s*Visual Studio Code$/);
     if (vscodeMatch) {
-      files.add(vscodeMatch[1].trim());
-      projects.add(vscodeMatch[2].trim());
+      codeFiles.add(vscodeMatch[1].trim());
+      codeProjects.add(vscodeMatch[2].trim());
       continue;
     }
 
-    // Claude Code: "✻ [Claude Code] path"
+    // Claude Code
     if (title.includes("[Claude Code]")) {
-      activities.add("Claude Code");
+      hadClaudeCode = true;
       const pathMatch = title.match(/Projects[/\\]([^/\\]+)/);
-      if (pathMatch) projects.add(pathMatch[1]);
+      if (pathMatch) codeProjects.add(pathMatch[1]);
       continue;
     }
 
-    // Chrome: "Page Title - Google Chrome"
+    // Chrome pages → describe activity, not app
     const chromeMatch = title.match(/^(.+?)\s*[-—]\s*Google Chrome$/);
     if (chromeMatch) {
-      const pageTitle = chromeMatch[1].trim();
-      if (pageTitle.includes("GitHub")) websites.add("GitHub");
-      else if (pageTitle.includes("Notion")) websites.add("Notion");
-      else if (pageTitle.includes("localhost")) websites.add("localhost");
-      else if (pageTitle.includes("Dashboard")) websites.add("Autronis Dashboard");
-      else if (pageTitle.length < 50) websites.add(pageTitle);
+      const p = chromeMatch[1].trim();
+      if (p.includes("GitHub")) browseActivities.push("Code reviews en repositories op GitHub");
+      else if (p.includes("Notion")) browseActivities.push("Planning en documentatie in Notion");
+      else if (p.includes("localhost") || p.includes("Dashboard")) browseActivities.push("Dashboard getest");
+      else if (p.includes("Google Zoeken") || p.includes("google.com")) browseActivities.push("Online research");
+      else if (p.includes("Stack Overflow") || p.includes("stackoverflow")) browseActivities.push("Technische oplossingen gezocht");
+      else if (p.includes("YouTube")) browseActivities.push("Video content bekeken");
+      else if (p.includes("LinkedIn")) browseActivities.push("LinkedIn bekeken");
+      else if (p.includes("gmail") || p.includes("mail")) browseActivities.push("E-mail afgehandeld");
+      else if (p.length < 40 && !browseActivities.some(a => a === p)) browseActivities.push(p);
       continue;
     }
 
-    // Discord: "#channel | Server - Discord"
+    // TradingView / investing
+    if (title.includes("TradingView") || title.includes("Trading")) {
+      hadTrading = true;
+      continue;
+    }
+
+    // Discord
     const discordMatch = title.match(/^(#.+?)\s*\|\s*(.+?)\s*[-—]\s*Discord$/);
     if (discordMatch) {
-      activities.add(`Discord (${discordMatch[2].trim()})`);
+      chatContexts.add(discordMatch[2].trim());
       continue;
     }
 
-    // Spotify: skip background music
-    if (title.includes("Spotify")) {
-      continue;
-    }
-
-    // Generic: just add the title if short enough
-    if (title.length < 60) activities.add(title);
+    // Spotify — skip
+    if (title.includes("Spotify") || title.includes("Mediaspeler")) continue;
   }
 
-  // Build description
+  // Build natural description
   const parts: string[] = [];
 
-  if (projects.size > 0) {
-    const projectList = Array.from(projects).slice(0, 3).join(", ");
-    const fileList = Array.from(files).slice(0, 5).join(", ");
-    if (files.size > 0) {
-      parts.push(`Gewerkt aan ${projectList} (${fileList})`);
-    } else {
-      parts.push(`Gewerkt aan ${projectList}`);
-    }
+  // Code work
+  if (codeProjects.size > 0) {
+    const projs = Array.from(codeProjects).slice(0, 3);
+    const projNames = projs.map(p => {
+      // Make project names more readable
+      return p.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+    });
+    const fileStr = codeFiles.size > 0 ? `: ${Array.from(codeFiles).slice(0, 4).join(", ")}` : "";
+    const tool = hadClaudeCode ? " met Claude Code" : "";
+    parts.push(`Development aan ${projNames.join(" en ")}${tool}${fileStr}`);
   }
 
-  if (websites.size > 0) {
-    parts.push(Array.from(websites).slice(0, 3).join(", "));
+  // Trading/investing
+  if (hadTrading) {
+    parts.push("Investerings analyse en marktdata bekeken");
   }
 
-  if (activities.size > 0) {
-    parts.push(Array.from(activities).slice(0, 3).join(", "));
+  // Browse activities (deduplicated)
+  const uniqueBrowse = [...new Set(browseActivities)].slice(0, 2);
+  if (uniqueBrowse.length > 0) {
+    parts.push(uniqueBrowse.join(", "));
   }
 
-  return parts.join(". ") || sessie.app;
+  // Chat
+  if (chatContexts.size > 0) {
+    const servers = Array.from(chatContexts).slice(0, 2).join(" en ");
+    parts.push(`Communicatie via Discord (${servers})`);
+  }
+
+  if (parts.length === 0) return sessie.app;
+
+  return parts.join(". ");
 }
 
 function groupIntoSessions(entries: RawEntry[]): Sessie[] {
