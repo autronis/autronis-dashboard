@@ -110,13 +110,40 @@ function groupIntoSessions(entries: RawEntry[]): Sessie[] {
   // Results in ~3-5 sessions per day (ochtend, middag, avond)
   let currentEntries: RawEntry[] = [entries[0]];
 
+  // Group apps into activity types for detecting activity changes
+  function getActivityType(app: string, cat: string): string {
+    if (["TradingView"].includes(app)) return "trading";
+    if (cat === "development") return "development";
+    if (cat === "communicatie") return "communicatie";
+    if (cat === "design") return "design";
+    if (cat === "administratie") return "administratie";
+    return "overig";
+  }
+
+  // Track dominant activity type in current session (rolling window)
+  function getDominantActivity(entries: RawEntry[]): string {
+    const counts: Record<string, number> = {};
+    for (const e of entries) {
+      const type = getActivityType(e.app, e.categorie);
+      counts[type] = (counts[type] || 0) + e.duurSeconden;
+    }
+    return Object.entries(counts).sort(([,a],[,b]) => b - a)[0]?.[0] || "overig";
+  }
+
   for (let i = 1; i < entries.length; i++) {
     const prevEnd = new Date(entries[i - 1].eindTijd).getTime();
     const thisStart = new Date(entries[i].startTijd).getTime();
     const gapSeconds = (thisStart - prevEnd) / 1000;
 
-    if (gapSeconds > SESSION_GAP_SECONDS) {
-      // Gap too large — finalize current session
+    // Split on time gap OR significant activity change
+    const currentActivity = getDominantActivity(currentEntries);
+    const newEntryActivity = getActivityType(entries[i].app, entries[i].categorie);
+    const activityChanged = currentActivity !== newEntryActivity
+      && currentActivity !== "overig"
+      && newEntryActivity !== "overig"
+      && currentEntries.length >= 10; // Need enough entries to establish a pattern
+
+    if (gapSeconds > SESSION_GAP_SECONDS || activityChanged) {
       sessions.push(buildSession(currentEntries));
       currentEntries = [entries[i]];
     } else {
