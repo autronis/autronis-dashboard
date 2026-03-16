@@ -119,9 +119,9 @@ export function TimerStrip() {
   }
 
   async function handleStop() {
-    if (!timer.registratieId) return;
+    if (!timer.registratieId || !timer.startTijd) return;
 
-    const startMs = new Date(timer.startTijd!).getTime();
+    const startMs = new Date(timer.startTijd).getTime();
     const duurMinuten = Math.round((Date.now() - startMs) / 60000);
 
     try {

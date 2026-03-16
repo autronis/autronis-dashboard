@@ -207,7 +207,7 @@ function RegelsSection() {
           <Shield className="w-12 h-12 text-autronis-text-secondary mx-auto mb-4 opacity-40" />
           <p className="text-autronis-text-secondary text-lg">Nog geen regels ingesteld</p>
           <p className="text-autronis-text-secondary text-sm mt-1 opacity-60">
-            Regels koppelen apps en websites automatisch aan categorieeen.
+            Regels koppelen apps en websites automatisch aan categorieën.
           </p>
         </div>
       ) : (

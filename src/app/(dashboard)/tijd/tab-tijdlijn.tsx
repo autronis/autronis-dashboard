@@ -717,5 +717,3 @@ export function TabTijdlijn({ datum }: { datum: string }) {
     </div>
   );
 }
-
-export default TabTijdlijn;
