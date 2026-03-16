@@ -37,9 +37,15 @@ Aparte `useFocus` Zustand store die de bestaande tijdregistratie API aanroept. F
 | status | text | "actief" / "voltooid" / "afgebroken" |
 | aangemaakt_op | text | datetime default now |
 
-### Wijziging bestaande schema
+### Wijzigingen bestaand schema
 
-- `tijdregistraties.categorie` enum uitbreiden met `"focus"` waarde
+- `tijdregistraties.categorie` enum uitbreiden met `"focus"` waarde in `schema.ts`
+- `TijdCategorie` type uitbreiden met `"focus"` in `src/types/index.ts`
+- `tijdregistratie_id` kolom is NOT NULL — een focus sessie bestaat altijd met een tijdregistratie
+
+### Migratie
+
+Na schema-wijzigingen: `npx drizzle-kit generate` → `npx drizzle-kit push`
 
 ## Zustand Store — `useFocus`
 
@@ -53,7 +59,7 @@ interface FocusState {
   isPaused: boolean
   projectId: number | null
   taakId: number | null
-  geplandeeDuur: number      // seconden
+  geplandeDuur: number      // seconden
   resterend: number          // seconden
   focusSessieId: number | null
   tijdregistratieId: number | null
@@ -83,20 +89,41 @@ interface FocusActions {
 
 1. `openSetup()` → toont setup modal
 2. `start(projectId, taakId?, duur)`:
-   - Stop actieve timer via `useTimer.getState().stop()`
+   - Als timer actief: `PUT /api/tijdregistraties/:id` (sluit server-side record) + `useTimer.getState().stop()`
    - `POST /api/tijdregistraties` → start tijdregistratie (categorie: "focus")
-   - `POST /api/focus` → maak focus sessie
-   - Start countdown (resterend = duur * 60)
-3. `tick()` → resterend -= 1, bij 0 → `triggerComplete()`
+   - `POST /api/focus` → maak focus sessie (rejects als er al een actieve sessie is)
+   - Sla `startTimestamp` op + `geplandeDuur`
+   - Start countdown
+3. `tick()` → berekent `resterend = geplandeDuur - (now - startTimestamp) + totalePauzeDuur`, bij 0 → `triggerComplete()`
+   - Gebruikt absolute tijd (niet `resterend -= 1`) zodat background tab throttling geen drift veroorzaakt
+   - `document.visibilitychange` event forceert tick bij tab-focus
 4. `triggerComplete()` → geluid + browser notificatie + `showReflectie = true`
 5. `stop(reflectie?)`:
    - `PUT /api/tijdregistraties/:id` → eind_tijd + duur_minuten
    - `PUT /api/focus/:id` → werkelijke_duur, reflectie, status
-6. `pause()` / `resume()` → pauzeert/hervat countdown (timer blijft lopen)
+6. `pause()` → slaat `pauseStartTimestamp` op, stopt tick
+7. `resume()` → telt pauzeduur op bij `totalePauzeDuur`, hervat tick
 
 ### Persistentie
 
-localStorage key: `autronis-focus` — slaat actieve sessie-state op zodat page refresh geen sessie verliest. `restore()` wordt aangeroepen bij mount.
+localStorage key: `autronis-focus`. Opgeslagen shape:
+
+```typescript
+{
+  isActive: boolean
+  isPaused: boolean
+  projectId: number
+  taakId: number | null
+  geplandeDuur: number          // seconden
+  startTimestamp: number         // Date.now() bij start
+  totalePauzeDuur: number        // seconden, opgeteld bij elke resume
+  pauseStartTimestamp: number | null  // Date.now() bij laatste pause
+  focusSessieId: number
+  tijdregistratieId: number
+}
+```
+
+`restore()` berekent bij mount het juiste `resterend` uit `startTimestamp` + `totalePauzeDuur`.
 
 ## API Routes
 
@@ -117,7 +144,7 @@ Nieuwe focus sessie aanmaken.
 {
   "projectId": 1,
   "taakId": null,
-  "geplandeeDuurMinuten": 25,
+  "geplandeDuurMinuten": 25,
   "tijdregistratieId": 123
 }
 ```
@@ -138,6 +165,16 @@ Sessie updaten (bij stop/complete).
 ```
 
 **Response:** `{ sessie: FocusSessie }`
+
+### `/api/focus/[id]` — DELETE
+
+Sessie verwijderen (bijv. per ongeluk gestart). Verwijdert ook gekoppelde tijdregistratie.
+
+**Response:** `{ succes: true }`
+
+### `/api/focus` — POST validatie
+
+POST rejects met `{ fout: "Er is al een actieve focus sessie" }` (409) als er een sessie met `status: "actief"` bestaat voor de gebruiker. Voorkomt dubbele sessies bij meerdere tabs.
 
 ### `/api/focus/statistieken` — GET
 
@@ -217,7 +254,7 @@ Alle routes met `requireAuth()`, error format: `{ fout: "message" }`.
 
 ### 6. /focus Statistieken Pagina
 
-- **Sidebar item:** "Focus" met `Target` icoon
+- **Sidebar item:** "Focus" met `Target` icoon, geplaatst na "Tijdregistratie"
 - **Secties:**
   1. **Vandaag:** lijst van sessies met project, duur, taak, reflectie
   2. **Week overzicht:** bar chart per dag (ma-zo)
@@ -230,6 +267,7 @@ Alle routes met `requireAuth()`, error format: `{ fout: "message" }`.
 - **Web Audio API:** korte synthesized "ding" toon bij timer-afloop (geen externe audio files)
 - **Browser Notification:** `Notification.requestPermission()` bij eerste focus start
 - Als tab niet actief → browser notification met "Focus sessie voltooid!" tekst
+- Backup: `setTimeout` met exacte resterende ms als fallback voor `setInterval` throttling in background tabs
 
 ## Scope Afbakening
 
