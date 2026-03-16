@@ -947,3 +947,21 @@ export const focusSessies = sqliteTable("focus_sessies", {
   status: text("status", { enum: ["actief", "voltooid", "afgebroken"] }).notNull().default("actief"),
   aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
 });
+
+// ── SECOND BRAIN ─────────────────────────────────────────
+export const secondBrainItems = sqliteTable("second_brain_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  gebruikerId: integer("gebruiker_id").references(() => gebruikers.id).notNull(),
+  type: text("type", { enum: ["tekst", "url", "afbeelding", "pdf", "code"] }).notNull(),
+  titel: text("titel"),
+  inhoud: text("inhoud"),
+  aiSamenvatting: text("ai_samenvatting"),
+  aiTags: text("ai_tags"), // JSON array string
+  bronUrl: text("bron_url"),
+  bestandPad: text("bestand_pad"),
+  taal: text("taal"),
+  isFavoriet: integer("is_favoriet").default(0),
+  isGearchiveerd: integer("is_gearchiveerd").default(0),
+  aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
+  bijgewerktOp: text("bijgewerkt_op").default(sql`(datetime('now'))`),
+});
