@@ -20,8 +20,10 @@ import {
   FileText,
   History,
   Loader2,
+  Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface CommandPaletteProps {
   open: boolean;
@@ -105,6 +107,7 @@ function saveRecentSearch(query: string) {
 
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   const router = useRouter();
+  const { addToast } = useToast();
   const [search, setSearch] = useState("");
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
   const [resultaten, setResultaten] = useState<ZoekResultaat[]>([]);
@@ -182,6 +185,31 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   function handleSelect(href: string) {
     navigate(href, search);
   }
+
+  const handleSaveToSecondBrain = async () => {
+    if (!search.trim()) return;
+    try {
+      const isUrl = /^https?:\/\//.test(search.trim());
+      if (isUrl) {
+        await fetch("/api/second-brain/verwerken", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bronUrl: search.trim() }),
+        });
+      } else {
+        await fetch("/api/second-brain", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "tekst", inhoud: search.trim() }),
+        });
+      }
+      addToast("Opgeslagen in Second Brain", "succes");
+    } catch {
+      addToast("Kon niet opslaan in Second Brain", "fout");
+    }
+    setSearch("");
+    onClose();
+  };
 
   function handleResultSelect(result: ZoekResultaat) {
     if (search) saveRecentSearch(search);
@@ -368,6 +396,31 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                     </Command.Group>
                   );
                 })}
+                {/* Second Brain actie */}
+                {search.length > 0 && (
+                  <Command.Group
+                    heading={
+                      <span className="text-xs font-medium text-autronis-text-secondary px-2">
+                        Acties
+                      </span>
+                    }
+                    className="mb-2"
+                  >
+                    <Command.Item
+                      value="opslaan-second-brain"
+                      onSelect={handleSaveToSecondBrain}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer",
+                        "text-autronis-text-primary text-sm",
+                        "data-[selected=true]:bg-autronis-accent/10 data-[selected=true]:text-autronis-accent",
+                        "transition-colors"
+                      )}
+                    >
+                      <Brain className="w-4 h-4 mr-2 text-autronis-accent" />
+                      Opslaan in Second Brain
+                    </Command.Item>
+                  </Command.Group>
+                )}
               </Command.List>
 
               {/* Footer */}
