@@ -27,6 +27,7 @@ import {
   BookOpen,
   Monitor,
   Mic,
+  Radar,
 } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { cn } from "@/lib/utils";
@@ -49,6 +50,7 @@ const navItems = [
   { label: "Kilometers", icon: Car, href: "/kilometers" },
   { label: "Wiki", icon: BookOpen, href: "/wiki" },
   { label: "Documenten", icon: FileText, href: "/documenten" },
+  { label: "Learning Radar", icon: Radar, href: "/radar" },
   { label: "AI Assistent", icon: Sparkles, href: "/ai-assistent" },
 ];
 
