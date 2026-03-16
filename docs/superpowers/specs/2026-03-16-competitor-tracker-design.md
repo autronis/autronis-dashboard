@@ -43,6 +43,7 @@ Scan-logica, AI-calls en opslag in Next.js API routes (zelfde patroon als briefi
 | websiteUrl | text NOT NULL | Hoofd-URL |
 | linkedinUrl | text | LinkedIn bedrijfspagina URL |
 | instagramHandle | text | Instagram handle (zonder @) |
+| scanPaginas | text | JSON array van subpagina's om te scannen (default: ["/diensten", "/over-ons", "/pricing", "/cases"]) |
 | notities | text | Vrij tekstveld voor context |
 | isActief | integer DEFAULT 1 | Soft delete |
 | aangemaaktOp | text | datetime('now') |
@@ -65,6 +66,7 @@ Doel: ruwe website-inhoud bewaren voor diff-vergelijking. Bewaar laatste 2 per U
 |-------|------|-------------|
 | id | integer PK | Auto-increment |
 | concurrentId | integer FK | → concurrenten.id |
+| status | text DEFAULT 'bezig' | "bezig" / "voltooid" / "mislukt" |
 | scanDatum | text NOT NULL | Datum van de scan |
 | websiteChanges | text (JSON) | Welke pagina's veranderd, wat is nieuw/weg |
 | vacatures | text (JSON) | Gevonden vacatures met titel, bron, URL |
@@ -91,17 +93,72 @@ Doel: ruwe website-inhoud bewaren voor diff-vergelijking. Bewaar laatste 2 per U
 |--------|-------|-------------|
 | POST | `/api/concurrenten/scan` | Start scan voor alle actieve concurrenten |
 | POST | `/api/concurrenten/scan/[id]` | Scan één specifieke concurrent |
-| GET | `/api/concurrenten/scan/status` | Polling endpoint voor voortgang |
+| GET | `/api/concurrenten/scan/status` | Polling endpoint voor voortgang (zie Response Schemas) |
 
 ### Webhook
 | Method | Route | Beschrijving |
 |--------|-------|-------------|
-| POST | `/api/concurrenten/webhook` | Ontvang extern scan-resultaat (n8n), via `requireApiKey()` |
+| POST | `/api/concurrenten/webhook` | Twee modi: trigger scan of ontvang data (zie Webhook sectie) |
 
 ### Dashboard integratie
 | Method | Route | Beschrijving |
 |--------|-------|-------------|
 | GET | `/api/dashboard/concurrenten` | Widget data: wijzigingen deze week, highlights |
+
+## Response Schemas
+
+### GET /api/concurrenten/scan/status
+```json
+{
+  "actief": true,
+  "concurrenten": [
+    { "id": 1, "naam": "DigitalAgency.nl", "status": "voltooid" },
+    { "id": 2, "naam": "WebWerkt", "status": "bezig", "stap": "vacatures" },
+    { "id": 3, "naam": "AutomatePro", "status": "wachtend" },
+    { "id": 4, "naam": "TechFlow", "status": "mislukt", "fout": "Timeout" }
+  ]
+}
+```
+Statussen per concurrent: `wachtend` → `bezig` → `voltooid` | `mislukt`. Veld `stap` toont huidige stap als `bezig`. Als `actief: false` is de hele scan klaar.
+
+### GET /api/dashboard/concurrenten
+```json
+{
+  "wijzigingenDezeWeek": 7,
+  "highlights": [
+    { "concurrentNaam": "DigitalAgency.nl", "tekst": "AI-diensten gelanceerd", "type": "waarschuwing" },
+    { "concurrentNaam": "AutomatePro", "tekst": "Enterprise tier verwijderd", "type": "kans" }
+  ],
+  "laatsteScan": "2026-03-16T08:00:00Z"
+}
+```
+
+### AI Prompt Structuur (Stap 4)
+Claude ontvangt per concurrent:
+```
+Je bent een competitive intelligence analist voor Autronis (AI & automatiseringsbureau).
+Analyseer de volgende scan-data van concurrent "{naam}" ({websiteUrl}).
+
+## Website changes
+{diff of null}
+
+## Vacatures
+{vacatures JSON of null}
+
+## Social activity
+{social data of null}
+
+## Vorige scan samenvatting
+{vorige aiSamenvatting of "Eerste scan — geen historie"}
+
+Genereer een JSON response:
+{
+  "aiSamenvatting": "2-3 zinnen samenvatting in het Nederlands",
+  "aiHighlights": ["opvallend punt 1", "opvallend punt 2"],
+  "trendIndicator": "groeiend" | "stabiel" | "krimpend",
+  "kansen": ["kans voor Autronis 1", "kans 2"]
+}
+```
 
 ## Scan Pipeline
 
@@ -114,15 +171,18 @@ Per concurrent, sequential:
 4. Vergelijk met vorige snapshot hash → als gelijk, skip
 5. Als anders: tekst-diff genereren, nieuwe snapshot opslaan
 
-### Stap 2 — Vacatures
-1. Zoek via publieke zoek-URL's (`site:linkedin.com/jobs "{bedrijfsnaam}"`)
-2. Fetch zoekresultaten pagina, extract vacature-titels en URLs
-3. Vergelijk met vorige scan → markeer nieuwe vacatures
+### Stap 2 — Vacatures (best-effort)
+1. Google Search scrape: `"{bedrijfsnaam}" vacature site:linkedin.com OR site:indeed.nl`
+2. Fallback: directe Indeed.nl search URL met bedrijfsnaam
+3. Extract vacature-titels en URLs uit zoekresultaten HTML
+4. Vergelijk met vorige scan → markeer nieuwe vacatures
+5. **Degraded mode:** als alle bronnen geblokkeerd worden, sla `null` op met error. Dit is een best-effort feature — Google/LinkedIn kunnen scraping blokkeren. De website changes scan levert altijd de meeste waarde.
 
-### Stap 3 — Social activity
-1. Instagram: fetch publiek profiel, extract aantal posts, recente captions
-2. LinkedIn: bedrijfspagina fetch (basale activiteit)
-3. Vergelijk posting-frequentie met vorige scan
+### Stap 3 — Social activity (best-effort)
+1. Instagram: fetch `instagram.com/{handle}/` met browser-like User-Agent headers. Extract basale metadata (bio, post count) uit de HTML. **Let op:** Instagram blokkeert vaak ongeauthenticeerde requests — dit is best-effort.
+2. LinkedIn: bedrijfspagina fetch — eveneens best-effort, beperkte data zonder API.
+3. Vergelijk beschikbare data met vorige scan
+4. **Degraded mode:** als scraping faalt, sla `null` op. Social data is "nice to have" — website changes + vacatures zijn de kern.
 
 ### Stap 4 — AI analyse
 Claude ontvangt alle ruwe data en genereert:
@@ -149,9 +209,9 @@ Elke stap is fout-tolerant — bij error krijgt het JSON-veld `null` met error-n
 
 ### /concurrenten/[id] — detail pagina
 - **Header:** bedrijfsnaam, URL, social links, scan/bewerk knoppen
-- **Tabs:** Scan historie, Website changes, Vacatures, Social, Vergelijking
+- **Tabs:** Scan historie, Website changes, Vacatures, Social
 - **Scan historie tab:** timeline met dots, per scan een samenvatting
-- **Overige tabs:** gedetailleerde data per categorie
+- **Overige tabs:** gedetailleerde data per categorie met raw JSON weergave
 
 ### Dashboard widget
 - **Compact card** op de homepage: "Concurrent updates" met badge count
@@ -172,9 +232,13 @@ Elke stap is fout-tolerant — bij error krijgt het JSON-veld `null` met error-n
 - Voorbeeld: "AutomatePro gebruikt een tool uit je radar: n8n"
 
 ### Webhook voor n8n
-- `POST /api/concurrenten/webhook` met Bearer token (`requireApiKey()`)
-- Body: `{ concurrentId, websiteChanges, vacatures, socialActivity }`
-- Dashboard slaat op en genereert AI samenvatting
+`POST /api/concurrenten/webhook` met Bearer token (bestaande `requireApiKey()` uit `src/lib/auth.ts`).
+
+Twee modi:
+1. **Trigger mode:** `{ action: "scan" }` of `{ action: "scan", concurrentId: 3 }` — start de in-app scan pipeline
+2. **Data mode:** `{ action: "data", concurrentId: 3, websiteChanges: {...}, vacatures: {...}, socialActivity: {...} }` — n8n stuurt kant-en-klare data, dashboard slaat op en genereert AI samenvatting
+
+Dit maakt beide patronen mogelijk: n8n als simpele cron trigger, of n8n als volledige scraping pipeline.
 
 ## Error Handling & Edge Cases
 
@@ -188,12 +252,16 @@ Elke stap is fout-tolerant — bij error krijgt het JSON-veld `null` met error-n
 - Bij 3 opeenvolgende mislukte scans: markeer als "scan probleem" in UI
 - Geen automatische deactivatie
 
+### Concurrent scan guard
+- Als er al een scan loopt (`actief: true` op status endpoint), weiger nieuwe scan-all met `{ fout: "Scan is al bezig" }`
+- Individuele scan per concurrent is wel toegestaan als die concurrent niet al gescand wordt
+
 ### Rate limiting
 - 2 seconden pauze tussen website fetches
 - Claude API: één call per concurrent per scan
 
 ### Data retentie
-- Snapshots: laatste 2 per URL (huidige + vorige)
+- Snapshots: laatste 2 per URL (huidige + vorige). Cleanup bij insert: na opslaan nieuwe snapshot, verwijder alle behalve de 2 nieuwste per (concurrentId, url).
 - Scans: bewaar alles (historie voor trends)
 - Geen automatische cleanup nodig bij 3-5 concurrenten
 
@@ -209,7 +277,7 @@ Elke stap is fout-tolerant — bij error krijgt het JSON-veld `null` met error-n
 - Card-based UI met `rounded-2xl`, `card-glow`, autronis-* CSS tokens
 - Soft delete via `isActief` flag
 - Toast notificaties via `useToast()`
-- Sidebar navigatie-item in sectie "Strategie & Analyse" of "Groei"
+- Sidebar navigatie-item in sectie "Groei"
 
 ## Nieuwe files
 
