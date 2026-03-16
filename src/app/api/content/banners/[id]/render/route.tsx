@@ -206,14 +206,139 @@ function OgIcon({ icon, size }: { icon: BannerIcon; size: number }) {
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke={NEON} strokeWidth={sw} strokeLinejoin="round" />
         </svg>
       );
+    case "workflow":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <circle cx="5" cy="6" r="2" stroke={NEON} strokeWidth={sw} />
+          <circle cx="19" cy="6" r="2" stroke={NEON} strokeWidth={sw} />
+          <circle cx="12" cy="18" r="2" stroke={NEON} strokeWidth={sw} />
+          <path d="M7 6h5M14 6h3M5 8v4l5 4M19 8v4l-5 4" stroke={NEON} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "api":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <path d="M8 6L3 12l5 6" stroke={NEON} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M16 6l5 6-5 6" stroke={NEON} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="13" y1="4" x2="11" y2="20" stroke={NEON} strokeWidth={sw} strokeLinecap="round" />
+        </svg>
+      );
+    case "chat":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke={NEON} strokeWidth={sw} strokeLinejoin="round" />
+          <line x1="8" y1="10" x2="16" y2="10" stroke={NEON} strokeWidth={sw} strokeLinecap="round" />
+          <line x1="8" y1="13" x2="13" y2="13" stroke={NEON} strokeWidth={sw} strokeLinecap="round" />
+        </svg>
+      );
+    case "check":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke={NEON} strokeWidth={sw} />
+          <path d="M8 12l3 3 5-5" stroke={NEON} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "settings":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="3" stroke={NEON} strokeWidth={sw} />
+          <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke={NEON} strokeWidth={sw} strokeLinecap="round" />
+        </svg>
+      );
+    case "search":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="8" stroke={NEON} strokeWidth={sw} />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" stroke={NEON} strokeWidth={sw} strokeLinecap="round" />
+        </svg>
+      );
+    case "star":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke={NEON} strokeWidth={sw} strokeLinejoin="round" />
+        </svg>
+      );
+    case "diamond":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <path d="M2 12l4-8h12l4 8-10 10L2 12z" stroke={NEON} strokeWidth={sw} strokeLinejoin="round" />
+          <line x1="2" y1="12" x2="22" y2="12" stroke={NEON} strokeWidth={sw} />
+        </svg>
+      );
+    case "code":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <polyline points="16 18 22 12 16 6" stroke={NEON} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points="8 6 2 12 8 18" stroke={NEON} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "truck":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <rect x="1" y="3" width="15" height="13" rx="1" stroke={NEON} strokeWidth={sw} />
+          <path d="M16 8h4l3 5v3h-7V8z" stroke={NEON} strokeWidth={sw} strokeLinejoin="round" />
+          <circle cx="5.5" cy="18.5" r="2.5" stroke={NEON} strokeWidth={sw} />
+          <circle cx="18.5" cy="18.5" r="2.5" stroke={NEON} strokeWidth={sw} />
+        </svg>
+      );
+    case "building":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="2" width="12" height="20" rx="1" stroke={NEON} strokeWidth={sw} />
+          <rect x="15" y="8" width="6" height="14" rx="1" stroke={NEON} strokeWidth={sw} />
+          <line x1="3" y1="22" x2="21" y2="22" stroke={NEON} strokeWidth={sw} strokeLinecap="round" />
+          <rect x="6" y="5" width="3" height="3" stroke={NEON} strokeWidth="1.5" />
+          <rect x="10" y="5" width="3" height="3" stroke={NEON} strokeWidth="1.5" />
+        </svg>
+      );
+    case "chart-pie":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <path d="M21.21 15.89A10 10 0 1 1 8 2.83" stroke={NEON} strokeWidth={sw} strokeLinecap="round" />
+          <path d="M22 12A10 10 0 0 0 12 2v10z" stroke={NEON} strokeWidth={sw} strokeLinejoin="round" />
+        </svg>
+      );
+    case "filter":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" stroke={NEON} strokeWidth={sw} strokeLinejoin="round" />
+        </svg>
+      );
+    case "repeat":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <polyline points="17 1 21 5 17 9" stroke={NEON} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M3 11V9a4 4 0 0 1 4-4h14" stroke={NEON} strokeWidth={sw} strokeLinecap="round" />
+          <polyline points="7 23 3 19 7 15" stroke={NEON} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M21 13v2a4 4 0 0 1-4 4H3" stroke={NEON} strokeWidth={sw} strokeLinecap="round" />
+        </svg>
+      );
+    case "send":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <line x1="22" y1="2" x2="11" y2="13" stroke={NEON} strokeWidth={sw} strokeLinecap="round" />
+          <polygon points="22 2 15 22 11 13 2 9 22 2" stroke={NEON} strokeWidth={sw} strokeLinejoin="round" />
+        </svg>
+      );
+    case "wifi":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <path d="M1.42 9a16 16 0 0 1 21.16 0" stroke={NEON} strokeWidth={sw} strokeLinecap="round" />
+          <path d="M5 12.55a11 11 0 0 1 14.08 0" stroke={NEON} strokeWidth={sw} strokeLinecap="round" />
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0" stroke={NEON} strokeWidth={sw} strokeLinecap="round" />
+          <circle cx="12" cy="20" r="1" fill={NEON} />
+        </svg>
+      );
   }
 }
 
 // ─── OG-safe simplified illustration ────────────────────────────────────────
-function OgIllustration({ type, width, height }: { type: BannerIllustration; width: number; height: number }) {
-  const cx = width / 2;
-  const cy = height / 2;
-  const r = Math.min(width, height) * 0.38;
+function OgIllustration({
+  type, width, height, scale = 1, offsetX = 0, offsetY = 0,
+}: { type: BannerIllustration; width: number; height: number; scale?: number; offsetX?: number; offsetY?: number }) {
+  const cx = width / 2 + offsetX;
+  const cy = height / 2 + offsetY;
+  const r = Math.min(width, height) * 0.38 * scale;
 
   function renderLines() {
     switch (type) {
@@ -355,23 +480,43 @@ function OgIllustration({ type, width, height }: { type: BannerIllustration; wid
   );
 }
 
-// ─── OG-safe flow lines ───────────────────────────────────────────────────────
+// ─── OG-safe flow lines (dashboard wave formula, static t=0) ─────────────────
+function buildOgWavePath(width: number, height: number, waveIndex: number): string {
+  const yBase = (height / 6) * (waveIndex + 1);
+  const amplitude = 18 + waveIndex * 4;
+  const frequency = 0.0015 + waveIndex * 0.0002;
+  const offset1 = waveIndex * 0.8;
+  const offset2 = waveIndex * 1.2;
+  const offset3 = waveIndex * 0.5;
+
+  const step = 8; // larger step for OG rendering (performance)
+  const points: string[] = [];
+  for (let x = 0; x <= width; x += step) {
+    const y =
+      yBase +
+      Math.sin(x * frequency + offset1) * amplitude +
+      Math.sin(x * frequency * 1.8 + offset2) * (amplitude * 0.35) +
+      Math.cos(x * 0.0008 + offset3) * 5;
+    points.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+  }
+  if (points.length === 0) return "";
+  return `M${points[0]} ` + points.slice(1).map((p) => `L${p}`).join(" ");
+}
+
 function OgFlowLines({ width, height }: { width: number; height: number }) {
-  const w = width;
-  const h = height;
+  const opacities = [0.08, 0.10, 0.08, 0.10, 0.08];
   return (
-    <svg style={{ position: "absolute", top: 0, left: 0 }} width={w} height={h} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none">
-      <path d={`M0,${h*0.06} C${w*0.2},${h*0.01} ${w*0.5},${h*0.11} ${w*0.75},${h*0.04} S${w},${h*0.08} ${w},${h*0.06}`} fill="none" stroke={NEON} strokeWidth="1.5" opacity="0.06" />
-      <path d={`M0,${h*0.15} C${w*0.25},${h*0.08} ${w*0.5},${h*0.22} ${w*0.72},${h*0.12} S${w},${h*0.17} ${w},${h*0.15}`} fill="none" stroke={NEON} strokeWidth="2.5" opacity="0.10" />
-      <path d={`M0,${h*0.24} C${w*0.2},${h*0.18} ${w*0.45},${h*0.30} ${w*0.65},${h*0.21} S${w*0.88},${h*0.26} ${w},${h*0.24}`} fill="none" stroke={NEON} strokeWidth="1.5" opacity="0.05" />
-      <path d={`M0,${h*0.34} C${w*0.3},${h*0.26} ${w*0.55},${h*0.42} ${w*0.75},${h*0.31} S${w},${h*0.36} ${w},${h*0.34}`} fill="none" stroke={NEON} strokeWidth="3.0" opacity="0.11" />
-      <path d={`M0,${h*0.43} C${w*0.22},${h*0.37} ${w*0.48},${h*0.49} ${w*0.7},${h*0.40} S${w},${h*0.45} ${w},${h*0.43}`} fill="none" stroke={NEON} strokeWidth="2.0" opacity="0.08" />
-      <path d={`M0,${h*0.52} C${w*0.28},${h*0.43} ${w*0.52},${h*0.61} ${w*0.74},${h*0.50} S${w},${h*0.55} ${w},${h*0.52}`} fill="none" stroke={NEON} strokeWidth="2.5" opacity="0.12" />
-      <path d={`M0,${h*0.61} C${w*0.18},${h*0.55} ${w*0.42},${h*0.67} ${w*0.62},${h*0.59} S${w*0.86},${h*0.63} ${w},${h*0.61}`} fill="none" stroke={NEON} strokeWidth="1.5" opacity="0.06" />
-      <path d={`M0,${h*0.70} C${w*0.25},${h*0.63} ${w*0.5},${h*0.77} ${w*0.72},${h*0.68} S${w},${h*0.72} ${w},${h*0.70}`} fill="none" stroke={NEON} strokeWidth="3.0" opacity="0.10" />
-      <path d={`M0,${h*0.79} C${w*0.2},${h*0.73} ${w*0.45},${h*0.85} ${w*0.68},${h*0.77} S${w},${h*0.81} ${w},${h*0.79}`} fill="none" stroke={NEON} strokeWidth="2.0" opacity="0.07" />
-      <path d={`M0,${h*0.88} C${w*0.22},${h*0.82} ${w*0.48},${h*0.94} ${w*0.7},${h*0.86} S${w},${h*0.90} ${w},${h*0.88}`} fill="none" stroke={NEON} strokeWidth="2.5" opacity="0.09" />
-      <path d={`M0,${h*0.96} C${w*0.18},${h*0.91} ${w*0.44},${h*1.00} ${w*0.66},${h*0.94} S${w},${h*0.97} ${w},${h*0.96}`} fill="none" stroke={NEON} strokeWidth="1.5" opacity="0.05" />
+    <svg style={{ position: "absolute", top: 0, left: 0 }} width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      {[0, 1, 2, 3, 4].map((wi) => (
+        <path
+          key={wi}
+          d={buildOgWavePath(width, height, wi)}
+          fill="none"
+          stroke={NEON}
+          strokeWidth="0.7"
+          opacity={String(opacities[wi])}
+        />
+      ))}
     </svg>
   );
 }
@@ -384,6 +529,9 @@ function OgBanner({
   width,
   height,
   logoSrc,
+  illustrationScale,
+  illustrationOffsetX,
+  illustrationOffsetY,
 }: {
   onderwerp: string;
   icon: BannerIcon;
@@ -391,6 +539,9 @@ function OgBanner({
   width: number;
   height: number;
   logoSrc: string;
+  illustrationScale?: number;
+  illustrationOffsetX?: number;
+  illustrationOffsetY?: number;
 }) {
   const scale = width / 1080;
   const iconSize = Math.round(44 * scale);
@@ -415,7 +566,14 @@ function OgBanner({
       <OgFlowLines width={width} height={height} />
 
       {/* Illustration */}
-      <OgIllustration type={illustration} width={width} height={height} />
+      <OgIllustration
+        type={illustration}
+        width={width}
+        height={height}
+        scale={illustrationScale}
+        offsetX={illustrationOffsetX}
+        offsetY={illustrationOffsetY}
+      />
 
       {/* Radial glow */}
       <div
@@ -564,11 +722,17 @@ export async function POST(
       onderwerp?: string;
       icon?: string;
       illustration?: string;
+      illustrationScale?: number;
+      illustrationOffsetX?: number;
+      illustrationOffsetY?: number;
     };
 
     const onderwerp = parsed.onderwerp ?? "Autronis";
     const icon = (parsed.icon ?? "cog") as BannerIcon;
     const illustration = (parsed.illustration ?? "gear") as BannerIllustration;
+    const illustrationScale = typeof parsed.illustrationScale === "number" ? parsed.illustrationScale : 1.0;
+    const illustrationOffsetX = typeof parsed.illustrationOffsetX === "number" ? parsed.illustrationOffsetX : 0;
+    const illustrationOffsetY = typeof parsed.illustrationOffsetY === "number" ? parsed.illustrationOffsetY : 0;
     const formaat = (banner.formaat ?? "instagram") as BannerFormaat;
     const { width, height } = BANNER_FORMAAT_SIZES[formaat];
 
@@ -582,6 +746,9 @@ export async function POST(
         width={width}
         height={height}
         logoSrc={logoSrc}
+        illustrationScale={illustrationScale}
+        illustrationOffsetX={illustrationOffsetX}
+        illustrationOffsetY={illustrationOffsetY}
       />
     );
 

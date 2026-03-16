@@ -189,5 +189,134 @@ export function CapsuleIcon({ icon, size = 32 }: CapsuleIconProps) {
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke={NEON} strokeWidth={SW} strokeLinejoin="round" />
         </svg>
       );
+    // ─── NEW ICONS ────────────────────────────────────────────────────────────
+    case "workflow":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <circle cx="5" cy="6" r="2" stroke={NEON} strokeWidth={SW} />
+          <circle cx="19" cy="6" r="2" stroke={NEON} strokeWidth={SW} />
+          <circle cx="12" cy="18" r="2" stroke={NEON} strokeWidth={SW} />
+          <path d="M7 6h5M14 6h3M5 8v4l5 4M19 8v4l-5 4" stroke={NEON} strokeWidth={SW} strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "api":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <path d="M8 6L3 12l5 6" stroke={NEON} strokeWidth={SW} strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M16 6l5 6-5 6" stroke={NEON} strokeWidth={SW} strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="13" y1="4" x2="11" y2="20" stroke={NEON} strokeWidth={SW} strokeLinecap="round" />
+        </svg>
+      );
+    case "chat":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke={NEON} strokeWidth={SW} strokeLinejoin="round" />
+          <line x1="8" y1="10" x2="16" y2="10" stroke={NEON} strokeWidth={SW} strokeLinecap="round" />
+          <line x1="8" y1="13" x2="13" y2="13" stroke={NEON} strokeWidth={SW} strokeLinecap="round" />
+        </svg>
+      );
+    case "check":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke={NEON} strokeWidth={SW} />
+          <path d="M8 12l3 3 5-5" stroke={NEON} strokeWidth={SW} strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "settings":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" stroke={NEON} strokeWidth={SW} />
+          <circle cx="12" cy="12" r="3" stroke={NEON} strokeWidth={SW} />
+        </svg>
+      );
+    case "search":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="8" stroke={NEON} strokeWidth={SW} />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" stroke={NEON} strokeWidth={SW} strokeLinecap="round" />
+        </svg>
+      );
+    case "star":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke={NEON} strokeWidth={SW} strokeLinejoin="round" />
+        </svg>
+      );
+    case "diamond":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <path d="M2 12l4-8h12l4 8-10 10L2 12z" stroke={NEON} strokeWidth={SW} strokeLinejoin="round" />
+          <line x1="2" y1="12" x2="22" y2="12" stroke={NEON} strokeWidth={SW} />
+          <line x1="6" y1="4" x2="9" y2="12" stroke={NEON} strokeWidth="1" strokeLinecap="round" />
+          <line x1="18" y1="4" x2="15" y2="12" stroke={NEON} strokeWidth="1" strokeLinecap="round" />
+        </svg>
+      );
+    case "code":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <polyline points="16 18 22 12 16 6" stroke={NEON} strokeWidth={SW} strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points="8 6 2 12 8 18" stroke={NEON} strokeWidth={SW} strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case "truck":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <rect x="1" y="3" width="15" height="13" rx="1" stroke={NEON} strokeWidth={SW} />
+          <path d="M16 8h4l3 5v3h-7V8z" stroke={NEON} strokeWidth={SW} strokeLinejoin="round" />
+          <circle cx="5.5" cy="18.5" r="2.5" stroke={NEON} strokeWidth={SW} />
+          <circle cx="18.5" cy="18.5" r="2.5" stroke={NEON} strokeWidth={SW} />
+        </svg>
+      );
+    case "building":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="2" width="12" height="20" rx="1" stroke={NEON} strokeWidth={SW} />
+          <rect x="15" y="8" width="6" height="14" rx="1" stroke={NEON} strokeWidth={SW} />
+          <line x1="3" y1="22" x2="21" y2="22" stroke={NEON} strokeWidth={SW} strokeLinecap="round" />
+          <rect x="6" y="5" width="3" height="3" stroke={NEON} strokeWidth="1.5" />
+          <rect x="10" y="5" width="3" height="3" stroke={NEON} strokeWidth="1.5" />
+          <rect x="6" y="10" width="3" height="3" stroke={NEON} strokeWidth="1.5" />
+          <rect x="10" y="10" width="3" height="3" stroke={NEON} strokeWidth="1.5" />
+          <rect x="7" y="16" width="5" height="6" stroke={NEON} strokeWidth="1.5" />
+        </svg>
+      );
+    case "chart-pie":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <path d="M21.21 15.89A10 10 0 1 1 8 2.83" stroke={NEON} strokeWidth={SW} strokeLinecap="round" />
+          <path d="M22 12A10 10 0 0 0 12 2v10z" stroke={NEON} strokeWidth={SW} strokeLinejoin="round" />
+        </svg>
+      );
+    case "filter":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" stroke={NEON} strokeWidth={SW} strokeLinejoin="round" />
+        </svg>
+      );
+    case "repeat":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <polyline points="17 1 21 5 17 9" stroke={NEON} strokeWidth={SW} strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M3 11V9a4 4 0 0 1 4-4h14" stroke={NEON} strokeWidth={SW} strokeLinecap="round" />
+          <polyline points="7 23 3 19 7 15" stroke={NEON} strokeWidth={SW} strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M21 13v2a4 4 0 0 1-4 4H3" stroke={NEON} strokeWidth={SW} strokeLinecap="round" />
+        </svg>
+      );
+    case "send":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <line x1="22" y1="2" x2="11" y2="13" stroke={NEON} strokeWidth={SW} strokeLinecap="round" />
+          <polygon points="22 2 15 22 11 13 2 9 22 2" stroke={NEON} strokeWidth={SW} strokeLinejoin="round" />
+        </svg>
+      );
+    case "wifi":
+      return (
+        <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+          <path d="M1.42 9a16 16 0 0 1 21.16 0" stroke={NEON} strokeWidth={SW} strokeLinecap="round" />
+          <path d="M5 12.55a11 11 0 0 1 14.08 0" stroke={NEON} strokeWidth={SW} strokeLinecap="round" />
+          <path d="M8.53 16.11a6 6 0 0 1 6.95 0" stroke={NEON} strokeWidth={SW} strokeLinecap="round" />
+          <circle cx="12" cy="20" r="1" fill={NEON} />
+        </svg>
+      );
   }
 }

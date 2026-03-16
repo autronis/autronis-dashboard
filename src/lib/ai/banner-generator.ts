@@ -21,46 +21,62 @@ function buildAnalyzePrompt(onderwerp: string): string {
 3. Clean capsule text (short, max 3 words, like "Process Automation")
 
 Icon guide:
-- cog: process, workflow, automation, system
-- brain: AI, machine learning, intelligence
-- bar-chart: data, analytics, reporting, statistics
-- link: integrations, API, connections, linking
-- lightbulb: tips, insights, ideas, advice
-- target: goals, sales, conversion, targeting
-- git-branch: development, branches, workflows
-- zap: speed, instant, fast automation, triggers
-- plug: connections, integrations, plugins
-- users: team, clients, collaboration, people
-- euro: finance, revenue, costs, pricing
-- shield: security, reliability, protection
-- database: databases, storage, data management
-- mail: email, outreach, communication, campaigns
-- globe: web, international, online presence, SaaS
-- rocket: launch, growth, startup, scale
+- cog: process, workflow, automation, system, mechanism
+- brain: AI, machine learning, intelligence, neural
+- bar-chart: data, analytics, reporting, statistics, charts
+- link: integrations, API, connections, linking, chains
+- lightbulb: tips, insights, ideas, advice, innovation
+- target: goals, sales, conversion, targeting, KPI
+- git-branch: development, branches, workflows, versioning
+- zap: speed, instant, fast automation, triggers, electric
+- plug: connections, integrations, plugins, connectors
+- users: team, clients, collaboration, people, HR
+- euro: finance, revenue, costs, pricing, money
+- shield: security, reliability, protection, compliance
+- database: databases, storage, data management, SQL
+- mail: email, outreach, communication, campaigns, inbox
+- globe: web, international, online presence, SaaS, domain
+- rocket: launch, growth, startup, scale, boost
 - clock: scheduling, time management, planning, deadlines
-- layers: multi-layer, stack, architecture, systems
-- trending-up: growth, KPIs, performance, metrics
-- cpu: tech, infrastructure, processing, computing
-- cloud: cloud services, SaaS, hosting, backup
-- calendar: planning, scheduling, agenda, events
-- key: access, authentication, permissions, security
-- heart: customer satisfaction, loyalty, NPS, care
+- layers: multi-layer, stack, architecture, systems, tiers
+- trending-up: growth, KPIs, performance, metrics, upward
+- cpu: tech, infrastructure, processing, computing, hardware
+- cloud: cloud services, SaaS, hosting, backup, AWS
+- calendar: planning, scheduling, agenda, events, dates
+- key: access, authentication, permissions, security, login
+- heart: customer satisfaction, loyalty, NPS, care, love
+- workflow: branching flow, pipelines, automation steps
+- api: API endpoints, developer, REST, GraphQL, integrations
+- chat: messaging, support, communication, chatbot, dialogue
+- check: done, completed, approved, verified, confirmed
+- settings: configuration, admin, setup, parameters
+- search: find, discover, lookup, query, search engine
+- star: favorite, rating, premium, top, excellence
+- diamond: value, premium, crystal, precious, quality
+- code: software, development, programming, code review
+- truck: logistics, delivery, transport, shipping, supply chain
+- building: company, office, real estate, enterprise, B2B
+- chart-pie: distribution, percentages, market share, breakdown
+- filter: filtering, segmentation, refining, criteria
+- repeat: recurring, automation loop, retry, cycle, subscription
+- send: outreach, publish, deliver, submit, dispatch
+- wifi: connectivity, wireless, online, network, IoT
 
 Illustration guide:
-- gear: process automation, workflows, systems
-- brain: AI, machine learning, neural networks
-- nodes: integrations, connections, network, graph
-- chart: data, analytics, growth, metrics
-- target: goals, sales, lead generation, KPIs
-- flow: workflows, processes, pipelines
-- circuit: tech, development, infrastructure
-- lightbulb: tips, insights, ideas, innovation
-- puzzle: integrations, system fitting, SaaS
-- cloud: cloud, SaaS, hosting, backup
-- rocket: launch, growth, scaling, startup
-- calendar: planning, scheduling, time management
-- magnet: lead generation, attraction, marketing
-- handshake: partnerships, deals, collaboration, clients
+- gear: process automation, workflows, systems, mechanisms
+- brain: AI, machine learning, neural networks, intelligence
+- nodes: integrations, connections, network, graph, topology
+- chart: data, analytics, growth, metrics, dashboards
+- target: goals, sales, lead generation, KPIs, conversion
+- flow: workflows, processes, pipelines, decision trees
+- circuit: tech, development, infrastructure, electronics
+- lightbulb: tips, insights, ideas, innovation, creativity
+- puzzle: integrations, system fitting, SaaS, combining parts
+- cloud: cloud, SaaS, hosting, backup, data transfer
+- rocket: launch, growth, scaling, startup, acceleration
+- calendar: planning, scheduling, time management, agenda
+- magnet: lead generation, attraction, marketing, pull
+- handshake: partnerships, deals, collaboration, clients, B2B
 
 Return ONLY valid JSON, no explanation, no markdown:
 {"icon":"cog","illustration":"gear","capsuleText":"Process Automation"}`;
@@ -111,59 +127,86 @@ export async function analyzeTopic(onderwerp: string): Promise<TopicAnalysis> {
 export function getDefaults(onderwerp: string): { icon: BannerIcon; illustration: BannerIllustration } {
   const lower = onderwerp.toLowerCase();
 
-  if (/ai|machine|neural|model|leren|intelligence/.test(lower)) {
+  if (/ai|machine|neural|model|leren|intelligence|gpt|llm/.test(lower)) {
     return { icon: "brain", illustration: "brain" };
   }
-  if (/data|dashboard|rapport|statistiek|analytics|chart|grafiek|kpi|metric/.test(lower)) {
+  if (/data|dashboard|rapport|statistiek|analytics|chart|grafiek|kpi|metric|pie|taart/.test(lower)) {
     return { icon: "trending-up", illustration: "chart" };
   }
-  if (/integrat|koppel|api|connect|systeem|sync|puzzle/.test(lower)) {
-    return { icon: "link", illustration: "puzzle" };
+  if (/integrat|koppel|api|connect|systeem|sync|puzzle|rest|graphql/.test(lower)) {
+    return { icon: "api", illustration: "nodes" };
   }
-  if (/tip|inzicht|advies|idee|learning/.test(lower)) {
+  if (/tip|inzicht|advies|idee|learning|kennis/.test(lower)) {
     return { icon: "lightbulb", illustration: "lightbulb" };
   }
-  if (/doel|target|sales|lead|conversie|klant|magnet/.test(lower)) {
+  if (/doel|target|sales|lead|conversie|klant|magnet|attract/.test(lower)) {
     return { icon: "target", illustration: "magnet" };
   }
-  if (/flow|workflow|pipeline|proces|process/.test(lower)) {
-    return { icon: "git-branch", illustration: "flow" };
+  if (/flow|workflow|pipeline|proces|process|stap|step/.test(lower)) {
+    return { icon: "workflow", illustration: "flow" };
   }
-  if (/snel|snelheid|speed|zap|trigger|instant/.test(lower)) {
+  if (/code|develop|programmeer|software|git|branch|deploy/.test(lower)) {
+    return { icon: "code", illustration: "circuit" };
+  }
+  if (/snel|snelheid|speed|zap|trigger|instant|auto/.test(lower)) {
     return { icon: "zap", illustration: "circuit" };
   }
-  if (/geld|euro|prijs|omzet|financ|revenue/.test(lower)) {
+  if (/geld|euro|prijs|omzet|financ|revenue|kosten|budget/.test(lower)) {
     return { icon: "euro", illustration: "chart" };
   }
-  if (/team|mensen|gebruiker|klanten|samenwerk|partner|handshake/.test(lower)) {
+  if (/team|mensen|gebruiker|klanten|samenwerk|partner|handshake|hr/.test(lower)) {
     return { icon: "users", illustration: "handshake" };
   }
-  if (/beveiliging|security|shield|bescherm|key|toegang/.test(lower)) {
+  if (/beveiliging|security|shield|bescherm|key|toegang|compliance/.test(lower)) {
     return { icon: "shield", illustration: "circuit" };
   }
-  if (/cloud|saas|hosting|backup|server/.test(lower)) {
+  if (/cloud|saas|hosting|backup|server|aws|azure/.test(lower)) {
     return { icon: "cloud", illustration: "cloud" };
   }
   if (/launch|lanceer|groei|scale|startup|rocket/.test(lower)) {
     return { icon: "rocket", illustration: "rocket" };
   }
-  if (/plan|agenda|kalend|schedule|datum|datum/.test(lower)) {
+  if (/plan|agenda|kalend|schedule|datum|event/.test(lower)) {
     return { icon: "calendar", illustration: "calendar" };
   }
-  if (/email|mail|outreach|campagne|nieuwsbrief/.test(lower)) {
-    return { icon: "mail", illustration: "nodes" };
+  if (/email|mail|outreach|campagne|nieuwsbrief|verstuur|send/.test(lower)) {
+    return { icon: "send", illustration: "nodes" };
   }
-  if (/database|opslag|storage|db/.test(lower)) {
+  if (/database|opslag|storage|db|sql|postgres/.test(lower)) {
     return { icon: "database", illustration: "circuit" };
   }
-  if (/web|website|online|globaal|international/.test(lower)) {
+  if (/web|website|online|globaal|international|domain/.test(lower)) {
     return { icon: "globe", illustration: "nodes" };
   }
-  if (/tijd|uur|deadline|snelheid|timer/.test(lower)) {
-    return { icon: "clock", illustration: "flow" };
+  if (/tijd|uur|deadline|snelheid|timer|herhaal|repeat|recur/.test(lower)) {
+    return { icon: "repeat", illustration: "flow" };
   }
-  if (/infrastructuur|stack|architectuur|layers/.test(lower)) {
+  if (/infrastructuur|stack|architectuur|layers|systemen/.test(lower)) {
     return { icon: "layers", illustration: "circuit" };
+  }
+  if (/chat|gesprek|support|bericht|message|bot/.test(lower)) {
+    return { icon: "chat", illustration: "nodes" };
+  }
+  if (/logistiek|transport|bezorg|levering|truck|shipping/.test(lower)) {
+    return { icon: "truck", illustration: "flow" };
+  }
+  if (/bedrijf|kantoor|gebouw|enterprise|b2b|onderneming/.test(lower)) {
+    return { icon: "building", illustration: "handshake" };
+  }
+  if (/filter|segment|verfijn|criteria|search|zoek/.test(lower)) {
+    return { icon: "filter", illustration: "nodes" };
+  }
+  if (/ster|premium|top|kwaliteit|excel|rating/.test(lower)) {
+    return { icon: "star", illustration: "target" };
+  }
+  if (/wifi|netwerk|verbinding|iot|wireless|online/.test(lower)) {
+    return { icon: "wifi", illustration: "nodes" };
+  }
+  if (/check|klaar|done|afgerond|compleet|goedgekeurd/.test(lower)) {
+    return { icon: "check", illustration: "flow" };
+  }
+  if (/instelling|configuratie|admin|setup|beheer/.test(lower)) {
+    return { icon: "settings", illustration: "gear" };
   }
 
   // Default: automation

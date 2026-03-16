@@ -3,67 +3,123 @@ interface FlowLinesProps {
   height: number;
 }
 
-export function FlowLines({ width, height }: FlowLinesProps) {
-  const h = height;
-  const w = width;
+// Exact same wave formula as the dashboard's WavesBackground (waves-background.tsx)
+// 5 waves, evenly spread, with sine+sine+cos compound formula, t=0 (static)
+function buildWavePath(width: number, height: number, waveIndex: number): string {
+  const yBase = (height / 6) * (waveIndex + 1);
+  const amplitude = 18 + waveIndex * 4;
+  const frequency = 0.0015 + waveIndex * 0.0002;
 
-  // 11 wave lines — varying thickness, opacity, and curve depth for organic depth
-  const lines = [
-    { y: h * 0.06, amp: h * 0.055, freq: 1.1, sw: 1.5, op: 0.06 },
-    { y: h * 0.15, amp: h * 0.07,  freq: 0.9, sw: 2.5, op: 0.10 },
-    { y: h * 0.24, amp: h * 0.045, freq: 1.3, sw: 1.5, op: 0.05 },
-    { y: h * 0.34, amp: h * 0.08,  freq: 1.0, sw: 3.0, op: 0.11 },
-    { y: h * 0.43, amp: h * 0.06,  freq: 1.2, sw: 2.0, op: 0.08 },
-    { y: h * 0.52, amp: h * 0.09,  freq: 0.85,sw: 2.5, op: 0.12 },
-    { y: h * 0.61, amp: h * 0.05,  freq: 1.35,sw: 1.5, op: 0.06 },
-    { y: h * 0.70, amp: h * 0.075, freq: 1.05,sw: 3.0, op: 0.10 },
-    { y: h * 0.79, amp: h * 0.055, freq: 0.95,sw: 2.0, op: 0.07 },
-    { y: h * 0.88, amp: h * 0.065, freq: 1.15,sw: 2.5, op: 0.09 },
-    { y: h * 0.96, amp: h * 0.04,  freq: 1.25,sw: 1.5, op: 0.05 },
-  ];
+  // Phase offsets matching the dashboard (at t=0)
+  const offset1 = waveIndex * 0.8;
+  const offset2 = waveIndex * 1.2;
+  const offset3 = waveIndex * 0.5;
 
-  function buildPath(y: number, amp: number, freq: number): string {
-    // 5 cubic bezier segments spanning the full width with organic crossing curves
-    const segments = 5;
-    const segW = w / segments;
-    // Offset starting y slightly per-freq to break symmetry
-    const startY = y + amp * 0.15 * freq;
-    let d = `M0,${startY}`;
-
-    for (let i = 0; i < segments; i++) {
-      const x1 = (i + 1) * segW;
-      const cp1x = i * segW + segW * 0.25;
-      const cp2x = i * segW + segW * 0.75;
-      const sign = i % 2 === 0 ? 1 : -1;
-      // Vary the end Y slightly to create crossing behaviour over the full height
-      const endY = y + sign * amp * 0.12 * freq;
-      const cp1y = y + amp * sign * freq;
-      const cp2y = y - amp * sign * freq * 0.8;
-      d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${x1},${endY}`;
-    }
-
-    return d;
+  const points: [number, number][] = [];
+  for (let x = 0; x <= width; x += 4) {
+    const y =
+      yBase +
+      Math.sin(x * frequency + offset1) * amplitude +
+      Math.sin(x * frequency * 1.8 + offset2) * (amplitude * 0.35) +
+      Math.cos(x * 0.0008 + offset3) * 5;
+    points.push([x, y]);
   }
+
+  if (points.length === 0) return "";
+
+  let d = `M${points[0][0].toFixed(2)},${points[0][1].toFixed(2)}`;
+  for (let i = 1; i < points.length; i++) {
+    d += ` L${points[i][0].toFixed(2)},${points[i][1].toFixed(2)}`;
+  }
+  return d;
+}
+
+// Compute the Y-value of a wave at a given X position (for dot placement)
+function getWaveY(x: number, height: number, waveIndex: number): number {
+  const yBase = (height / 6) * (waveIndex + 1);
+  const amplitude = 18 + waveIndex * 4;
+  const frequency = 0.0015 + waveIndex * 0.0002;
+  const offset1 = waveIndex * 0.8;
+  const offset2 = waveIndex * 1.2;
+  const offset3 = waveIndex * 0.5;
+  return (
+    yBase +
+    Math.sin(x * frequency + offset1) * amplitude +
+    Math.sin(x * frequency * 1.8 + offset2) * (amplitude * 0.35) +
+    Math.cos(x * 0.0008 + offset3) * 5
+  );
+}
+
+// Fixed dot position offsets per wave (0.0–1.0 fraction of width)
+const DOT_POSITIONS = [0.18, 0.38, 0.55, 0.72, 0.88];
+
+export function FlowLines({ width, height }: FlowLinesProps) {
+  const waveOpacities = [0.08, 0.10, 0.08, 0.10, 0.08];
 
   return (
     <svg
       style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}
-      width={w}
-      height={h}
-      viewBox={`0 0 ${w} ${h}`}
-      preserveAspectRatio="none"
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
     >
-      {lines.map((line, i) => (
+      <defs>
+        {/* Radial glow gradient for traveling dots */}
+        {[0, 1, 2, 3, 4].map((wi) => (
+          <radialGradient
+            key={wi}
+            id={`dot-glow-${wi}`}
+            cx="50%"
+            cy="50%"
+            r="50%"
+          >
+            <stop offset="0%" stopColor="#2DD4A8" stopOpacity="0.9" />
+            <stop offset="60%" stopColor="#2DD4A8" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#2DD4A8" stopOpacity="0" />
+          </radialGradient>
+        ))}
+      </defs>
+
+      {/* 5 waves using the exact dashboard formula */}
+      {[0, 1, 2, 3, 4].map((wi) => (
         <path
-          key={i}
-          d={buildPath(line.y, line.amp, line.freq)}
+          key={wi}
+          d={buildWavePath(width, height, wi)}
           fill="none"
           stroke="#2DD4A8"
-          strokeWidth={line.sw}
-          opacity={line.op}
+          strokeWidth="0.7"
+          opacity={waveOpacities[wi]}
           strokeLinecap="round"
         />
       ))}
+
+      {/* 1 traveling dot per wave, at fixed position */}
+      {[0, 1, 2, 3, 4].map((wi) => {
+        const xFrac = DOT_POSITIONS[wi];
+        const x = xFrac * width;
+        const y = getWaveY(x, height, wi);
+        const glowR = 8;
+        const dotR = 2.5;
+        return (
+          <g key={wi}>
+            {/* Glow halo */}
+            <circle
+              cx={x}
+              cy={y}
+              r={glowR}
+              fill={`url(#dot-glow-${wi})`}
+            />
+            {/* Core dot */}
+            <circle
+              cx={x}
+              cy={y}
+              r={dotR}
+              fill="#2DD4A8"
+              opacity="0.85"
+            />
+          </g>
+        );
+      })}
     </svg>
   );
 }

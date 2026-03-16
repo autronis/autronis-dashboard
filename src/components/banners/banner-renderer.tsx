@@ -18,6 +18,9 @@ interface BannerRendererProps {
   illustration: BannerIllustration;
   formaat: BannerFormaat;
   scale?: number;
+  illustrationScale?: number;
+  illustrationOffsetX?: number;
+  illustrationOffsetY?: number;
 }
 
 export function BannerRenderer({
@@ -26,6 +29,9 @@ export function BannerRenderer({
   illustration,
   formaat,
   scale = 1,
+  illustrationScale,
+  illustrationOffsetX,
+  illustrationOffsetY,
 }: BannerRendererProps) {
   const { width, height } = BANNER_FORMAAT_SIZES[formaat];
 
@@ -54,7 +60,14 @@ export function BannerRenderer({
       <FlowLines width={width * scale} height={height * scale} />
 
       {/* 2. Background illustration */}
-      <BgIllustration type={illustration} width={width * scale} height={height * scale} />
+      <BgIllustration
+        type={illustration}
+        width={width * scale}
+        height={height * scale}
+        scale={illustrationScale}
+        offsetX={illustrationOffsetX}
+        offsetY={illustrationOffsetY}
+      />
 
       {/* 3. Radial glow behind capsule */}
       <div

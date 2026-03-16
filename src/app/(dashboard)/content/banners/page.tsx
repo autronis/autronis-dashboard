@@ -33,7 +33,9 @@ import type {
 import {
   BANNER_FORMAAT_SIZES,
   BANNER_ICONS,
+  BANNER_ICON_LABELS,
   BANNER_ILLUSTRATIONS,
+  BANNER_ILLUSTRATION_LABELS,
 } from "@/types/content";
 import { getDefaults } from "@/lib/ai/banner-generator";
 
@@ -232,6 +234,9 @@ export default function BannersPage() {
   const [icon, setIcon] = useState<BannerIcon>("cog");
   const [illustration, setIllustration] = useState<BannerIllustration>("gear");
   const [capsuleText, setCapsuleText] = useState("");
+  const [illustrationScale, setIllustrationScale] = useState<number>(1.0);
+  const [illustrationOffsetX, setIllustrationOffsetX] = useState<number>(0);
+  const [illustrationOffsetY, setIllustrationOffsetY] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -296,6 +301,9 @@ export default function BannersPage() {
         icon,
         illustration,
         formaat,
+        illustrationScale,
+        illustrationOffsetX,
+        illustrationOffsetY,
       });
       await renderBanner.mutateAsync(result.banner.id);
       addToast("Banner opgeslagen en gerenderd", "succes");
@@ -318,6 +326,9 @@ export default function BannersPage() {
         icon,
         illustration,
         formaat,
+        illustrationScale,
+        illustrationOffsetX,
+        illustrationOffsetY,
       });
       const rendered = await renderBanner.mutateAsync(result.banner.id);
       const a = document.createElement("a");
@@ -447,7 +458,7 @@ export default function BannersPage() {
                 className="w-full bg-autronis-bg border border-autronis-border rounded-xl px-4 py-2.5 text-sm text-autronis-text-primary focus:outline-none focus:border-autronis-accent"
               >
                 {BANNER_ICONS.map((ic) => (
-                  <option key={ic} value={ic}>{ic}</option>
+                  <option key={ic} value={ic}>{BANNER_ICON_LABELS[ic]}</option>
                 ))}
               </select>
             </div>
@@ -461,9 +472,73 @@ export default function BannersPage() {
                 className="w-full bg-autronis-bg border border-autronis-border rounded-xl px-4 py-2.5 text-sm text-autronis-text-primary focus:outline-none focus:border-autronis-accent"
               >
                 {BANNER_ILLUSTRATIONS.map((il) => (
-                  <option key={il} value={il}>{il}</option>
+                  <option key={il} value={il}>{BANNER_ILLUSTRATION_LABELS[il]}</option>
                 ))}
               </select>
+            </div>
+
+            {/* Illustration size */}
+            <div>
+              <label className="text-sm font-medium text-autronis-text-secondary mb-2 block">
+                Grootte illustratie
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {([
+                  { label: "Klein", value: 0.6 },
+                  { label: "Normaal", value: 1.0 },
+                  { label: "Groot", value: 1.3 },
+                  { label: "Extra groot", value: 1.5 },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setIllustrationScale(opt.value)}
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                      illustrationScale === opt.value
+                        ? "border-autronis-accent bg-autronis-accent/10 text-autronis-accent"
+                        : "border-autronis-border text-autronis-text-secondary hover:border-autronis-accent/50"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Illustration position */}
+            <div>
+              <label className="text-sm font-medium text-autronis-text-secondary mb-3 block">
+                Positie illustratie
+              </label>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-xs text-autronis-text-secondary mb-1">
+                    <span>Horizontaal</span>
+                    <span className="text-autronis-accent">{illustrationOffsetX}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={-200}
+                    max={200}
+                    value={illustrationOffsetX}
+                    onChange={(e) => setIllustrationOffsetX(Number(e.target.value))}
+                    className="w-full accent-autronis-accent"
+                  />
+                </div>
+                <div>
+                  <div className="flex justify-between text-xs text-autronis-text-secondary mb-1">
+                    <span>Verticaal</span>
+                    <span className="text-autronis-accent">{illustrationOffsetY}px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={-200}
+                    max={200}
+                    value={illustrationOffsetY}
+                    onChange={(e) => setIllustrationOffsetY(Number(e.target.value))}
+                    className="w-full accent-autronis-accent"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Actions */}
@@ -527,6 +602,9 @@ export default function BannersPage() {
                 illustration={illustration}
                 formaat={formaat}
                 scale={previewScale}
+                illustrationScale={illustrationScale}
+                illustrationOffsetX={illustrationOffsetX * previewScale}
+                illustrationOffsetY={illustrationOffsetY * previewScale}
               />
             </div>
             <p className="text-center text-xs text-autronis-text-secondary/60 mt-2">

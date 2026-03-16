@@ -103,14 +103,36 @@ export const BANNER_ICONS = [
   "cog", "brain", "bar-chart", "link", "lightbulb", "target", "git-branch", "zap",
   "plug", "users", "euro", "shield", "database", "mail", "globe", "rocket",
   "clock", "layers", "trending-up", "cpu", "cloud", "calendar", "key", "heart",
+  "workflow", "api", "chat", "check", "settings", "search", "star", "diamond",
+  "code", "truck", "building", "chart-pie", "filter", "repeat", "send", "wifi",
 ] as const;
 export type BannerIcon = typeof BANNER_ICONS[number];
+
+export const BANNER_ICON_LABELS: Record<BannerIcon, string> = {
+  cog: "Tandwiel", brain: "Brein", "bar-chart": "Grafiek", link: "Koppeling",
+  lightbulb: "Lamp", target: "Doel", "git-branch": "Vertakking", zap: "Bliksem",
+  plug: "Stekker", users: "Gebruikers", euro: "Euro", shield: "Schild",
+  database: "Database", mail: "E-mail", globe: "Wereld", rocket: "Raket",
+  clock: "Klok", layers: "Lagen", "trending-up": "Stijgend", cpu: "Processor",
+  cloud: "Cloud", calendar: "Kalender", key: "Sleutel", heart: "Hart",
+  workflow: "Workflow", api: "API", chat: "Chat", check: "Vinkje",
+  settings: "Instellingen", search: "Zoeken", star: "Ster", diamond: "Diamant",
+  code: "Code", truck: "Transport", building: "Gebouw", "chart-pie": "Taartdiagram",
+  filter: "Filter", repeat: "Herhalen", send: "Verzenden", wifi: "Wifi",
+};
 
 export const BANNER_ILLUSTRATIONS = [
   "gear", "brain", "nodes", "chart", "target", "flow", "circuit", "lightbulb",
   "puzzle", "cloud", "rocket", "calendar", "magnet", "handshake",
 ] as const;
 export type BannerIllustration = typeof BANNER_ILLUSTRATIONS[number];
+
+export const BANNER_ILLUSTRATION_LABELS: Record<BannerIllustration, string> = {
+  gear: "Tandwielen", brain: "Neuraal netwerk", nodes: "Netwerk nodes", chart: "Dashboard",
+  target: "Doelwit & magneet", flow: "Flowchart", circuit: "Circuit board", lightbulb: "Idee lamp",
+  puzzle: "Puzzelstukken", cloud: "Cloud systeem", rocket: "Raket lancering", calendar: "Planning",
+  magnet: "Magneet", handshake: "Samenwerking",
+};
 
 export interface ContentBanner {
   id: number;

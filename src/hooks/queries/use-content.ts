@@ -382,6 +382,9 @@ export function useSaveBanner() {
       icon: BannerIcon;
       illustration: BannerIllustration;
       formaat: BannerFormaat;
+      illustrationScale?: number;
+      illustrationOffsetX?: number;
+      illustrationOffsetY?: number;
     }) => {
       const res = await fetch("/api/content/banners", {
         method: "POST",

@@ -54,6 +54,9 @@ interface SaveBannerBody {
   icon: BannerIcon;
   illustration: BannerIllustration;
   formaat: BannerFormaat;
+  illustrationScale?: number;
+  illustrationOffsetX?: number;
+  illustrationOffsetY?: number;
 }
 
 export async function POST(req: NextRequest) {
@@ -61,7 +64,7 @@ export async function POST(req: NextRequest) {
     await requireAuth();
 
     const body = await req.json() as SaveBannerBody;
-    const { onderwerp, icon, illustration, formaat } = body;
+    const { onderwerp, icon, illustration, formaat, illustrationScale, illustrationOffsetX, illustrationOffsetY } = body;
 
     if (!onderwerp || typeof onderwerp !== "string" || onderwerp.trim().length === 0) {
       return NextResponse.json({ fout: "Onderwerp is verplicht" }, { status: 400 });
@@ -76,7 +79,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ fout: "Ongeldig formaat" }, { status: 400 });
     }
 
-    const data = JSON.stringify({ onderwerp: onderwerp.trim(), icon, illustration });
+    const data = JSON.stringify({
+      onderwerp: onderwerp.trim(),
+      icon,
+      illustration,
+      illustrationScale: illustrationScale ?? 1.0,
+      illustrationOffsetX: illustrationOffsetX ?? 0,
+      illustrationOffsetY: illustrationOffsetY ?? 0,
+    });
 
     const result = await db
       .insert(contentBanners)
