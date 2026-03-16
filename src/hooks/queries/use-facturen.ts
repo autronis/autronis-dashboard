@@ -132,4 +132,42 @@ export function useGenereerPeriodiek() {
   });
 }
 
+export function useScanBon() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("bon", file);
+      const res = await fetch("/api/uitgaven/scan", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.fout || "Scan mislukt");
+      }
+      return res.json() as Promise<{
+        uitgave: {
+          id: number;
+          omschrijving: string;
+          bedrag: number;
+          leverancier: string | null;
+          categorie: string | null;
+        };
+        extracted: {
+          leverancier?: string;
+          bedrag?: number;
+          omschrijving?: string;
+          categorie?: string;
+        };
+        bonUrl: string;
+      }>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["uitgaven"] });
+      queryClient.invalidateQueries({ queryKey: ["facturen"] });
+    },
+  });
+}
+
 export type { Factuur, FactuurKPIs, OuderdomData, OuderdomBucket };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Receipt,
   Plus,
@@ -9,6 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
+  Camera,
+  Loader2,
 } from "lucide-react";
 import { cn, formatBedrag, formatDatumKort } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +20,7 @@ import { Modal } from "@/components/ui/modal";
 import { FormField, SelectField } from "@/components/ui/form-field";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useScanBon } from "@/hooks/queries/use-facturen";
 
 interface Uitgave {
   id: number;
@@ -105,6 +108,39 @@ export function UitgavenTab() {
   const [totaalUitgaven, setTotaalUitgaven] = useState(0);
   const [totaalAftrekbaar, setTotaalAftrekbaar] = useState(0);
   const [totaalBtw, setTotaalBtw] = useState(0);
+
+  const scanBonMutation = useScanBon();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleScanBon = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Reset input so the same file can be selected again
+    e.target.value = "";
+
+    scanBonMutation.mutate(file, {
+      onSuccess: (data) => {
+        const extracted = data.extracted;
+        const parts = [
+          extracted.leverancier && `${extracted.leverancier}`,
+          extracted.bedrag && `\u20AC${extracted.bedrag.toFixed(2)}`,
+          extracted.categorie,
+        ].filter(Boolean);
+        addToast(
+          `Bon gescand: ${parts.join(" - ") || data.uitgave.omschrijving}`,
+          "succes"
+        );
+        fetchData();
+      },
+      onError: (err) => {
+        addToast(err.message, "fout");
+      },
+    });
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -333,13 +369,34 @@ export function UitgavenTab() {
           ))}
         </select>
 
-        <button
-          onClick={openNieuwModal}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-autronis-accent/20 sm:ml-auto"
-        >
-          <Plus className="w-4 h-4" />
-          Nieuwe uitgave
-        </button>
+        <div className="flex items-center gap-3 sm:ml-auto">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            className="hidden"
+            onChange={handleFileSelected}
+          />
+          <button
+            onClick={handleScanBon}
+            disabled={scanBonMutation.isPending}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-autronis-card border border-autronis-border hover:border-autronis-accent/50 hover:bg-autronis-accent/5 text-autronis-text-primary rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+          >
+            {scanBonMutation.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Camera className="w-4 h-4 text-autronis-accent" />
+            )}
+            {scanBonMutation.isPending ? "Scannen..." : "Bon scannen"}
+          </button>
+          <button
+            onClick={openNieuwModal}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-autronis-accent/20"
+          >
+            <Plus className="w-4 h-4" />
+            Nieuwe uitgave
+          </button>
+        </div>
       </div>
 
       {/* Table */}

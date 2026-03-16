@@ -33,16 +33,34 @@ Icon guide:
 - users: team, clients, collaboration, people
 - euro: finance, revenue, costs, pricing
 - shield: security, reliability, protection
+- database: databases, storage, data management
+- mail: email, outreach, communication, campaigns
+- globe: web, international, online presence, SaaS
+- rocket: launch, growth, startup, scale
+- clock: scheduling, time management, planning, deadlines
+- layers: multi-layer, stack, architecture, systems
+- trending-up: growth, KPIs, performance, metrics
+- cpu: tech, infrastructure, processing, computing
+- cloud: cloud services, SaaS, hosting, backup
+- calendar: planning, scheduling, agenda, events
+- key: access, authentication, permissions, security
+- heart: customer satisfaction, loyalty, NPS, care
 
 Illustration guide:
-- gear: process automation, workflows
-- brain: AI, machine learning
-- nodes: integrations, connections, network
-- chart: data, analytics, growth
-- target: goals, sales, lead generation
+- gear: process automation, workflows, systems
+- brain: AI, machine learning, neural networks
+- nodes: integrations, connections, network, graph
+- chart: data, analytics, growth, metrics
+- target: goals, sales, lead generation, KPIs
 - flow: workflows, processes, pipelines
-- circuit: tech, development, systems
-- lightbulb: tips, insights, ideas
+- circuit: tech, development, infrastructure
+- lightbulb: tips, insights, ideas, innovation
+- puzzle: integrations, system fitting, SaaS
+- cloud: cloud, SaaS, hosting, backup
+- rocket: launch, growth, scaling, startup
+- calendar: planning, scheduling, time management
+- magnet: lead generation, attraction, marketing
+- handshake: partnerships, deals, collaboration, clients
 
 Return ONLY valid JSON, no explanation, no markdown:
 {"icon":"cog","illustration":"gear","capsuleText":"Process Automation"}`;
@@ -96,17 +114,17 @@ export function getDefaults(onderwerp: string): { icon: BannerIcon; illustration
   if (/ai|machine|neural|model|leren|intelligence/.test(lower)) {
     return { icon: "brain", illustration: "brain" };
   }
-  if (/data|dashboard|rapport|statistiek|analytics|chart|grafiek/.test(lower)) {
-    return { icon: "bar-chart", illustration: "chart" };
+  if (/data|dashboard|rapport|statistiek|analytics|chart|grafiek|kpi|metric/.test(lower)) {
+    return { icon: "trending-up", illustration: "chart" };
   }
-  if (/integrat|koppel|api|connect|systeem|sync/.test(lower)) {
-    return { icon: "link", illustration: "nodes" };
+  if (/integrat|koppel|api|connect|systeem|sync|puzzle/.test(lower)) {
+    return { icon: "link", illustration: "puzzle" };
   }
   if (/tip|inzicht|advies|idee|learning/.test(lower)) {
     return { icon: "lightbulb", illustration: "lightbulb" };
   }
-  if (/doel|target|sales|lead|conversie|klant/.test(lower)) {
-    return { icon: "target", illustration: "target" };
+  if (/doel|target|sales|lead|conversie|klant|magnet/.test(lower)) {
+    return { icon: "target", illustration: "magnet" };
   }
   if (/flow|workflow|pipeline|proces|process/.test(lower)) {
     return { icon: "git-branch", illustration: "flow" };
@@ -114,14 +132,38 @@ export function getDefaults(onderwerp: string): { icon: BannerIcon; illustration
   if (/snel|snelheid|speed|zap|trigger|instant/.test(lower)) {
     return { icon: "zap", illustration: "circuit" };
   }
-  if (/geld|euro|prijs|omzet|financ/.test(lower)) {
+  if (/geld|euro|prijs|omzet|financ|revenue/.test(lower)) {
     return { icon: "euro", illustration: "chart" };
   }
-  if (/team|mensen|gebruiker|klanten|samenwerk/.test(lower)) {
-    return { icon: "users", illustration: "nodes" };
+  if (/team|mensen|gebruiker|klanten|samenwerk|partner|handshake/.test(lower)) {
+    return { icon: "users", illustration: "handshake" };
   }
-  if (/beveiliging|security|shield|bescherm/.test(lower)) {
+  if (/beveiliging|security|shield|bescherm|key|toegang/.test(lower)) {
     return { icon: "shield", illustration: "circuit" };
+  }
+  if (/cloud|saas|hosting|backup|server/.test(lower)) {
+    return { icon: "cloud", illustration: "cloud" };
+  }
+  if (/launch|lanceer|groei|scale|startup|rocket/.test(lower)) {
+    return { icon: "rocket", illustration: "rocket" };
+  }
+  if (/plan|agenda|kalend|schedule|datum|datum/.test(lower)) {
+    return { icon: "calendar", illustration: "calendar" };
+  }
+  if (/email|mail|outreach|campagne|nieuwsbrief/.test(lower)) {
+    return { icon: "mail", illustration: "nodes" };
+  }
+  if (/database|opslag|storage|db/.test(lower)) {
+    return { icon: "database", illustration: "circuit" };
+  }
+  if (/web|website|online|globaal|international/.test(lower)) {
+    return { icon: "globe", illustration: "nodes" };
+  }
+  if (/tijd|uur|deadline|snelheid|timer/.test(lower)) {
+    return { icon: "clock", illustration: "flow" };
+  }
+  if (/infrastructuur|stack|architectuur|layers/.test(lower)) {
+    return { icon: "layers", illustration: "circuit" };
   }
 
   // Default: automation

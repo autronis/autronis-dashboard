@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { BottomNav } from "./bottom-nav";
@@ -28,6 +28,15 @@ export function AppShell({ gebruiker, children }: AppShellProps) {
     shortcutsOverlayOpen,
     setShortcutsOverlayOpen,
   } = useKeyboardShortcuts();
+
+  // Run auto-tasks once per session per day (non-blocking)
+  useEffect(() => {
+    const key =
+      "autronis-auto-tasks-" + new Date().toISOString().split("T")[0];
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    fetch("/api/auto-tasks", { method: "POST" }).catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-autronis-bg relative">

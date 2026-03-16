@@ -29,14 +29,14 @@ export function BannerRenderer({
 }: BannerRendererProps) {
   const { width, height } = BANNER_FORMAAT_SIZES[formaat];
 
-  const fontSize = Math.min(Math.round(32 * scale), Math.round(height * scale * 0.035));
-  const iconSize = Math.round(32 * scale);
+  const fontSize = Math.min(Math.round(40 * scale), Math.round(height * scale * 0.04));
+  const iconSize = Math.round(44 * scale);
   const headerFontSize = Math.round(18 * scale);
   const footerFontSize = Math.round(14 * scale);
 
-  const paddingV = Math.round(20 * scale);
-  const paddingH = Math.round(40 * scale);
-  const capsuleGap = Math.round(16 * scale);
+  const paddingV = Math.round(24 * scale);
+  const paddingH = Math.round(48 * scale);
+  const capsuleGap = Math.round(18 * scale);
 
   return (
     <div
@@ -62,9 +62,9 @@ export function BannerRenderer({
           position: "absolute",
           top: "50%",
           left: "50%",
-          width: width * scale * 0.65,
-          height: height * scale * 0.4,
-          background: "radial-gradient(ellipse at center, rgba(45,212,168,0.08) 0%, transparent 70%)",
+          width: width * scale * 0.9,
+          height: height * scale * 0.55,
+          background: "radial-gradient(ellipse at center, rgba(45,212,168,0.18) 0%, rgba(45,212,168,0.06) 40%, transparent 70%)",
           transform: "translate(-50%, -50%)",
           pointerEvents: "none",
         }}
@@ -92,7 +92,7 @@ export function BannerRenderer({
             borderRadius: "999px",
             border: `${Math.round(2 * scale)}px solid ${NEON}`,
             background: "rgba(45,212,168,0.08)",
-            boxShadow: `0 0 ${Math.round(20 * scale)}px rgba(45,212,168,0.4), 0 0 ${Math.round(60 * scale)}px rgba(45,212,168,0.15)`,
+            boxShadow: `0 0 ${Math.round(30 * scale)}px rgba(45,212,168,0.5), 0 0 ${Math.round(80 * scale)}px rgba(45,212,168,0.25), 0 0 ${Math.round(120 * scale)}px rgba(45,212,168,0.1)`,
           }}
         >
           <CapsuleIcon icon={icon} size={iconSize} />
@@ -120,9 +120,15 @@ export function BannerRenderer({
           left: Math.round(44 * scale),
           display: "flex",
           alignItems: "center",
-          gap: Math.round(8 * scale),
+          gap: Math.round(10 * scale),
         }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo.png"
+          alt="Autronis"
+          style={{ height: Math.round(40 * scale), width: "auto", objectFit: "contain" }}
+        />
         <span
           style={{
             fontFamily: FONT,
@@ -132,7 +138,7 @@ export function BannerRenderer({
             letterSpacing: "0.02em",
           }}
         >
-          ✦ Autronis
+          Autronis
         </span>
       </div>
 
@@ -145,8 +151,16 @@ export function BannerRenderer({
           right: 0,
           display: "flex",
           justifyContent: "center",
+          alignItems: "center",
+          gap: Math.round(8 * scale),
         }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo.png"
+          alt="Autronis"
+          style={{ height: Math.round(24 * scale), width: "auto", objectFit: "contain", opacity: 0.6 }}
+        />
         <span
           style={{
             fontFamily: FONT,

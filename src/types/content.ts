@@ -99,10 +99,17 @@ export const BANNER_FORMAAT_SIZES: Record<BannerFormaat, { width: number; height
   linkedin: { width: 1200, height: 627, label: "LinkedIn (1200x627)" },
 };
 
-export const BANNER_ICONS = ["cog", "brain", "bar-chart", "link", "lightbulb", "target", "git-branch", "zap", "plug", "users", "euro", "shield"] as const;
+export const BANNER_ICONS = [
+  "cog", "brain", "bar-chart", "link", "lightbulb", "target", "git-branch", "zap",
+  "plug", "users", "euro", "shield", "database", "mail", "globe", "rocket",
+  "clock", "layers", "trending-up", "cpu", "cloud", "calendar", "key", "heart",
+] as const;
 export type BannerIcon = typeof BANNER_ICONS[number];
 
-export const BANNER_ILLUSTRATIONS = ["gear", "brain", "nodes", "chart", "target", "flow", "circuit", "lightbulb"] as const;
+export const BANNER_ILLUSTRATIONS = [
+  "gear", "brain", "nodes", "chart", "target", "flow", "circuit", "lightbulb",
+  "puzzle", "cloud", "rocket", "calendar", "magnet", "handshake",
+] as const;
 export type BannerIllustration = typeof BANNER_ILLUSTRATIONS[number];
 
 export interface ContentBanner {

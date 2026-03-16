@@ -7,32 +7,39 @@ export function FlowLines({ width, height }: FlowLinesProps) {
   const h = height;
   const w = width;
 
-  // 6 wavy lines at different vertical positions with varying amplitudes
+  // 11 wave lines — varying thickness, opacity, and curve depth for organic depth
   const lines = [
-    { y: h * 0.15, amp: h * 0.04, freq: 1.2, sw: 1.5, op: 0.07 },
-    { y: h * 0.28, amp: h * 0.035, freq: 0.9, sw: 1, op: 0.055 },
-    { y: h * 0.42, amp: h * 0.05, freq: 1.1, sw: 2, op: 0.08 },
-    { y: h * 0.57, amp: h * 0.03, freq: 1.4, sw: 1, op: 0.05 },
-    { y: h * 0.71, amp: h * 0.045, freq: 0.85, sw: 1.5, op: 0.065 },
-    { y: h * 0.86, amp: h * 0.038, freq: 1.15, sw: 1, op: 0.06 },
+    { y: h * 0.06, amp: h * 0.055, freq: 1.1, sw: 1.5, op: 0.06 },
+    { y: h * 0.15, amp: h * 0.07,  freq: 0.9, sw: 2.5, op: 0.10 },
+    { y: h * 0.24, amp: h * 0.045, freq: 1.3, sw: 1.5, op: 0.05 },
+    { y: h * 0.34, amp: h * 0.08,  freq: 1.0, sw: 3.0, op: 0.11 },
+    { y: h * 0.43, amp: h * 0.06,  freq: 1.2, sw: 2.0, op: 0.08 },
+    { y: h * 0.52, amp: h * 0.09,  freq: 0.85,sw: 2.5, op: 0.12 },
+    { y: h * 0.61, amp: h * 0.05,  freq: 1.35,sw: 1.5, op: 0.06 },
+    { y: h * 0.70, amp: h * 0.075, freq: 1.05,sw: 3.0, op: 0.10 },
+    { y: h * 0.79, amp: h * 0.055, freq: 0.95,sw: 2.0, op: 0.07 },
+    { y: h * 0.88, amp: h * 0.065, freq: 1.15,sw: 2.5, op: 0.09 },
+    { y: h * 0.96, amp: h * 0.04,  freq: 1.25,sw: 1.5, op: 0.05 },
   ];
 
   function buildPath(y: number, amp: number, freq: number): string {
-    // Build a smooth S-curve wave using cubic bezier segments
-    const segments = 4;
+    // 5 cubic bezier segments spanning the full width with organic crossing curves
+    const segments = 5;
     const segW = w / segments;
-    let d = `M0,${y}`;
+    // Offset starting y slightly per-freq to break symmetry
+    const startY = y + amp * 0.15 * freq;
+    let d = `M0,${startY}`;
 
     for (let i = 0; i < segments; i++) {
-      const x0 = i * segW;
-      const x1 = x0 + segW;
-      const cp1x = x0 + segW * 0.3;
-      const cp2x = x0 + segW * 0.7;
+      const x1 = (i + 1) * segW;
+      const cp1x = i * segW + segW * 0.25;
+      const cp2x = i * segW + segW * 0.75;
       const sign = i % 2 === 0 ? 1 : -1;
+      // Vary the end Y slightly to create crossing behaviour over the full height
+      const endY = y + sign * amp * 0.12 * freq;
       const cp1y = y + amp * sign * freq;
-      const cp2y = y - amp * sign * freq;
-      const ey = y + (i % 2 === 0 ? amp * 0.1 : -amp * 0.1);
-      d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${x1},${ey}`;
+      const cp2y = y - amp * sign * freq * 0.8;
+      d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${x1},${endY}`;
     }
 
     return d;
@@ -54,6 +61,7 @@ export function FlowLines({ width, height }: FlowLinesProps) {
           stroke="#2DD4A8"
           strokeWidth={line.sw}
           opacity={line.op}
+          strokeLinecap="round"
         />
       ))}
     </svg>
