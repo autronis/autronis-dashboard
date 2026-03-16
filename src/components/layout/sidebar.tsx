@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   Clock,
@@ -30,6 +31,7 @@ import {
   Radar,
   Lightbulb,
   Megaphone,
+  Video,
 } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { cn } from "@/lib/utils";
@@ -56,6 +58,7 @@ const navItems = [
   { label: "Documenten", icon: FileText, href: "/documenten" },
   { label: "Learning Radar", icon: Radar, href: "/radar" },
   { label: "AI Assistent", icon: Sparkles, href: "/ai-assistent" },
+  { label: "Case Studies", icon: Video, href: "/case-studies" },
 ];
 
 const bottomNavItem = { label: "Instellingen", icon: Settings, href: "/instellingen" };
@@ -97,12 +100,13 @@ export function Sidebar() {
       )}
 
       {/* Sidebar */}
-      <aside
+      <motion.aside
+        animate={{ width: isCollapsed ? 72 : 260 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className={cn(
-          "fixed top-0 left-0 h-full z-30 flex flex-col glass border-r border-autronis-border transition-all duration-300",
-          isCollapsed ? "w-16" : "w-64",
+          "fixed top-0 left-0 h-full z-30 flex flex-col glass border-r border-autronis-border",
           // Mobile: hidden unless isOpen
-          "max-lg:translate-x-full max-lg:w-64",
+          "max-lg:translate-x-full max-lg:w-64 max-lg:transition-transform max-lg:duration-300",
           isOpen && "max-lg:translate-x-0"
         )}
       >
@@ -157,24 +161,24 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                  "flex items-center gap-3 py-3 px-4 rounded-lg transition-colors duration-150",
                   active
-                    ? "bg-autronis-accent/10 text-autronis-accent"
-                    : "text-autronis-text-secondary hover:bg-autronis-border"
+                    ? "bg-autronis-accent/10 border-l-[3px] border-autronis-accent text-white font-semibold"
+                    : "text-autronis-text-secondary hover:bg-white/5 border-l-[3px] border-transparent"
                 )}
                 title={isCollapsed ? item.label : undefined}
               >
                 <span className="relative flex-shrink-0">
-                  <Icon className="w-5 h-5" />
+                  <Icon className={cn("w-5 h-5", active ? "text-autronis-accent" : "text-slate-400")} />
                   {item.href === "/belasting" && urgentCount > 0 && isCollapsed && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-autronis-card" />
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-autronis-card animate-pulse" />
                   )}
                 </span>
                 {!isCollapsed && (
-                  <span className="text-sm font-medium truncate flex-1">{item.label}</span>
+                  <span className="text-sm truncate flex-1">{item.label}</span>
                 )}
                 {!isCollapsed && item.href === "/belasting" && urgentCount > 0 && (
-                  <span className="ml-auto flex-shrink-0 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold bg-red-500 text-white rounded-full">
+                  <span className="ml-auto flex-shrink-0 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold bg-red-500 text-white rounded-full animate-pulse">
                     {urgentCount}
                   </span>
                 )}
@@ -230,22 +234,22 @@ export function Sidebar() {
               <Link
                 href={bottomNavItem.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors",
+                  "flex items-center gap-3 py-3 px-4 rounded-lg transition-colors duration-150",
                   active
-                    ? "bg-autronis-accent/10 text-autronis-accent"
-                    : "text-autronis-text-secondary hover:bg-autronis-border"
+                    ? "bg-autronis-accent/10 border-l-[3px] border-autronis-accent text-white font-semibold"
+                    : "text-autronis-text-secondary hover:bg-white/5 border-l-[3px] border-transparent"
                 )}
                 title={isCollapsed ? bottomNavItem.label : undefined}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" />
+                <Icon className={cn("w-5 h-5 flex-shrink-0", active ? "text-autronis-accent" : "text-slate-400")} />
                 {!isCollapsed && (
-                  <span className="text-sm font-medium">{bottomNavItem.label}</span>
+                  <span className="text-sm">{bottomNavItem.label}</span>
                 )}
               </Link>
             );
           })()}
         </div>
-      </aside>
+      </motion.aside>
     </>
   );
 }
