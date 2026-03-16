@@ -245,6 +245,59 @@ export async function archiveNotionDocument(notionId: string, archived: boolean)
   }));
 }
 
+// Search documents by content using Notion search API
+export async function searchNotionDocuments(query: string): Promise<DocumentBase[]> {
+  try {
+    const response = await withRetry(() => notion.search({
+      query,
+      filter: { property: "object", value: "page" },
+      page_size: 10,
+    }));
+
+    return response.results
+      .filter((page) => "properties" in page)
+      .map((page) => {
+        const props = (page as { properties: Record<string, unknown> }).properties as Record<string, {
+          rich_text?: Array<{ plain_text: string }>;
+        }>;
+        const storedType = props["Document type"]?.rich_text?.[0]?.plain_text;
+        if (!storedType) return null; // Not a document we created
+        return parseNotionPage(page as { id: string; url?: string; properties?: Record<string, unknown> }, storedType as DocumentType);
+      })
+      .filter((doc): doc is DocumentBase => doc !== null);
+  } catch {
+    return [];
+  }
+}
+
+// Get page content as plain text (for bulk summary)
+export async function getPageContent(pageId: string): Promise<string> {
+  try {
+    const response = await withRetry(() => notion.blocks.children.list({ block_id: pageId, page_size: 100 }));
+    return response.results
+      .map((block) => {
+        const b = block as { type: string; [key: string]: unknown };
+        const textBlock = b[b.type] as { rich_text?: Array<{ plain_text: string }> } | undefined;
+        return textBlock?.rich_text?.map((t) => t.plain_text).join("") ?? "";
+      })
+      .filter(Boolean)
+      .join("\n\n");
+  } catch {
+    return "";
+  }
+}
+
+// Update a Notion page's summary property
+export async function updatePageSummary(pageId: string, samenvatting: string): Promise<void> {
+  const properties = {
+    Samenvatting: { rich_text: [{ text: { content: samenvatting } }] },
+  };
+  await withRetry(() => notion.pages.update({
+    page_id: pageId,
+    properties: properties as Parameters<typeof notion.pages.update>[0]["properties"],
+  }));
+}
+
 export async function fetchNotionDocument(notionId: string): Promise<DocumentBase | null> {
   try {
     const page = await withRetry(() => notion.pages.retrieve({ page_id: notionId }));

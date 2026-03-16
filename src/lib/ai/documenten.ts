@@ -57,6 +57,38 @@ Genereer het volledige document. Gebruik duidelijke koppen en structuur.`,
   return { content, samenvatting };
 }
 
+export type ImproveMode = "formeler" | "korter" | "uitgebreider" | "eenvoudiger" | "toon";
+
+const IMPROVE_PROMPTS: Record<ImproveMode, string> = {
+  formeler: "Herschrijf dit document professioneler en zakelijker. Behoud alle inhoud maar maak de toon formeler.",
+  korter: "Maak dit document 30% korter. Behoud de kernboodschap maar verwijder overbodige tekst.",
+  uitgebreider: "Breid dit document uit met relevante details. Voeg context toe die nuttig is op basis van de Autronis diensten en werkwijze.",
+  eenvoudiger: "Herschrijf dit document in eenvoudig Nederlands. Vermijd jargon en gebruik korte zinnen.",
+  toon: "Pas de toon van dit document aan zodat het past bij de Autronis tone of voice: professioneel maar toegankelijk, concreet en to-the-point.",
+};
+
+export const IMPROVE_MODE_LABELS: Record<ImproveMode, string> = {
+  formeler: "Formeler",
+  korter: "Korter",
+  uitgebreider: "Uitgebreider",
+  eenvoudiger: "Eenvoudiger",
+  toon: "Autronis toon",
+};
+
+export async function improveDocument(content: string, mode: ImproveMode): Promise<{ original: string; improved: string }> {
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 2000,
+    system: `${AUTRONIS_CONTEXT}\n\n${IMPROVE_PROMPTS[mode]}\n\nSchrijf in het Nederlands. Geef alleen het verbeterde document terug, geen uitleg.`,
+    messages: [
+      { role: "user", content },
+    ],
+  });
+
+  const improved = message.content[0].type === "text" ? message.content[0].text : content;
+  return { original: content, improved };
+}
+
 export async function categorizeDocument(content: string, type: DocumentType): Promise<AiCategorisatieResponse> {
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-20250514",
@@ -93,4 +125,18 @@ ${content}`,
     samenvatting: "",
     extractedMetadata: {},
   };
+}
+
+export async function generateSummary(content: string): Promise<string> {
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 200,
+    messages: [
+      {
+        role: "user",
+        content: `Geef een samenvatting van maximaal 2 zinnen van het volgende document:\n\n${content}`,
+      },
+    ],
+  });
+  return message.content[0].type === "text" ? message.content[0].text : "";
 }

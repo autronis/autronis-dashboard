@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { klanten, projecten, facturen, taken, leads } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth";
 import { like, eq, sql, or } from "drizzle-orm";
-import { fetchAllDocuments } from "@/lib/notion";
+import { fetchAllDocuments, searchNotionDocuments } from "@/lib/notion";
 import { DocumentBase } from "@/types/documenten";
 
 interface ZoekResultaat {
@@ -93,6 +93,7 @@ export async function GET(req: NextRequest) {
       resultaten.push({ type: "lead", id: l.id, titel: l.bedrijfsnaam, subtitel: l.contactpersoon, link: "/crm" });
     }
 
+    // Title-based search from cache
     try {
       const documenten = await getCachedDocuments();
       const matchingDocs = documenten
@@ -106,6 +107,23 @@ export async function GET(req: NextRequest) {
           externalUrl: doc.notionUrl,
         }));
       resultaten.push(...matchingDocs);
+
+      // Content-based search via Notion search API (if query is 3+ chars)
+      if (q.length >= 3) {
+        const contentResults = await searchNotionDocuments(q);
+        const existingIds = new Set(matchingDocs.map(d => d.id));
+        const contentDocs = contentResults
+          .filter(doc => !existingIds.has(doc.notionId))
+          .slice(0, 3)
+          .map(doc => ({
+            id: doc.notionId,
+            type: "document" as const,
+            titel: doc.titel,
+            subtitel: `Gevonden in document · ${doc.samenvatting || doc.type}`,
+            externalUrl: doc.notionUrl,
+          }));
+        resultaten.push(...contentDocs);
+      }
     } catch {
       // Notion search failed silently
     }

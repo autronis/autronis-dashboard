@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DocumentBase, DOCUMENT_TYPE_CONFIG } from "@/types/documenten";
-import { X, ExternalLink, Copy, Calendar, User, Archive, FileDown } from "lucide-react";
+import { useImproveDocument } from "@/hooks/queries/use-documenten";
+import { IMPROVE_MODE_LABELS, type ImproveMode } from "@/lib/ai/documenten";
+import { X, ExternalLink, Copy, Calendar, User, Archive, FileDown, Sparkles, Loader2, Check, RotateCcw } from "lucide-react";
 
 interface DocumentPreviewProps {
   document: DocumentBase | null;
@@ -15,6 +17,9 @@ interface DocumentPreviewProps {
 
 export function DocumentPreview({ document: doc, open, onClose, onDuplicate, onArchive }: DocumentPreviewProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const [showImprove, setShowImprove] = useState(false);
+  const [improveResult, setImproveResult] = useState<{ original: string; improved: string } | null>(null);
+  const improveDocument = useImproveDocument();
 
   useEffect(() => {
     if (!open) return;
@@ -117,6 +122,72 @@ export function DocumentPreview({ document: doc, open, onClose, onDuplicate, onA
                   </div>
                 )}
               </div>
+
+              {/* AI Verbeteren */}
+              {doc.samenvatting && (
+                <div>
+                  <button
+                    onClick={() => { setShowImprove(!showImprove); setImproveResult(null); }}
+                    className="flex items-center gap-1.5 text-xs font-medium text-autronis-accent hover:text-autronis-accent-hover transition-colors"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    AI Verbeteren
+                  </button>
+
+                  {showImprove && (
+                    <div className="mt-2 space-y-2">
+                      <div className="flex flex-wrap gap-1.5">
+                        {(Object.entries(IMPROVE_MODE_LABELS) as [ImproveMode, string][]).map(([mode, label]) => (
+                          <button
+                            key={mode}
+                            onClick={async () => {
+                              try {
+                                const result = await improveDocument.mutateAsync({ content: doc.samenvatting, mode });
+                                setImproveResult(result);
+                              } catch {
+                                // Error handled by mutation
+                              }
+                            }}
+                            disabled={improveDocument.isPending}
+                            className="px-2.5 py-1 rounded-lg text-xs bg-autronis-bg border border-autronis-border text-autronis-text-secondary hover:text-autronis-text-primary hover:border-autronis-accent/50 transition-colors disabled:opacity-50"
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+
+                      {improveDocument.isPending && (
+                        <div className="flex items-center gap-2 text-xs text-autronis-text-secondary">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          AI is bezig...
+                        </div>
+                      )}
+
+                      {improveResult && (
+                        <div className="space-y-2 rounded-lg bg-autronis-bg border border-autronis-border p-3">
+                          <div>
+                            <span className="text-xs font-medium text-red-400">Origineel:</span>
+                            <p className="text-xs text-autronis-text-secondary mt-0.5 line-through">{improveResult.original}</p>
+                          </div>
+                          <div>
+                            <span className="text-xs font-medium text-green-400">Verbeterd:</span>
+                            <p className="text-xs text-autronis-text-primary mt-0.5">{improveResult.improved}</p>
+                          </div>
+                          <div className="flex items-center gap-2 pt-1">
+                            <button
+                              onClick={() => setImproveResult(null)}
+                              className="flex items-center gap-1 text-xs text-autronis-text-secondary hover:text-autronis-text-primary"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              Opnieuw
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Actions */}
               <div className="space-y-2 pt-2">

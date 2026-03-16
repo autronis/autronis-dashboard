@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { DocumentBase, DocumentPayload, AiDraftRequest, AiDraftResponse, PaginatedDocumenten, SortOption } from "@/types/documenten";
+import type { ImproveMode } from "@/lib/ai/documenten";
 
 async function fetchDocumenten(sort?: SortOption, cursor?: string): Promise<PaginatedDocumenten> {
   const params = new URLSearchParams();
@@ -118,6 +119,24 @@ export function useGenerateDraft() {
       }
       const data = await res.json();
       return data.draft;
+    },
+  });
+}
+
+export function useImproveDocument() {
+  return useMutation({
+    mutationFn: async ({ content, mode }: { content: string; mode: ImproveMode }): Promise<{ original: string; improved: string }> => {
+      const res = await fetch("/api/documenten/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, mode }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.fout ?? "Kon document niet verbeteren");
+      }
+      const data = await res.json();
+      return data.result;
     },
   });
 }

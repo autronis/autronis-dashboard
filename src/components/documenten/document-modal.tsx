@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/modal";
-import { useCreateDocument, useGenerateDraft } from "@/hooks/queries/use-documenten";
+import { useCreateDocument, useGenerateDraft, useDocumenten } from "@/hooks/queries/use-documenten";
 import { useKlanten } from "@/hooks/queries/use-klanten";
 import { useToast } from "@/hooks/use-toast";
-import { DocumentType, DocumentPayload, DOCUMENT_TYPE_LABELS } from "@/types/documenten";
-import { Sparkles, Loader2 } from "lucide-react";
+import { DocumentBase, DocumentType, DocumentPayload, DOCUMENT_TYPE_LABELS, DOCUMENT_TYPE_CONFIG } from "@/types/documenten";
+import { Sparkles, Loader2, ExternalLink } from "lucide-react";
 
 interface InitialValues {
   titel?: string;
@@ -41,6 +41,7 @@ export function DocumentModal({ open, onClose, initialType, initialValues }: Doc
   const [datum, setDatum] = useState("");
 
   const { data: klanten } = useKlanten();
+  const { data: allDocs } = useDocumenten();
   const createDocument = useCreateDocument();
   const generateDraft = useGenerateDraft();
   const { addToast } = useToast();
@@ -283,6 +284,39 @@ export function DocumentModal({ open, onClose, initialType, initialValues }: Doc
           />
         </div>
       </div>
+
+      {/* Slimme suggesties */}
+      {klantId && allDocs?.documenten && (() => {
+        const suggesties = allDocs.documenten
+          .filter((d: DocumentBase) => d.klantNaam === selectedKlant?.bedrijfsnaam && d.type === type)
+          .slice(0, 3);
+        if (suggesties.length === 0) return null;
+        return (
+          <div className="mt-4 p-3 rounded-lg bg-autronis-bg/50 border border-autronis-border">
+            <p className="text-xs font-medium text-autronis-text-secondary mb-2">
+              Bestaande documenten voor {selectedKlant?.bedrijfsnaam}
+            </p>
+            <div className="space-y-1.5">
+              {suggesties.map((d: DocumentBase) => {
+                const cfg = DOCUMENT_TYPE_CONFIG[d.type];
+                return (
+                  <a
+                    key={d.notionId}
+                    href={d.notionUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-2 py-1.5 rounded text-xs text-autronis-text-secondary hover:text-autronis-text-primary transition-colors"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cfg.color }} />
+                    <span className="truncate flex-1">{d.titel}</span>
+                    <ExternalLink className="w-3 h-3 flex-shrink-0 opacity-50" />
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="flex justify-end gap-3 mt-6">
         <button onClick={onClose} className="px-4 py-2 rounded-lg text-sm text-autronis-text-secondary hover:text-autronis-text-primary transition-colors">
