@@ -24,7 +24,9 @@ import {
   useUpdateSecondBrainItem,
   type SecondBrainItem,
 } from "@/hooks/queries/use-second-brain";
+import { useQueryClient } from "@tanstack/react-query";
 import { AiZoekenTab } from "./ai-zoeken-tab";
+import { DetailModal } from "./detail-modal";
 
 const typeConfig = {
   tekst: { icon: FileText, label: "Tekst", color: "text-blue-400" },
@@ -38,6 +40,7 @@ type TypeKey = keyof typeof typeConfig;
 
 export default function SecondBrainPage() {
   const { addToast } = useToast();
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<"feed" | "zoeken">("feed");
   const [typeFilter, setTypeFilter] = useState("alle");
@@ -433,55 +436,13 @@ export default function SecondBrainPage() {
           <AiZoekenTab onSelectItem={(item) => setSelectedItem(item)} />
         )}
 
-        {/* Selected item detail (minimal inline preview) */}
+        {/* Detail modal */}
         {selectedItem && (
-          <div
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60"
-            onClick={() => setSelectedItem(null)}
-          >
-            <div
-              className="bg-autronis-card border border-autronis-border rounded-2xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                {(() => {
-                  const cfg = typeConfig[selectedItem.type] ?? typeConfig.tekst;
-                  const Icon = cfg.icon;
-                  return <Icon className={cn("w-5 h-5", cfg.color)} />;
-                })()}
-                <h2 className="text-lg font-semibold text-autronis-text-primary flex-1 min-w-0 truncate">
-                  {selectedItem.titel ?? "Zonder titel"}
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => setSelectedItem(null)}
-                  className="text-autronis-text-secondary hover:text-autronis-text-primary transition-colors text-xl leading-none"
-                >
-                  ×
-                </button>
-              </div>
-              {selectedItem.aiSamenvatting && (
-                <p className="text-autronis-text-secondary text-sm mb-4 leading-relaxed">
-                  {selectedItem.aiSamenvatting}
-                </p>
-              )}
-              {selectedItem.inhoud && (
-                <pre className="text-autronis-text-primary text-sm bg-autronis-bg rounded-xl p-4 whitespace-pre-wrap break-words mb-4 max-h-60 overflow-y-auto">
-                  {selectedItem.inhoud}
-                </pre>
-              )}
-              {selectedItem.bronUrl && (
-                <a
-                  href={selectedItem.bronUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-autronis-accent text-sm hover:underline break-all"
-                >
-                  {selectedItem.bronUrl}
-                </a>
-              )}
-            </div>
-          </div>
+          <DetailModal
+            item={selectedItem}
+            onClose={() => setSelectedItem(null)}
+            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["second-brain"] })}
+          />
         )}
       </div>
     </PageTransition>
