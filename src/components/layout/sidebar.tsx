@@ -32,6 +32,7 @@ import {
   Lightbulb,
   Megaphone,
   Video,
+  Flame,
 } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { cn } from "@/lib/utils";
@@ -56,6 +57,7 @@ const navItems: NavItem[] = [
   { label: "Kilometers", icon: Car, href: "/kilometers" },
   { section: "Groei" },
   { label: "Analytics", icon: BarChart3, href: "/analytics" },
+  { label: "Gewoontes", icon: Flame, href: "/gewoontes" },
   { label: "Doelen", icon: Crosshair, href: "/doelen" },
   { label: "Ideeën", icon: Lightbulb, href: "/ideeen" },
   { section: "Content & Kennis" },

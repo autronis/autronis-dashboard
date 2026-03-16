@@ -875,6 +875,33 @@ export const contentBanners = sqliteTable("content_banners", {
   aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
 });
 
+// ============ GEWOONTES (HABITS) ============
+
+export const gewoontes = sqliteTable("gewoontes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  gebruikerId: integer("gebruiker_id").references(() => gebruikers.id),
+  naam: text("naam").notNull(),
+  icoon: text("icoon").notNull().default("Target"), // Lucide icon name
+  frequentie: text("frequentie", { enum: ["dagelijks", "weekelijks"] }).default("dagelijks"),
+  streefwaarde: text("streefwaarde"), // e.g. "30 min", "1 persoon"
+  volgorde: integer("volgorde").default(0),
+  isActief: integer("is_actief").default(1),
+  aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
+});
+
+export const gewoonteLogboek = sqliteTable("gewoonte_logboek", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  gewoonteId: integer("gewoonte_id").references(() => gewoontes.id, { onDelete: "cascade" }),
+  gebruikerId: integer("gebruiker_id").references(() => gebruikers.id),
+  datum: text("datum").notNull(), // YYYY-MM-DD
+  voltooid: integer("voltooid").default(1),
+  notitie: text("notitie"),
+  aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
+}, (table) => [
+  index("idx_logboek_gewoonte_datum").on(table.gewoonteId, table.datum),
+  index("idx_logboek_gebruiker_datum").on(table.gebruikerId, table.datum),
+]);
+
 // ============ IDEEEN ============
 
 export const ideeen = sqliteTable("ideeen", {
