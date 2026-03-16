@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
 import { BottomNav } from "./bottom-nav";
@@ -12,6 +12,10 @@ import { CommandPalette } from "@/components/ui/command-palette";
 import { KeyboardShortcutsOverlay } from "@/components/ui/keyboard-shortcuts-overlay";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { FocusSetupModal } from "@/components/focus/focus-setup-modal";
+import { FocusOverlay } from "@/components/focus/focus-overlay";
+import { FocusReflectieModal } from "@/components/focus/focus-reflectie-modal";
+import { useFocus, loadFocusFromStorage } from "@/hooks/use-focus";
 import { cn } from "@/lib/utils";
 import type { SessionGebruiker } from "@/types";
 
@@ -28,6 +32,16 @@ export function AppShell({ gebruiker, children }: AppShellProps) {
     shortcutsOverlayOpen,
     setShortcutsOverlayOpen,
   } = useKeyboardShortcuts();
+
+  const focus = useFocus();
+
+  // Restore focus session from localStorage on mount
+  useEffect(() => {
+    const stored = loadFocusFromStorage();
+    if (stored) {
+      focus.restore();
+    }
+  }, []);
 
   // Run auto-tasks once per session per day (non-blocking)
   useEffect(() => {
@@ -73,6 +87,11 @@ export function AppShell({ gebruiker, children }: AppShellProps) {
         open={shortcutsOverlayOpen}
         onClose={() => setShortcutsOverlayOpen(false)}
       />
+
+      {/* Focus modals & overlay */}
+      <FocusSetupModal />
+      <FocusOverlay />
+      <FocusReflectieModal />
     </div>
   );
 }
