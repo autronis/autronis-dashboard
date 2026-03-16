@@ -11,6 +11,7 @@ import {
   Edit,
   Loader2,
   ExternalLink,
+  FileText,
   Sparkles,
   ArrowUpCircle,
   Target,
@@ -30,6 +31,7 @@ import {
   useSyncBacklog,
   useGenereerIdeeen,
   usePromoveerIdee,
+  useRegenereerPlan,
   type Idee,
 } from "@/hooks/queries/use-ideeen";
 
@@ -114,12 +116,14 @@ export default function IdeeenPage() {
   const syncBacklogMutation = useSyncBacklog();
   const genereerMutation = useGenereerIdeeen();
   const promoveerMutation = usePromoveerIdee();
+  const regenereerPlanMutation = useRegenereerPlan();
 
   // Modal state
   const [detailIdee, setDetailIdee] = useState<Idee | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editIdee, setEditIdee] = useState<Idee | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [notionUrl, setNotionUrl] = useState<string | null>(null);
 
   // Form state
   const [formNaam, setFormNaam] = useState("");
@@ -258,6 +262,20 @@ export default function IdeeenPage() {
     deleteMutation.mutate(idee.id, {
       onSuccess: () => addToast("AI-suggestie verwijderd", "succes"),
       onError: () => addToast("Kon niet verwijderen", "fout"),
+    });
+  }
+
+  function handleRegenereerPlan() {
+    if (!detailIdee) return;
+    setNotionUrl(null);
+    regenereerPlanMutation.mutate(detailIdee.id, {
+      onSuccess: (data: { notionUrl?: string }) => {
+        addToast("Notion plan gegenereerd", "succes");
+        if (data.notionUrl) {
+          setNotionUrl(data.notionUrl);
+        }
+      },
+      onError: (err) => addToast(err.message || "Regenereren mislukt", "fout"),
     });
   }
 
@@ -690,7 +708,7 @@ export default function IdeeenPage() {
                 </div>
               </div>
               <button
-                onClick={() => setDetailIdee(null)}
+                onClick={() => { setDetailIdee(null); setNotionUrl(null); }}
                 className="p-2 text-autronis-text-secondary hover:text-autronis-text-primary rounded-lg hover:bg-autronis-bg/50 transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -744,6 +762,34 @@ export default function IdeeenPage() {
                   )}
                   Start als project
                 </button>
+              )}
+
+              {(detailIdee.status === "actief" || detailIdee.status === "gebouwd") && (
+                <>
+                  <button
+                    onClick={handleRegenereerPlan}
+                    disabled={regenereerPlanMutation.isPending}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+                  >
+                    {regenereerPlanMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <FileText className="w-4 h-4" />
+                    )}
+                    Regenereer Notion plan
+                  </button>
+                  {notionUrl && (
+                    <a
+                      href={notionUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-autronis-accent/15 text-autronis-accent hover:bg-autronis-accent/25 rounded-xl text-sm font-medium transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Open in Notion
+                    </a>
+                  )}
+                </>
               )}
 
               <div className="flex-1" />

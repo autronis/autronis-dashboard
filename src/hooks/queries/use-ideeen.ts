@@ -192,6 +192,23 @@ export function usePromoveerIdee() {
   });
 }
 
+export function useRegenereerPlan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/ideeen/${id}/regenereer-plan`, { method: "POST" });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.fout || "Regenereren mislukt");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ideeen"] });
+    },
+  });
+}
+
 export function useSyncBacklog() {
   const queryClient = useQueryClient();
 
