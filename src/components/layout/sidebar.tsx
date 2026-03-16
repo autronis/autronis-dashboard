@@ -32,6 +32,8 @@ import {
   Megaphone,
   Video,
   Flame,
+  Focus,
+  Brain,
 } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { cn } from "@/lib/utils";
@@ -44,6 +46,7 @@ const navItems: NavItem[] = [
   { label: "Taken", icon: CheckSquare, href: "/taken" },
   { section: "Werk" },
   { label: "Tijd", icon: Clock, href: "/tijd" },
+  { label: "Focus", icon: Focus, href: "/focus" },
   { label: "Meetings", icon: Mic, href: "/meetings" },
   { section: "Klanten & Sales" },
   { label: "Klanten", icon: Users, href: "/klanten" },
@@ -63,6 +66,7 @@ const navItems: NavItem[] = [
   { label: "Documenten", icon: FileText, href: "/documenten" },
   { label: "Wiki", icon: BookOpen, href: "/wiki" },
   { label: "Learning Radar", icon: Radar, href: "/radar" },
+  { label: "Second Brain", icon: Brain, href: "/second-brain" },
   { section: "Team & AI" },
   { label: "Team", icon: Users2, href: "/team" },
   { label: "AI Assistent", icon: Sparkles, href: "/ai-assistent" },
