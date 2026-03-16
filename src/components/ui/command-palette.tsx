@@ -81,6 +81,16 @@ const typeLabels: Record<ZoekResultaat["type"], string> = {
   "second-brain": "Second Brain",
 };
 
+const typeLabelsMeervoud: Record<ZoekResultaat["type"], string> = {
+  klant: "Klanten",
+  project: "Projecten",
+  factuur: "Facturen",
+  taak: "Taken",
+  lead: "Leads",
+  document: "Documenten",
+  "second-brain": "Second Brain",
+};
+
 function loadRecentSearches(): RecentSearch[] {
   if (typeof window === "undefined") return [];
   try {
@@ -369,7 +379,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                       key={type}
                       heading={
                         <span className="text-xs font-medium text-autronis-text-secondary px-2">
-                          {label}en
+                          {typeLabelsMeervoud[type as ZoekResultaat["type"]] || `${label}en`}
                         </span>
                       }
                       className="mb-2"

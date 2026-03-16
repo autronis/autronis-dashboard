@@ -78,7 +78,7 @@ export function DetailModal({ item, onClose, onUpdate }: DetailModalProps) {
   const handleRemoveTag = (tag: string) => {
     const newTags = parsedTags.filter((t) => t !== tag);
     updateMutation.mutate(
-      { id: item.id, aiTags: JSON.stringify(newTags) },
+      { id: item.id, aiTags: newTags },
       {
         onSuccess: () => {
           addToast("Tag verwijderd", "succes");
@@ -93,7 +93,7 @@ export function DetailModal({ item, onClose, onUpdate }: DetailModalProps) {
     const tag = nieuwTag.trim();
     if (!tag || parsedTags.includes(tag)) return;
     updateMutation.mutate(
-      { id: item.id, aiTags: JSON.stringify([...parsedTags, tag]) },
+      { id: item.id, aiTags: [...parsedTags, tag] },
       {
         onSuccess: () => {
           addToast("Tag toegevoegd", "succes");
@@ -255,7 +255,7 @@ export function DetailModal({ item, onClose, onUpdate }: DetailModalProps) {
         onClose={() => setShowConfirm(false)}
         onBevestig={handleArchiveer}
         titel="Item archiveren?"
-        bericht="Dit item wordt permanent verwijderd uit je Second Brain. Dit kan niet ongedaan worden gemaakt."
+        bericht="Dit item wordt gearchiveerd uit je Second Brain."
         bevestigTekst="Archiveren"
       />
     </>

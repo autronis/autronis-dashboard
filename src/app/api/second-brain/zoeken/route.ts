@@ -42,7 +42,8 @@ export async function POST(req: NextRequest) {
     const compact = items.length > 100;
     const itemContext = items
       .map((item) => {
-        const tags = item.aiTags ? JSON.parse(item.aiTags).join(", ") : "";
+        let tags = "";
+        try { tags = item.aiTags ? JSON.parse(item.aiTags).join(", ") : ""; } catch { /* malformed tags */ }
         if (compact) {
           return `[ID:${item.id}] ${item.titel || "Zonder titel"} | Tags: ${tags} | ${item.aiSamenvatting || ""}`;
         }

@@ -32,8 +32,9 @@ Antwoord alleen met valid JSON, geen andere tekst.`,
     ],
   });
 
-  const text =
+  const raw =
     response.content[0].type === "text" ? response.content[0].text : "";
+  const text = raw.replace(/```json?\n?/g, "").replace(/```/g, "").trim();
   const parsed = JSON.parse(text);
   return {
     titel: parsed.titel || "Zonder titel",
@@ -182,9 +183,10 @@ Antwoord alleen met valid JSON.`,
             ],
           });
 
-          const text =
+          const raw =
             response.content[0].type === "text" ? response.content[0].text : "";
-          const parsed = JSON.parse(text);
+          const cleaned = raw.replace(/```json?\n?/g, "").replace(/```/g, "").trim();
+          const parsed = JSON.parse(cleaned);
           await db
             .update(secondBrainItems)
             .set({

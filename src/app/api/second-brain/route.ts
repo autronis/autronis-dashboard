@@ -50,8 +50,10 @@ export async function GET(req: NextRequest) {
     // Filter by tag in application layer (JSON field)
     const gefilterd = tag
       ? items.filter((item) => {
-          const tags: string[] = item.aiTags ? JSON.parse(item.aiTags) : [];
-          return tags.includes(tag);
+          try {
+            const tags: string[] = item.aiTags ? JSON.parse(item.aiTags) : [];
+            return tags.includes(tag);
+          } catch { return false; }
         })
       : items;
 

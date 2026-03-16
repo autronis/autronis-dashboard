@@ -67,6 +67,16 @@ export default function SecondBrainPage() {
     }
   }, [needsRefetch, items]);
 
+  // Keep selectedItem in sync with query data
+  useEffect(() => {
+    if (selectedItem) {
+      const updated = items.find((i) => i.id === selectedItem.id);
+      if (updated && JSON.stringify(updated) !== JSON.stringify(selectedItem)) {
+        setSelectedItem(updated);
+      }
+    }
+  }, [items, selectedItem]);
+
   const handleSubmit = useCallback(async () => {
     const input = nieuwInput.trim();
     if (!input) return;
@@ -74,17 +84,21 @@ export default function SecondBrainPage() {
     const isUrl = /^https?:\/\//.test(input);
     const isCode = input.startsWith("```");
 
+    const onSuccess = () => {
+      addToast("Item opgeslagen", "succes");
+      setNeedsRefetch(true);
+    };
+    const onError = () => addToast("Kon item niet opslaan", "fout");
+
     if (isUrl) {
-      verwerkenMutation.mutate({ bronUrl: input });
+      verwerkenMutation.mutate({ bronUrl: input }, { onSuccess, onError });
     } else if (isCode) {
-      createMutation.mutate({ type: "code", inhoud: input });
+      createMutation.mutate({ type: "code", inhoud: input }, { onSuccess, onError });
     } else {
-      createMutation.mutate({ type: "tekst", inhoud: input });
+      createMutation.mutate({ type: "tekst", inhoud: input }, { onSuccess, onError });
     }
 
     setNieuwInput("");
-    setNeedsRefetch(true);
-    addToast("Item opgeslagen", "succes");
   }, [nieuwInput, verwerkenMutation, createMutation, addToast]);
 
   const handleFileUpload = useCallback(
@@ -93,7 +107,7 @@ export default function SecondBrainPage() {
       if (!file) return;
 
       const formData = new FormData();
-      formData.append("bestand", file);
+      formData.append("file", file);
 
       if (file.type.startsWith("image/")) {
         formData.append("type", "afbeelding");
@@ -103,8 +117,13 @@ export default function SecondBrainPage() {
         formData.append("type", "tekst");
       }
 
-      verwerkenMutation.mutate(formData);
-      addToast("Bestand wordt verwerkt...", "succes");
+      verwerkenMutation.mutate(formData, {
+        onSuccess: () => {
+          addToast("Bestand wordt verwerkt...", "succes");
+          setNeedsRefetch(true);
+        },
+        onError: () => addToast("Kon bestand niet uploaden", "fout"),
+      });
 
       // Reset input
       if (fileInputRef.current) {
