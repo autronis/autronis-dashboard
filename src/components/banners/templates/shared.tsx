@@ -10,7 +10,7 @@ const FONT = "Inter, sans-serif";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type IllustrationType = "gear" | "brain" | "chart" | "nodes" | "lightbulb" | "network";
+export type IllustrationType = "gear" | "brain" | "chart" | "nodes" | "lightbulb" | "network" | "target" | "euro";
 
 export type CapsuleIconType =
   | "cog"
@@ -177,6 +177,55 @@ export function BackgroundIllustration({ type, width, height }: BackgroundIllust
             const y2 = (cy - r * 0.05) + Math.sin(rad) * (bulbR + r * 0.18);
             return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={NEON} strokeWidth="2" opacity="0.06" />;
           })}
+        </svg>
+      );
+    }
+
+    if (type === "target") {
+      // Target/bullseye with crosshair lines
+      return (
+        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+          {/* concentric circles */}
+          <circle cx={cx} cy={cy} r={r * 0.9} fill="none" stroke={NEON} strokeWidth="2.5" opacity="0.07" />
+          <circle cx={cx} cy={cy} r={r * 0.65} fill="none" stroke={NEON} strokeWidth="2.5" opacity="0.08" />
+          <circle cx={cx} cy={cy} r={r * 0.4} fill="none" stroke={NEON} strokeWidth="2.5" opacity="0.09" />
+          <circle cx={cx} cy={cy} r={r * 0.15} fill={NEON} opacity="0.1" />
+          {/* crosshair lines */}
+          <line x1={cx - r * 1.1} y1={cy} x2={cx - r * 0.15} y2={cy} stroke={NEON} strokeWidth="2" opacity="0.06" />
+          <line x1={cx + r * 0.15} y1={cy} x2={cx + r * 1.1} y2={cy} stroke={NEON} strokeWidth="2" opacity="0.06" />
+          <line x1={cx} y1={cy - r * 1.1} x2={cx} y2={cy - r * 0.15} stroke={NEON} strokeWidth="2" opacity="0.06" />
+          <line x1={cx} y1={cy + r * 0.15} x2={cx} y2={cy + r * 1.1} stroke={NEON} strokeWidth="2" opacity="0.06" />
+          {/* arrow pointing to center */}
+          <line x1={cx + r * 0.7} y1={cy - r * 0.7} x2={cx + r * 0.15} y2={cy - r * 0.15} stroke={NEON} strokeWidth="2.5" opacity="0.1" />
+          <line x1={cx + r * 0.7} y1={cy - r * 0.7} x2={cx + r * 0.5} y2={cy - r * 0.7} stroke={NEON} strokeWidth="2.5" opacity="0.1" />
+          <line x1={cx + r * 0.7} y1={cy - r * 0.7} x2={cx + r * 0.7} y2={cy - r * 0.5} stroke={NEON} strokeWidth="2.5" opacity="0.1" />
+        </svg>
+      );
+    }
+
+    if (type === "euro") {
+      // Euro symbol with chart lines
+      const euroR = r * 0.6;
+      return (
+        <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+          {/* Euro symbol - arc */}
+          <path
+            d={`M ${cx + euroR * 0.4} ${cy - euroR * 0.85} A ${euroR} ${euroR} 0 1 0 ${cx + euroR * 0.4} ${cy + euroR * 0.85}`}
+            fill="none" stroke={NEON} strokeWidth="4" opacity="0.08" strokeLinecap="round"
+          />
+          {/* Euro horizontal lines */}
+          <line x1={cx - euroR * 0.9} y1={cy - euroR * 0.15} x2={cx + euroR * 0.15} y2={cy - euroR * 0.15} stroke={NEON} strokeWidth="3" opacity="0.08" />
+          <line x1={cx - euroR * 0.9} y1={cy + euroR * 0.15} x2={cx + euroR * 0.15} y2={cy + euroR * 0.15} stroke={NEON} strokeWidth="3" opacity="0.08" />
+          {/* Small rising bars behind */}
+          {[0, 1, 2, 3, 4].map((i) => {
+            const bx = cx + r * 0.4 + i * r * 0.12;
+            const bh = r * 0.15 + i * r * 0.1;
+            return (
+              <rect key={i} x={bx} y={cy + r * 0.4 - bh} width={r * 0.08} height={bh} fill={NEON} opacity="0.06" rx="2" />
+            );
+          })}
+          {/* Trend line */}
+          <line x1={cx + r * 0.35} y1={cy + r * 0.35} x2={cx + r * 0.95} y2={cy - r * 0.15} stroke={NEON} strokeWidth="2" opacity="0.08" />
         </svg>
       );
     }

@@ -2,9 +2,12 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { BannerTemplateType, BannerData, QuoteData, StatData, TipData, CaseStudyData } from "@/types/content";
 import { AUTRONIS_CONTEXT } from "./autronis-context";
 
+export type BannerIllustrationType = "gear" | "brain" | "chart" | "nodes" | "lightbulb" | "network" | "target" | "euro";
+
 interface BannerGenerationResult {
   templateType: BannerTemplateType;
   data: BannerData;
+  illustration: BannerIllustrationType;
 }
 
 interface RawBannerResult {
@@ -45,11 +48,24 @@ Voor tip:
 Voor case_study:
 {"templateType":"case_study","data":{"klantNaam":"Naam klant of sector","resultaat":"Concreet resultaat in 1 zin","beschrijving":"Optionele korte uitleg"}}
 
+Voeg ook een "illustration" veld toe met de juiste achtergrond illustratie:
+- "gear" — voor process/workflow onderwerpen
+- "brain" — voor AI/machine learning onderwerpen
+- "chart" — voor data/analytics/statistieken
+- "nodes" — voor integraties/API/koppelingen
+- "lightbulb" — voor tips/insights
+- "network" — voor case studies/netwerk
+- "target" — voor lead generation/sales/doelen
+- "euro" — voor financiële onderwerpen
+
+Voorbeeld: {"templateType":"quote","illustration":"gear","data":{"tekst":"...","auteur":"..."}}
+
 Regels:
 - tekst voor quote: max 120 tekens, krachtig en direct
 - punten voor tip: elk max 80 tekens, actief geformuleerd
 - resultaat voor case_study: max 100 tekens
 - Schrijf in het Nederlands
+- Kies altijd de meest passende illustratie voor het onderwerp
 
 Genereer nu de banner data:`;
 }
@@ -144,5 +160,11 @@ export async function generateBannerData(postInhoud: string, postTitel: string):
       break;
   }
 
-  return { templateType, data };
+  const VALID_ILLUSTRATIONS: BannerIllustrationType[] = ["gear", "brain", "chart", "nodes", "lightbulb", "network", "target", "euro"];
+  const rawIllustration = (parsed as { illustration?: string }).illustration;
+  const illustration: BannerIllustrationType = VALID_ILLUSTRATIONS.includes(rawIllustration as BannerIllustrationType)
+    ? (rawIllustration as BannerIllustrationType)
+    : templateType === "tip" ? "lightbulb" : templateType === "case_study" ? "network" : templateType === "stat" ? "chart" : "gear";
+
+  return { templateType, data, illustration };
 }
