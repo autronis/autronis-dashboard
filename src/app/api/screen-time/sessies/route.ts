@@ -4,7 +4,7 @@ import { screenTimeEntries, projecten, klanten } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth";
 import { eq, and, asc, sql } from "drizzle-orm";
 
-const SESSION_GAP_SECONDS = 120; // 2 minutes
+const SESSION_GAP_SECONDS = 300; // 5 minutes of inactivity = new session
 
 interface RawEntry {
   app: string;
@@ -31,90 +31,80 @@ interface Sessie {
   isIdle: boolean;
 }
 
-interface SessionBuilder {
-  app: string;
-  projectId: number | null;
-  projectNaam: string | null;
-  klantNaam: string | null;
-  startTijd: string;
-  eindTijd: string;
-  duurSeconden: number;
-  venstertitels: string[];
-  isIdle: boolean;
-  categorieSeconden: Record<string, number>; // track seconds per category
-}
-
-function finalizeSessie(builder: SessionBuilder): Sessie {
-  // Dominant category = most seconds
-  const categorie = Object.entries(builder.categorieSeconden)
-    .sort(([, a], [, b]) => b - a)[0]?.[0] || "overig";
-
-  return {
-    app: builder.app,
-    categorie,
-    projectId: builder.projectId,
-    projectNaam: builder.projectNaam,
-    klantNaam: builder.klantNaam,
-    startTijd: builder.startTijd,
-    eindTijd: builder.eindTijd,
-    duurSeconden: builder.duurSeconden,
-    venstertitels: builder.venstertitels,
-    isIdle: builder.isIdle,
-  };
-}
-
-function newBuilder(entry: RawEntry): SessionBuilder {
-  return {
-    app: entry.app,
-    projectId: entry.projectId,
-    projectNaam: entry.projectNaam,
-    klantNaam: entry.klantNaam,
-    startTijd: entry.startTijd,
-    eindTijd: entry.eindTijd,
-    duurSeconden: entry.duurSeconden,
-    venstertitels: entry.vensterTitel ? [entry.vensterTitel] : [],
-    isIdle: entry.app === "Inactief",
-    categorieSeconden: { [entry.categorie]: entry.duurSeconden },
-  };
-}
-
 function groupIntoSessions(entries: RawEntry[]): Sessie[] {
   if (entries.length === 0) return [];
 
   const sessions: Sessie[] = [];
-  let current = newBuilder(entries[0]);
+
+  // Time-based grouping: gap > 5 min = new session (regardless of app)
+  let currentEntries: RawEntry[] = [entries[0]];
 
   for (let i = 1; i < entries.length; i++) {
-    const entry = entries[i];
-    const prevEnd = new Date(current.eindTijd).getTime();
-    const thisStart = new Date(entry.startTijd).getTime();
+    const prevEnd = new Date(entries[i - 1].eindTijd).getTime();
+    const thisStart = new Date(entries[i].startTijd).getTime();
     const gapSeconds = (thisStart - prevEnd) / 1000;
 
-    const sameApp = entry.app === current.app;
-    const withinGap = gapSeconds <= SESSION_GAP_SECONDS;
-
-    if (sameApp && withinGap) {
-      // Extend current session
-      current.eindTijd = entry.eindTijd;
-      current.duurSeconden += entry.duurSeconden;
-      current.categorieSeconden[entry.categorie] = (current.categorieSeconden[entry.categorie] || 0) + entry.duurSeconden;
-      if (entry.vensterTitel && !current.venstertitels.includes(entry.vensterTitel)) {
-        current.venstertitels.push(entry.vensterTitel);
-      }
-      if (!current.projectId && entry.projectId) {
-        current.projectId = entry.projectId;
-        current.projectNaam = entry.projectNaam;
-        current.klantNaam = entry.klantNaam;
-      }
+    if (gapSeconds > SESSION_GAP_SECONDS) {
+      // Gap too large — finalize current session
+      sessions.push(buildSession(currentEntries));
+      currentEntries = [entries[i]];
     } else {
-      // Finalize and start new session
-      sessions.push(finalizeSessie(current));
-      current = newBuilder(entry);
+      currentEntries.push(entries[i]);
     }
   }
-  sessions.push(finalizeSessie(current));
+  if (currentEntries.length > 0) {
+    sessions.push(buildSession(currentEntries));
+  }
 
   return sessions;
+}
+
+function buildSession(entries: RawEntry[]): Sessie {
+  // Find dominant app (most seconds)
+  const appSeconds: Record<string, number> = {};
+  const catSeconds: Record<string, number> = {};
+  const allTitles: string[] = [];
+  let projectId: number | null = null;
+  let projectNaam: string | null = null;
+  let klantNaam: string | null = null;
+
+  for (const e of entries) {
+    appSeconds[e.app] = (appSeconds[e.app] || 0) + e.duurSeconden;
+    catSeconds[e.categorie] = (catSeconds[e.categorie] || 0) + e.duurSeconden;
+    if (e.vensterTitel && !allTitles.includes(e.vensterTitel)) {
+      allTitles.push(e.vensterTitel);
+    }
+    if (!projectId && e.projectId) {
+      projectId = e.projectId;
+      projectNaam = e.projectNaam;
+      klantNaam = e.klantNaam;
+    }
+  }
+
+  const dominantApp = Object.entries(appSeconds).sort(([, a], [, b]) => b - a)[0]?.[0] || entries[0].app;
+  const dominantCat = Object.entries(catSeconds).sort(([, a], [, b]) => b - a)[0]?.[0] || "overig";
+  const totalSeconds = entries.reduce((s, e) => s + e.duurSeconden, 0);
+  const isIdle = dominantApp === "Inactief" || dominantCat === "inactief";
+
+  // Build description: top 3 apps used
+  const topApps = Object.entries(appSeconds)
+    .filter(([app]) => app !== "Inactief")
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([app]) => app);
+
+  return {
+    app: topApps.length > 0 ? topApps.join(", ") : dominantApp,
+    categorie: dominantCat,
+    projectId,
+    projectNaam,
+    klantNaam,
+    startTijd: entries[0].startTijd,
+    eindTijd: entries[entries.length - 1].eindTijd,
+    duurSeconden: totalSeconds,
+    venstertitels: allTitles.slice(0, 20),
+    isIdle,
+  };
 }
 
 export async function GET(req: NextRequest) {

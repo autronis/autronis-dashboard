@@ -324,6 +324,23 @@ function DagTimeline({
   const vandaag = isToday(datum);
   const currentPos = vandaag ? getCurrentTimePosition() : null;
 
+  // Filter out idle sessions — show as gaps instead of blocks
+  const visibleSessions = sessies.filter(s => !s.isIdle);
+
+  // Pre-compute positions and resolve overlaps
+  const positionedBlocks = useMemo(() => {
+    let minNextTop = 0; // Track bottom edge of previous block (in %)
+    return visibleSessions.map((sessie, idx) => {
+      const rawTop = getTimePosition(sessie.startTijd);
+      const height = getBlockHeight(sessie.duurSeconden);
+      // Ensure this block doesn't overlap with previous block
+      const top = Math.max(rawTop, minNextTop);
+      const effectiveHeight = Math.max(height, 1.5);
+      minNextTop = top + effectiveHeight + 0.15; // 0.15% gap between blocks
+      return { sessie, originalIdx: sessies.indexOf(sessie), top, height: effectiveHeight };
+    });
+  }, [visibleSessions, sessies]);
+
   return (
     <div className="relative flex" style={{ minHeight: `${TOTAL_HOURS * 56}px` }}>
       {/* Hour gutter */}
@@ -356,52 +373,38 @@ function DagTimeline({
           );
         })}
 
-        {/* Session blocks */}
-        {sessies.map((sessie, idx) => {
-          const top = getTimePosition(sessie.startTijd);
-          const height = getBlockHeight(sessie.duurSeconden);
-          const kleur = sessie.isIdle
-            ? CATEGORIE_KLEUREN.inactief
-            : (CATEGORIE_KLEUREN[sessie.categorie] ?? "#6B7280");
-          const isSelected = selectedSessie === idx;
+        {/* Session blocks (idle filtered out, overlap resolved) */}
+        {positionedBlocks.map(({ sessie, originalIdx, top, height }) => {
+          const kleur = CATEGORIE_KLEUREN[sessie.categorie] ?? "#6B7280";
+          const isSelected = selectedSessie === originalIdx;
 
           return (
             <button
-              key={idx}
-              onClick={() => onSelect(isSelected ? null : idx)}
+              key={originalIdx}
+              onClick={() => onSelect(isSelected ? null : originalIdx)}
               className={cn(
                 "absolute left-2 right-2 rounded-lg overflow-hidden text-left transition-all duration-150 cursor-pointer",
-                sessie.isIdle
-                  ? "border border-dashed border-gray-600/50"
-                  : "hover:brightness-110 hover:scale-[1.01]",
+                "hover:brightness-110 hover:scale-[1.01]",
                 isSelected && "ring-2 ring-autronis-accent ring-offset-1 ring-offset-autronis-bg"
               )}
               style={{
                 top: `${top}%`,
-                height: `${Math.max(height, 1.5)}%`,
-                backgroundColor: sessie.isIdle ? `${kleur}15` : `${kleur}CC`,
+                height: `${height}%`,
+                backgroundColor: `${kleur}CC`,
                 minHeight: "24px",
               }}
             >
               <div className="px-2.5 py-1 h-full flex flex-col justify-center overflow-hidden">
-                {sessie.isIdle ? (
-                  <span className="text-xs text-gray-500 truncate">
-                    Inactief ({formatTijd(sessie.duurSeconden)})
+                <span className="text-xs font-medium text-white truncate leading-tight">
+                  {sessie.app}
+                  {sessie.projectNaam && (
+                    <span className="font-normal opacity-80"> - {sessie.projectNaam}</span>
+                  )}
+                </span>
+                {height > 3 && (
+                  <span className="text-[10px] text-white/70 truncate leading-tight">
+                    {CATEGORIE_LABELS[sessie.categorie] ?? sessie.categorie} &middot; {formatTijd(sessie.duurSeconden)}
                   </span>
-                ) : (
-                  <>
-                    <span className="text-xs font-medium text-white truncate leading-tight">
-                      {sessie.app}
-                      {sessie.projectNaam && (
-                        <span className="font-normal opacity-80"> - {sessie.projectNaam}</span>
-                      )}
-                    </span>
-                    {height > 3 && (
-                      <span className="text-[10px] text-white/70 truncate leading-tight">
-                        {CATEGORIE_LABELS[sessie.categorie] ?? sessie.categorie} &middot; {formatTijd(sessie.duurSeconden)}
-                      </span>
-                    )}
-                  </>
                 )}
               </div>
             </button>
@@ -488,28 +491,21 @@ function WeekTimeline({
                 );
               })}
 
-              {/* Session blocks */}
-              {dag.sessies.map((sessie, sIdx) => {
+              {/* Session blocks (idle filtered out) */}
+              {dag.sessies.filter(s => !s.isIdle).map((sessie, sIdx) => {
                 const top = getTimePosition(sessie.startTijd);
                 const height = getBlockHeight(sessie.duurSeconden);
-                const kleur = sessie.isIdle
-                  ? CATEGORIE_KLEUREN.inactief
-                  : (CATEGORIE_KLEUREN[sessie.categorie] ?? "#6B7280");
+                const kleur = CATEGORIE_KLEUREN[sessie.categorie] ?? "#6B7280";
 
                 return (
                   <div
                     key={sIdx}
                     onClick={() => onSelectSessie(sessie)}
-                    className={cn(
-                      "absolute left-[2px] right-[2px] rounded cursor-pointer group",
-                      sessie.isIdle
-                        ? "border border-dashed border-gray-600/30"
-                        : "hover:brightness-125"
-                    )}
+                    className="absolute left-[2px] right-[2px] rounded cursor-pointer group hover:brightness-125"
                     style={{
                       top: `${top}%`,
                       height: `${Math.max(height, 0.8)}%`,
-                      backgroundColor: sessie.isIdle ? `${kleur}10` : `${kleur}BB`,
+                      backgroundColor: `${kleur}BB`,
                       minHeight: "4px",
                     }}
                   >
