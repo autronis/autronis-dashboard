@@ -539,7 +539,7 @@ export default function DoelenPage() {
               <button
                 onClick={handleOpslaan}
                 disabled={opslaan}
-                className="px-5 py-2 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+                className="px-5 py-2 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 shadow-lg shadow-autronis-accent/20"
               >
                 {opslaan ? "Opslaan..." : editDoel ? "Bijwerken" : "Aanmaken"}
               </button>

@@ -386,7 +386,7 @@ export default function AgendaPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="glass-modal border border-autronis-border rounded-2xl p-6 w-full max-w-lg shadow-2xl">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-semibold text-autronis-text-primary">
+              <h3 className="text-lg font-semibold text-white">
                 {selectedItem ? "Item bewerken" : "Nieuw agenda-item"}
               </h3>
               <div className="flex items-center gap-2">
