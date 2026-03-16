@@ -158,14 +158,18 @@ export async function GET(req: NextRequest) {
 
     const sessies = groupIntoSessions(filteredEntries);
 
-    // Compute stats excluding idle
+    // Compute stats: productief = development + design + administratie
+    // Productief % = productief / (productief + communicatie + afleiding) — excludes "overig" and idle
     const actiefSessies = sessies.filter(s => !s.isIdle);
     const totaalActief = actiefSessies.reduce((sum, s) => sum + s.duurSeconden, 0);
     const totaalIdle = sessies.filter(s => s.isIdle).reduce((sum, s) => sum + s.duurSeconden, 0);
     const productiefSeconden = actiefSessies
       .filter(s => ["development", "design", "administratie"].includes(s.categorie))
       .reduce((sum, s) => sum + s.duurSeconden, 0);
-    const productiefPercentage = totaalActief > 0 ? Math.round((productiefSeconden / totaalActief) * 100) : 0;
+    const werkSeconden = actiefSessies
+      .filter(s => ["development", "design", "administratie", "communicatie", "afleiding"].includes(s.categorie))
+      .reduce((sum, s) => sum + s.duurSeconden, 0);
+    const productiefPercentage = werkSeconden > 0 ? Math.round((productiefSeconden / werkSeconden) * 100) : 0;
 
     return NextResponse.json({
       sessies,
