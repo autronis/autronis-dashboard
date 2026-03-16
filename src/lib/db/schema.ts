@@ -864,7 +864,7 @@ export const contentBanners = sqliteTable("content_banners", {
   }).notNull(),
   templateVariant: integer("template_variant").default(0),
   formaat: text("formaat", {
-    enum: ["instagram", "linkedin"],
+    enum: ["instagram", "linkedin", "instagram_story"],
   }).notNull(),
   data: text("data").notNull(), // JSON with template-specific fields
   imagePath: text("image_path"),

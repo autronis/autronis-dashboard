@@ -254,7 +254,7 @@ function BannerCard({ banner }: { banner: ContentBanner }) {
     }
   }
 
-  const FORMAAT_SIZES = { instagram: { width: 1080, height: 1350 }, linkedin: { width: 1200, height: 627 } };
+  const FORMAAT_SIZES: Record<string, { width: number; height: number }> = { instagram: { width: 1080, height: 1350 }, linkedin: { width: 1200, height: 627 }, instagram_story: { width: 1080, height: 1920 } };
   const { width, height } = FORMAAT_SIZES[banner.formaat];
   const previewScale = 220 / width;
 
@@ -412,7 +412,7 @@ export default function BannersPage() {
   const [selectedPostId, setSelectedPostId] = useState<number | undefined>();
   const [isCreating, setIsCreating] = useState(false);
 
-  const FORMAAT_SIZES = { instagram: { width: 1080, height: 1350 }, linkedin: { width: 1200, height: 627 } };
+  const FORMAAT_SIZES: Record<string, { width: number; height: number }> = { instagram: { width: 1080, height: 1350 }, linkedin: { width: 1200, height: 627 }, instagram_story: { width: 1080, height: 1920 } };
 
   function handleTemplateChange(type: BannerTemplateType) {
     setTemplateType(type);
