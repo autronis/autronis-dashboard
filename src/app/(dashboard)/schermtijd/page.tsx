@@ -199,7 +199,7 @@ function getTimePosition(timeStr: string): number {
 }
 
 function getBlockHeight(duurSeconden: number): number {
-  return Math.max(0.8, (duurSeconden / 3600 / TOTAL_HOURS) * 100);
+  return Math.max(1.5, (duurSeconden / 3600 / TOTAL_HOURS) * 100);
 }
 
 function getCurrentTimePosition(): number | null {

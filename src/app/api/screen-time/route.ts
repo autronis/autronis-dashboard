@@ -59,11 +59,15 @@ export async function GET(req: NextRequest) {
       .orderBy(desc(screenTimeEntries.startTijd))
       .all();
 
+    // Filter out system/lock screen apps
+    const SYSTEM_APPS = ["LockApp", "SearchHost", "ShellHost", "ShellExperienceHost", "StartMenuExperienceHost", "ApplicationFrameHost"];
+    const filtered = entries.filter(e => !SYSTEM_APPS.includes(e.app));
+
     const categorieOverzicht: Record<string, number> = {};
     const appOverzicht: Record<string, number> = {};
     let totaalSeconden = 0;
 
-    for (const entry of entries) {
+    for (const entry of filtered) {
       const cat = entry.categorie ?? "overig";
       categorieOverzicht[cat] = (categorieOverzicht[cat] || 0) + entry.duurSeconden;
       if (cat !== "inactief") {
@@ -78,7 +82,7 @@ export async function GET(req: NextRequest) {
       .map(([app, seconden]) => ({ app, seconden }));
 
     return NextResponse.json({
-      entries,
+      entries: filtered,
       categorieOverzicht,
       topApps,
       totaalSeconden,

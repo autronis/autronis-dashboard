@@ -23,6 +23,10 @@ impl Default for Config {
                 "1Password".to_string(),
                 "KeePass".to_string(),
                 "Windows Security".to_string(),
+                "LockApp".to_string(),
+                "SearchHost".to_string(),
+                "ShellHost".to_string(),
+                "ShellExperienceHost".to_string(),
             ],
             tracking_enabled: true,
         }

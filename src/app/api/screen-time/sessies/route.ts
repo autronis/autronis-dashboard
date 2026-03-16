@@ -156,10 +156,17 @@ export async function GET(req: NextRequest) {
       .orderBy(asc(screenTimeEntries.startTijd))
       .all();
 
-    const sessies = groupIntoSessions(entries.map(e => ({
-      ...e,
-      categorie: e.categorie ?? "overig",
-    })));
+    // Filter out system/lock screen apps
+    const SYSTEM_APPS = ["LockApp", "SearchHost", "ShellHost", "ShellExperienceHost", "StartMenuExperienceHost", "ApplicationFrameHost"];
+
+    const filteredEntries = entries
+      .filter(e => !SYSTEM_APPS.includes(e.app))
+      .map(e => ({
+        ...e,
+        categorie: e.categorie ?? "overig",
+      }));
+
+    const sessies = groupIntoSessions(filteredEntries);
 
     // Compute stats excluding idle
     const actiefSessies = sessies.filter(s => !s.isIdle);
