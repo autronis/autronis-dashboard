@@ -231,6 +231,7 @@ interface SessieDetail {
   duurSeconden: number;
   venstertitels: string[];
   isIdle: boolean;
+  beschrijving: string;
 }
 
 function SessieDetailPanel({
@@ -265,6 +266,12 @@ function SessieDetailPanel({
           <X className="w-4 h-4" />
         </button>
       </div>
+
+      {sessie.beschrijving && sessie.beschrijving !== sessie.app && (
+        <p className="text-sm text-autronis-text-primary leading-relaxed">
+          {sessie.beschrijving}
+        </p>
+      )}
 
       {(sessie.projectNaam || sessie.klantNaam) && (
         <div className="flex items-center gap-2 text-sm">
@@ -396,10 +403,19 @@ function DagTimeline({
             >
               <div className="px-2.5 py-1 h-full flex flex-col justify-center overflow-hidden">
                 <span className="text-xs font-medium text-white truncate leading-tight">
-                  {sessie.app}
-                  {sessie.projectNaam && (
-                    <span className="font-normal opacity-80"> - {sessie.projectNaam}</span>
-                  )}
+                  {height < 3
+                    ? sessie.app
+                    : sessie.beschrijving && sessie.beschrijving !== sessie.app
+                      ? sessie.beschrijving
+                      : (
+                        <>
+                          {sessie.app}
+                          {sessie.projectNaam && (
+                            <span className="font-normal opacity-80"> - {sessie.projectNaam}</span>
+                          )}
+                        </>
+                      )
+                  }
                 </span>
                 {height > 3 && (
                   <span className="text-[10px] text-white/70 truncate leading-tight">
@@ -511,12 +527,16 @@ function WeekTimeline({
                   >
                     {/* Hover tooltip */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-20 pointer-events-none">
-                      <div className="bg-autronis-bg border border-autronis-border rounded-lg px-3 py-2 shadow-xl whitespace-nowrap text-xs">
-                        <p className="text-autronis-text-primary font-medium">{sessie.app}</p>
+                      <div className="bg-autronis-bg border border-autronis-border rounded-lg px-3 py-2 shadow-xl max-w-xs text-xs">
+                        <p className="text-autronis-text-primary font-medium truncate">
+                          {sessie.beschrijving && sessie.beschrijving !== sessie.app
+                            ? sessie.beschrijving
+                            : sessie.app}
+                        </p>
                         {sessie.projectNaam && (
                           <p className="text-autronis-accent text-[10px]">{sessie.projectNaam}</p>
                         )}
-                        <p className="text-autronis-text-secondary tabular-nums text-[10px]">
+                        <p className="text-autronis-text-secondary tabular-nums text-[10px] whitespace-nowrap">
                           {formatTijdRange(sessie.startTijd)} - {formatTijdRange(sessie.eindTijd)} &middot; {formatTijd(sessie.duurSeconden)}
                         </p>
                       </div>

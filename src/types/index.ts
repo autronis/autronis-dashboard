@@ -87,6 +87,7 @@ export interface ScreenTimeSessie {
   duurSeconden: number;
   venstertitels: string[];
   isIdle: boolean;
+  beschrijving: string;
 }
 
 export interface ScreenTimeSamenvatting {

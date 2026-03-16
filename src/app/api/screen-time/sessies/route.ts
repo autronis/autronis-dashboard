@@ -29,6 +29,85 @@ interface Sessie {
   duurSeconden: number;
   venstertitels: string[];
   isIdle: boolean;
+  beschrijving: string;
+}
+
+function generateBeschrijving(sessie: Omit<Sessie, "beschrijving">): string {
+  const titles = sessie.venstertitels;
+  if (titles.length === 0) return sessie.app;
+
+  const projects = new Set<string>();
+  const files = new Set<string>();
+  const websites = new Set<string>();
+  const activities = new Set<string>();
+
+  for (const title of titles) {
+    // VS Code: "file.tsx — project-name — Visual Studio Code"
+    const vscodeMatch = title.match(/^(.+?)\s*[-—]\s*(.+?)\s*[-—]\s*Visual Studio Code$/);
+    if (vscodeMatch) {
+      files.add(vscodeMatch[1].trim());
+      projects.add(vscodeMatch[2].trim());
+      continue;
+    }
+
+    // Claude Code: "✻ [Claude Code] path"
+    if (title.includes("[Claude Code]")) {
+      activities.add("Claude Code");
+      const pathMatch = title.match(/Projects[/\\]([^/\\]+)/);
+      if (pathMatch) projects.add(pathMatch[1]);
+      continue;
+    }
+
+    // Chrome: "Page Title - Google Chrome"
+    const chromeMatch = title.match(/^(.+?)\s*[-—]\s*Google Chrome$/);
+    if (chromeMatch) {
+      const pageTitle = chromeMatch[1].trim();
+      if (pageTitle.includes("GitHub")) websites.add("GitHub");
+      else if (pageTitle.includes("Notion")) websites.add("Notion");
+      else if (pageTitle.includes("localhost")) websites.add("localhost");
+      else if (pageTitle.includes("Dashboard")) websites.add("Autronis Dashboard");
+      else if (pageTitle.length < 50) websites.add(pageTitle);
+      continue;
+    }
+
+    // Discord: "#channel | Server - Discord"
+    const discordMatch = title.match(/^(#.+?)\s*\|\s*(.+?)\s*[-—]\s*Discord$/);
+    if (discordMatch) {
+      activities.add(`Discord (${discordMatch[2].trim()})`);
+      continue;
+    }
+
+    // Spotify: skip background music
+    if (title.includes("Spotify")) {
+      continue;
+    }
+
+    // Generic: just add the title if short enough
+    if (title.length < 60) activities.add(title);
+  }
+
+  // Build description
+  const parts: string[] = [];
+
+  if (projects.size > 0) {
+    const projectList = Array.from(projects).slice(0, 3).join(", ");
+    const fileList = Array.from(files).slice(0, 5).join(", ");
+    if (files.size > 0) {
+      parts.push(`Gewerkt aan ${projectList} (${fileList})`);
+    } else {
+      parts.push(`Gewerkt aan ${projectList}`);
+    }
+  }
+
+  if (websites.size > 0) {
+    parts.push(Array.from(websites).slice(0, 3).join(", "));
+  }
+
+  if (activities.size > 0) {
+    parts.push(Array.from(activities).slice(0, 3).join(", "));
+  }
+
+  return parts.join(". ") || sessie.app;
 }
 
 function groupIntoSessions(entries: RawEntry[]): Sessie[] {
@@ -93,7 +172,7 @@ function buildSession(entries: RawEntry[]): Sessie {
     .slice(0, 3)
     .map(([app]) => app);
 
-  return {
+  const baseSessie = {
     app: topApps.length > 0 ? topApps.join(", ") : dominantApp,
     categorie: dominantCat,
     projectId,
@@ -104,6 +183,11 @@ function buildSession(entries: RawEntry[]): Sessie {
     duurSeconden: totalSeconds,
     venstertitels: allTitles.slice(0, 20),
     isIdle,
+  };
+
+  return {
+    ...baseSessie,
+    beschrijving: generateBeschrijving(baseSessie),
   };
 }
 
