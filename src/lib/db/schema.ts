@@ -854,6 +854,27 @@ export const contentVideos = sqliteTable("content_videos", {
   aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
 });
 
+// ============ CONTENT ENGINE: BANNERS ============
+
+export const contentBanners = sqliteTable("content_banners", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  postId: integer("post_id").references(() => contentPosts.id),
+  templateType: text("template_type", {
+    enum: ["quote", "stat", "tip", "case_study"],
+  }).notNull(),
+  templateVariant: integer("template_variant").default(0),
+  formaat: text("formaat", {
+    enum: ["instagram", "linkedin"],
+  }).notNull(),
+  data: text("data").notNull(), // JSON with template-specific fields
+  imagePath: text("image_path"),
+  status: text("status", {
+    enum: ["concept", "klaar", "fout"],
+  }).default("concept"),
+  gridPositie: integer("grid_positie"),
+  aangemaaktOp: text("aangemaakt_op").default(sql`(datetime('now'))`),
+});
+
 // ============ IDEEEN ============
 
 export const ideeen = sqliteTable("ideeen", {
@@ -861,7 +882,7 @@ export const ideeen = sqliteTable("ideeen", {
   nummer: integer("nummer"),
   naam: text("naam").notNull(),
   categorie: text("categorie", {
-    enum: ["saas", "productized_service", "intern", "dev_tools", "video", "design", "website"],
+    enum: ["dashboard", "klant_verkoop", "intern", "dev_tools", "content_media", "geld_groei", "experimenteel", "website"],
   }),
   status: text("status", {
     enum: ["idee", "uitgewerkt", "actief", "gebouwd"],

@@ -322,13 +322,15 @@ export function useCreateReservering() {
 
 export interface JaaroverzichtData {
   jaar: number;
-  omzet: number;
-  kosten: number;
-  winst: number;
-  belasting: number;
-  btwAfgedragen: number;
-  investeringen: number;
-  uren: number;
+  omzet: { totaal: number; perKwartaal: number[] };
+  kosten: { totaal: number; perCategorie: Record<string, number> };
+  btw: { ontvangen: number; betaald: number; afgedragen: number; perKwartaal: Array<{ kwartaal: number; ontvangen: number; betaald: number; afdragen: number }> };
+  uren: { totaal: number; doel: number; voldoet: boolean };
+  kilometers: { totaalKm: number; aftrekbaarBedrag: number };
+  investeringen: { totaal: number; afschrijvingen: number; kia: number };
+  winstVerlies: { brutoOmzet: number; totaleKosten: number; afschrijvingen: number; kmAftrek: number; brutowinst: number; zelfstandigenaftrek: number; mkbVrijstelling: number; belastbaarInkomen: number; geschatteBelasting: number; effectiefTarief: number };
+  reserveringen: { gereserveerd: number; nodig: number; tekort: number };
+  voorlopigeAanslagen: { totaal: number; betaald: number; openstaand: number };
 }
 
 export function useJaaroverzicht(jaar: number) {

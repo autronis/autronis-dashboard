@@ -99,12 +99,13 @@ Alleen JSON, geen uitleg.`,
     const aangemaakteIdeeen = [];
 
     const validCategorieen = [
-      "saas",
-      "productized_service",
+      "dashboard",
+      "klant_verkoop",
       "intern",
       "dev_tools",
-      "video",
-      "design",
+      "content_media",
+      "geld_groei",
+      "experimenteel",
       "website",
     ] as const;
 
@@ -116,7 +117,7 @@ Alleen JSON, geen uitleg.`,
       const categorie = (
         validCategorieen as readonly string[]
       ).includes(idee.categorie)
-        ? (idee.categorie as typeof validCategorieen[number])
+        ? (idee.categorie as (typeof validCategorieen)[number])
         : "intern";
 
       const result = db

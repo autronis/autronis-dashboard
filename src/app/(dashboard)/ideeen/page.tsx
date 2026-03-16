@@ -45,12 +45,13 @@ const statusOpties = [
 ] as const;
 
 const categorieOpties = [
-  { key: "saas", label: "SaaS" },
-  { key: "productized_service", label: "Productized Service" },
+  { key: "dashboard", label: "Dashboard" },
+  { key: "klant_verkoop", label: "Klant/Verkoop" },
   { key: "intern", label: "Intern" },
   { key: "dev_tools", label: "Dev Tools" },
-  { key: "video", label: "Video" },
-  { key: "design", label: "Design" },
+  { key: "content_media", label: "Content & Media" },
+  { key: "geld_groei", label: "Geld & Groei" },
+  { key: "experimenteel", label: "Experimenteel" },
   { key: "website", label: "Website" },
 ] as const;
 
@@ -61,13 +62,14 @@ const prioriteitOpties = [
 ] as const;
 
 const categorieBadgeKleuren: Record<string, string> = {
-  saas: "bg-blue-500/15 text-blue-400",
-  productized_service: "bg-purple-500/15 text-purple-400",
+  dashboard: "bg-blue-500/15 text-blue-400",
+  klant_verkoop: "bg-emerald-500/15 text-emerald-400",
   intern: "bg-autronis-accent/15 text-autronis-accent",
   dev_tools: "bg-orange-500/15 text-orange-400",
-  video: "bg-red-500/15 text-red-400",
-  design: "bg-pink-500/15 text-pink-400",
-  website: "bg-emerald-500/15 text-emerald-400",
+  content_media: "bg-pink-500/15 text-pink-400",
+  geld_groei: "bg-yellow-500/15 text-yellow-400",
+  experimenteel: "bg-purple-500/15 text-purple-400",
+  website: "bg-cyan-500/15 text-cyan-400",
 };
 
 const statusBadgeKleuren: Record<string, string> = {
