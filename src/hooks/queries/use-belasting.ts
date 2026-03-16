@@ -365,7 +365,7 @@ export function useAuditLog(entiteitType?: string) {
       const res = await fetch(`/api/belasting/audit-log?${params.toString()}`);
       if (!res.ok) throw new Error("Kon audit log niet laden");
       const data = await res.json();
-      return data.entries;
+      return data.logs || [];
     },
     staleTime: 30_000,
   });
