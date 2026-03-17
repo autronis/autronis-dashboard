@@ -130,7 +130,7 @@ export const useFocus = create<FocusState & FocusActions>((set, get) => ({
     if (timerState.isRunning && timerState.registratieId) {
       const elapsed = timerState.elapsed;
       const duur = Math.round(elapsed / 60);
-      await fetch(`/api/tijdregistraties/${timerState.registratieId}`, {
+      const timerRes = await fetch(`/api/tijdregistraties/${timerState.registratieId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -138,7 +138,10 @@ export const useFocus = create<FocusState & FocusActions>((set, get) => ({
           duurMinuten: duur,
         }),
       });
-      timerState.stop();
+      if (timerRes.ok) {
+        timerState.stop();
+      }
+      // Continue with focus start regardless — don't block on timer stop failure
     }
 
     // Request notification permission
@@ -266,9 +269,11 @@ export const useFocus = create<FocusState & FocusActions>((set, get) => ({
     const werkelijkeDuurMinuten = Math.round(werkelijkeDuur / 60);
     const isVoltooid = state.resterend <= 0;
 
+    let apiFailed = false;
+
     // Update tijdregistratie
     if (state.tijdregistratieId) {
-      await fetch(`/api/tijdregistraties/${state.tijdregistratieId}`, {
+      const res = await fetch(`/api/tijdregistraties/${state.tijdregistratieId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -276,11 +281,12 @@ export const useFocus = create<FocusState & FocusActions>((set, get) => ({
           duurMinuten: werkelijkeDuurMinuten,
         }),
       });
+      if (!res.ok) apiFailed = true;
     }
 
     // Update focus session
     if (state.focusSessieId) {
-      await fetch(`/api/focus/${state.focusSessieId}`, {
+      const res = await fetch(`/api/focus/${state.focusSessieId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -289,6 +295,13 @@ export const useFocus = create<FocusState & FocusActions>((set, get) => ({
           status: isVoltooid ? "voltooid" : "afgebroken",
         }),
       });
+      if (!res.ok) apiFailed = true;
+    }
+
+    // If API failed, keep localStorage so restore can retry
+    if (apiFailed) {
+      set({ showReflectie: false, showOverlay: false });
+      throw new Error("Sessie opslaan mislukt. Probeer opnieuw.");
     }
 
     set({
