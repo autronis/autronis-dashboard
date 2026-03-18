@@ -15,6 +15,7 @@ import { useSidebar } from "@/hooks/use-sidebar";
 import { FocusSetupModal } from "@/components/focus/focus-setup-modal";
 import { FocusOverlay } from "@/components/focus/focus-overlay";
 import { FocusReflectieModal } from "@/components/focus/focus-reflectie-modal";
+import { AriWidget } from "@/components/ai/ari-widget";
 import { useFocus, loadFocusFromStorage } from "@/hooks/use-focus";
 import { cn } from "@/lib/utils";
 import type { SessionGebruiker } from "@/types";
@@ -92,6 +93,9 @@ export function AppShell({ gebruiker, children }: AppShellProps) {
       <FocusSetupModal />
       <FocusOverlay />
       <FocusReflectieModal />
+
+      {/* A.R.I. floating chat widget */}
+      <AriWidget />
     </div>
   );
 }

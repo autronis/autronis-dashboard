@@ -11,7 +11,6 @@ import {
   Users,
   Euro,
   BarChart3,
-  Target,
   Calendar,
   CheckSquare,
   Settings,
@@ -35,6 +34,9 @@ import {
   Flame,
   Focus,
   Brain,
+  Zap,
+  FolderKanban,
+  Rocket,
 } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { cn } from "@/lib/utils";
@@ -50,8 +52,10 @@ const navItems: NavItem[] = [
   { label: "Focus", icon: Focus, href: "/focus" },
   { label: "Meetings", icon: Mic, href: "/meetings" },
   { section: "Klanten & Sales" },
+  { label: "Projecten", icon: FolderKanban, href: "/projecten" },
   { label: "Klanten", icon: Users, href: "/klanten" },
-  { label: "CRM / Leads", icon: Target, href: "/crm" },
+  { label: "Leads", icon: Zap, href: "/leads" },
+  { label: "Sales Engine", icon: Rocket, href: "/sales-engine" },
   { label: "Offertes", icon: FileText, href: "/offertes" },
   { section: "Financieel" },
   { label: "Financiën", icon: Euro, href: "/financien" },
@@ -71,7 +75,7 @@ const navItems: NavItem[] = [
   { label: "Second Brain", icon: Brain, href: "/second-brain" },
   { section: "Team & AI" },
   { label: "Team", icon: Users2, href: "/team" },
-  { label: "AI Assistent", icon: Sparkles, href: "/ai-assistent" },
+  { label: "A.R.I.", icon: Sparkles, href: "/ai-assistent" },
   { label: "Case Studies", icon: Video, href: "/case-studies" },
 ];
 

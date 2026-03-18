@@ -502,8 +502,8 @@ export default function AIAssistentPage() {
                 <Sparkles className="w-4 h-4 text-autronis-accent" />
               </div>
               <div>
-                <h1 className="text-sm font-semibold text-autronis-text-primary">AI Assistent</h1>
-                <p className="text-xs text-autronis-text-secondary">Autronis bedrijfsdata inzichten</p>
+                <h1 className="text-sm font-semibold text-autronis-text-primary">A.R.I.</h1>
+                <p className="text-xs text-autronis-text-secondary">Autronis Reasoning Intelligence</p>
               </div>
             </div>
           </div>
@@ -516,10 +516,10 @@ export default function AIAssistentPage() {
                   <Sparkles className="w-8 h-8 text-autronis-accent" />
                 </div>
                 <h2 className="text-xl font-semibold text-autronis-text-primary mb-2">
-                  Hoe kan ik helpen?
+                  Hey Sem, wat kan ik voor je doen?
                 </h2>
                 <p className="text-sm text-autronis-text-secondary mb-8">
-                  Vraag me alles over je bedrijfsdata — omzet, projecten, klanten, leads en meer.
+                  Ik ben A.R.I., je Autronis AI. Vraag me alles over je bedrijfsdata.
                 </p>
 
                 {/* Quick actions */}
@@ -572,7 +572,7 @@ export default function AIAssistentPage() {
                   value={invoer}
                   onChange={(e) => setInvoer(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Stel een vraag over je bedrijfsdata..."
+                  placeholder="Vraag A.R.I. iets..."
                   rows={1}
                   disabled={isStreaming}
                   className="flex-1 bg-transparent text-sm text-autronis-text-primary placeholder:text-autronis-text-secondary resize-none outline-none min-h-[24px] max-h-[96px]"
