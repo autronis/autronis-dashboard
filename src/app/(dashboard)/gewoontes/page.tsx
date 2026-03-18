@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Plus,
   Flame,
@@ -13,7 +12,6 @@ import {
   Pencil,
   Trash2,
   Lightbulb,
-  ArrowRight,
   Loader2,
   Target,
   Dumbbell,
@@ -22,8 +20,12 @@ import {
   Users,
   GraduationCap,
   Sparkles,
-  ChevronLeft,
-  ChevronRight,
+  Award,
+  Zap,
+  Star,
+  Crown,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -32,20 +34,9 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 // Icon mapping for Lucide icons
 const ICON_MAP: Record<string, typeof Target> = {
-  Target,
-  Dumbbell,
-  BookOpen,
-  Megaphone,
-  Users,
-  GraduationCap,
-  Sparkles,
-  Flame,
-  Trophy,
-  TrendingUp,
-  Calendar,
-  CheckCircle2,
-  Lightbulb,
-  Plus,
+  Target, Dumbbell, BookOpen, Megaphone, Users, GraduationCap,
+  Sparkles, Flame, Trophy, TrendingUp, Calendar, CheckCircle2,
+  Lightbulb, Plus, Award, Zap, Star, Crown,
 };
 
 const ICON_OPTIONS = [
@@ -77,6 +68,7 @@ interface Suggestie {
   naam: string;
   icoon: string;
   streefwaarde: string | null;
+  frequentie?: string;
 }
 
 interface HabitStat {
@@ -94,15 +86,75 @@ interface HabitStat {
   heatmap: Record<string, number>;
 }
 
-// Heatmap component (GitHub-style)
-function Heatmap({ data, naam }: { data: Record<string, number>; naam: string }) {
-  const nu = new Date();
-  const weken = 52;
-  const cellen: { datum: string; waarde: number; dag: number; week: number }[] = [];
+// ─── Gamification ───
+function calculateLevel(totaalPunten: number): { level: number; naam: string; volgende: number; voortgang: number } {
+  const levels = [
+    { punten: 0, naam: "Beginner" },
+    { punten: 50, naam: "Starter" },
+    { punten: 150, naam: "Consistent" },
+    { punten: 350, naam: "Gedreven" },
+    { punten: 700, naam: "Expert" },
+    { punten: 1200, naam: "Master" },
+    { punten: 2000, naam: "Legende" },
+  ];
 
-  // Start from 52 weeks ago, aligned to Monday
+  let currentLevel = 0;
+  for (let i = levels.length - 1; i >= 0; i--) {
+    if (totaalPunten >= levels[i].punten) {
+      currentLevel = i;
+      break;
+    }
+  }
+
+  const volgende = currentLevel < levels.length - 1 ? levels[currentLevel + 1].punten : levels[currentLevel].punten;
+  const huidige = levels[currentLevel].punten;
+  const voortgang = currentLevel < levels.length - 1
+    ? ((totaalPunten - huidige) / (volgende - huidige)) * 100
+    : 100;
+
+  return { level: currentLevel + 1, naam: levels[currentLevel].naam, volgende, voortgang };
+}
+
+function getBadges(stats: HabitStat[]): Array<{ naam: string; icoon: typeof Trophy; kleur: string; behaald: boolean }> {
+  const maxStreak = Math.max(...stats.map((s) => s.huidigeStreak), 0);
+  const maxLangsteStreak = Math.max(...stats.map((s) => s.langsteStreak), 0);
+  const gemRate = stats.length > 0 ? stats.reduce((s, st) => s + st.completionRate, 0) / stats.length : 0;
+
+  return [
+    { naam: "7 dagen streak", icoon: Flame, kleur: "text-orange-400 bg-orange-500/10", behaald: maxStreak >= 7 },
+    { naam: "30 dagen streak", icoon: Flame, kleur: "text-red-400 bg-red-500/10", behaald: maxLangsteStreak >= 30 },
+    { naam: "Week perfect", icoon: Star, kleur: "text-yellow-400 bg-yellow-500/10", behaald: stats.some((s) => s.weekVoltooid >= 7) },
+    { naam: "80% consistent", icoon: TrendingUp, kleur: "text-emerald-400 bg-emerald-500/10", behaald: gemRate >= 80 },
+    { naam: "5 gewoontes", icoon: Crown, kleur: "text-purple-400 bg-purple-500/10", behaald: stats.length >= 5 },
+    { naam: "100 keer voltooid", icoon: Trophy, kleur: "text-autronis-accent bg-autronis-accent/10", behaald: stats.some((s) => s.totaalVoltooid >= 100) },
+  ];
+}
+
+// ─── Streak flame scaling ───
+function StreakFlame({ streak }: { streak: number }) {
+  if (streak === 0) return null;
+  const size = streak >= 30 ? "w-6 h-6" : streak >= 14 ? "w-5 h-5" : streak >= 7 ? "w-4.5 h-4.5" : "w-4 h-4";
+  const color = streak >= 30 ? "text-red-400" : streak >= 14 ? "text-orange-400" : streak >= 7 ? "text-orange-400" : "text-orange-400/70";
+  const animate = streak >= 14 ? "animate-pulse" : "";
+
+  return (
+    <span className={cn("inline-flex items-center gap-1 font-bold tabular-nums", color)}>
+      <Flame className={cn(size, animate)} />
+      <span className="text-sm">{streak}</span>
+    </span>
+  );
+}
+
+// ─── Heatmap ───
+function Heatmap({ data, naam, totaalGewoontes }: { data: Record<string, number>; naam?: string; totaalGewoontes?: number }) {
+  const nu = new Date();
+  const weken = 26; // 6 months for more detail
+
   const start = new Date(nu);
   start.setDate(start.getDate() - (weken * 7) - (start.getDay() === 0 ? 6 : start.getDay() - 1));
+
+  const celMap = new Map<string, { datum: string; waarde: number; dag: number; week: number }>();
+  const cellen: typeof celMap extends Map<string, infer V> ? V[] : never = [];
 
   for (let w = 0; w <= weken; w++) {
     for (let d = 0; d < 7; d++) {
@@ -110,83 +162,90 @@ function Heatmap({ data, naam }: { data: Record<string, number>; naam: string })
       datum.setDate(start.getDate() + w * 7 + d);
       if (datum > nu) continue;
       const datumStr = datum.toISOString().slice(0, 10);
-      cellen.push({
-        datum: datumStr,
-        waarde: data[datumStr] || 0,
-        dag: d,
-        week: w,
-      });
+      const cel = { datum: datumStr, waarde: data[datumStr] || 0, dag: d, week: w };
+      cellen.push(cel);
+      celMap.set(`${w}-${d}`, cel);
     }
   }
 
+  // Month labels
   const maanden: { label: string; week: number }[] = [];
   let laatsteMaand = -1;
   for (const cel of cellen) {
     const maand = new Date(cel.datum).getMonth();
     if (maand !== laatsteMaand && cel.dag === 0) {
-      maanden.push({
-        label: new Date(cel.datum).toLocaleDateString("nl-NL", { month: "short" }),
-        week: cel.week,
-      });
+      maanden.push({ label: new Date(cel.datum).toLocaleDateString("nl-NL", { month: "short" }), week: cel.week });
       laatsteMaand = maand;
     }
   }
 
+  const dagLabels = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+
+  function getCelColor(waarde: number): string {
+    if (waarde === 0) return "bg-autronis-border/30";
+    if (totaalGewoontes && totaalGewoontes > 1) {
+      const ratio = waarde / totaalGewoontes;
+      if (ratio >= 1) return "bg-emerald-500";
+      if (ratio >= 0.5) return "bg-emerald-500/60";
+      return "bg-emerald-500/30";
+    }
+    return "bg-emerald-500";
+  }
+
   return (
     <div>
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-sm font-medium text-autronis-text-primary">{naam}</span>
-      </div>
+      {naam && (
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-sm font-medium text-autronis-text-primary">{naam}</span>
+        </div>
+      )}
       <div className="overflow-x-auto">
         <div className="inline-block">
           {/* Month labels */}
-          <div className="flex mb-1 ml-6">
+          <div className="flex mb-1 ml-8">
             {maanden.map((m, i) => (
-              <span
-                key={i}
-                className="text-[10px] text-autronis-text-secondary"
-                style={{ position: "relative", left: `${m.week * 14}px` }}
-              >
+              <span key={i} className="text-[10px] text-autronis-text-secondary" style={{ position: "relative", left: `${m.week * 15}px` }}>
                 {m.label}
               </span>
             ))}
           </div>
-          <div className="flex gap-0.5">
-            {/* Day labels */}
-            <div className="flex flex-col gap-0.5 mr-1">
-              {["Ma", "", "Wo", "", "Vr", "", ""].map((d, i) => (
-                <span key={i} className="text-[9px] text-autronis-text-secondary h-[12px] leading-[12px]">
+          <div className="flex gap-[3px]">
+            {/* Day labels — show all 7 */}
+            <div className="flex flex-col gap-[3px] mr-1">
+              {dagLabels.map((d) => (
+                <span key={d} className="text-[9px] text-autronis-text-secondary h-[13px] leading-[13px] w-5">
                   {d}
                 </span>
               ))}
             </div>
             {/* Grid */}
             {Array.from({ length: weken + 1 }, (_, w) => (
-              <div key={w} className="flex flex-col gap-0.5">
+              <div key={w} className="flex flex-col gap-[3px]">
                 {Array.from({ length: 7 }, (_, d) => {
-                  const cel = cellen.find((c) => c.week === w && c.dag === d);
-                  if (!cel) return <div key={d} className="w-[12px] h-[12px]" />;
+                  const cel = celMap.get(`${w}-${d}`);
+                  if (!cel) return <div key={d} className="w-[13px] h-[13px]" />;
+                  const isVandaag = cel.datum === nu.toISOString().slice(0, 10);
                   return (
                     <div
                       key={d}
                       className={cn(
-                        "w-[12px] h-[12px] rounded-sm transition-colors",
-                        cel.waarde > 0
-                          ? "bg-emerald-500"
-                          : "bg-autronis-border/50"
+                        "w-[13px] h-[13px] rounded-sm transition-colors",
+                        getCelColor(cel.waarde),
+                        isVandaag && "ring-1 ring-autronis-accent"
                       )}
-                      title={`${cel.datum}: ${cel.waarde > 0 ? "Voltooid" : "Gemist"}`}
+                      title={`${new Date(cel.datum).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" })}: ${cel.waarde > 0 ? `${cel.waarde} voltooid` : "Gemist"}`}
                     />
                   );
                 })}
               </div>
             ))}
           </div>
-          <div className="flex items-center gap-1 mt-2 ml-6">
+          <div className="flex items-center gap-1 mt-2 ml-8">
             <span className="text-[10px] text-autronis-text-secondary">Minder</span>
-            <div className="w-[12px] h-[12px] rounded-sm bg-autronis-border/50" />
-            <div className="w-[12px] h-[12px] rounded-sm bg-emerald-500/40" />
-            <div className="w-[12px] h-[12px] rounded-sm bg-emerald-500" />
+            <div className="w-[13px] h-[13px] rounded-sm bg-autronis-border/30" />
+            <div className="w-[13px] h-[13px] rounded-sm bg-emerald-500/30" />
+            <div className="w-[13px] h-[13px] rounded-sm bg-emerald-500/60" />
+            <div className="w-[13px] h-[13px] rounded-sm bg-emerald-500" />
             <span className="text-[10px] text-autronis-text-secondary">Meer</span>
           </div>
         </div>
@@ -195,15 +254,9 @@ function Heatmap({ data, naam }: { data: Record<string, number>; naam: string })
   );
 }
 
-// Form modal
-function GewoonteModal({
-  open,
-  onClose,
-  onSave,
-  gewoonte,
-}: {
-  open: boolean;
-  onClose: () => void;
+// ─── Modal ───
+function GewoonteModal({ open, onClose, onSave, gewoonte }: {
+  open: boolean; onClose: () => void;
   onSave: (data: { naam: string; icoon: string; frequentie: string; streefwaarde: string }) => void;
   gewoonte?: Gewoonte | null;
 }) {
@@ -219,10 +272,7 @@ function GewoonteModal({
       setFrequentie(gewoonte.frequentie);
       setStreefwaarde(gewoonte.streefwaarde || "");
     } else {
-      setNaam("");
-      setIcoon("Target");
-      setFrequentie("dagelijks");
-      setStreefwaarde("");
+      setNaam(""); setIcoon("Target"); setFrequentie("dagelijks"); setStreefwaarde("");
     }
   }, [gewoonte, open]);
 
@@ -232,86 +282,46 @@ function GewoonteModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-semibold text-white">
-            {gewoonte ? "Gewoonte bewerken" : "Nieuwe gewoonte"}
-          </h3>
-          <button onClick={onClose} className="text-autronis-text-secondary hover:text-white transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+          <h3 className="text-lg font-semibold text-white">{gewoonte ? "Gewoonte bewerken" : "Nieuwe gewoonte"}</h3>
+          <button onClick={onClose} className="text-autronis-text-secondary hover:text-white transition-colors"><X className="w-5 h-5" /></button>
         </div>
-
         <div className="space-y-4">
           <div>
             <label className="text-sm text-autronis-text-secondary mb-1 block">Naam</label>
-            <input
-              type="text"
-              value={naam}
-              onChange={(e) => setNaam(e.target.value)}
-              placeholder="Bijv. Sporten"
-              className="w-full bg-autronis-bg border border-autronis-border rounded-xl px-4 py-3 text-sm text-autronis-text-primary placeholder:text-autronis-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-autronis-accent/50 focus:border-autronis-accent transition-colors"
-            />
+            <input type="text" value={naam} onChange={(e) => setNaam(e.target.value)} placeholder="Bijv. Sporten"
+              className="w-full bg-autronis-bg border border-autronis-border rounded-xl px-4 py-3 text-sm text-autronis-text-primary placeholder:text-autronis-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-autronis-accent/50" />
           </div>
-
           <div>
             <label className="text-sm text-autronis-text-secondary mb-1 block">Icoon</label>
             <div className="flex flex-wrap gap-2">
               {ICON_OPTIONS.map(({ naam: iconNaam, icon: Icon }) => (
-                <button
-                  key={iconNaam}
-                  type="button"
-                  onClick={() => setIcoon(iconNaam)}
-                  className={cn(
-                    "p-2.5 rounded-xl border transition-all",
-                    icoon === iconNaam
-                      ? "bg-autronis-accent/15 border-autronis-accent text-autronis-accent"
-                      : "bg-autronis-bg border-autronis-border text-autronis-text-secondary hover:border-autronis-accent/50"
-                  )}
-                >
+                <button key={iconNaam} type="button" onClick={() => setIcoon(iconNaam)}
+                  className={cn("p-2.5 rounded-xl border transition-all", icoon === iconNaam
+                    ? "bg-autronis-accent/15 border-autronis-accent text-autronis-accent"
+                    : "bg-autronis-bg border-autronis-border text-autronis-text-secondary hover:border-autronis-accent/50")}>
                   <Icon className="w-4 h-4" />
                 </button>
               ))}
             </div>
           </div>
-
           <div>
             <label className="text-sm text-autronis-text-secondary mb-1 block">Frequentie</label>
-            <select
-              value={frequentie}
-              onChange={(e) => setFrequentie(e.target.value)}
-              className="w-full bg-autronis-bg border border-autronis-border rounded-xl px-4 py-3 text-sm text-autronis-text-primary focus:outline-none focus:ring-2 focus:ring-autronis-accent/50 focus:border-autronis-accent transition-colors"
-            >
+            <select value={frequentie} onChange={(e) => setFrequentie(e.target.value)}
+              className="w-full bg-autronis-bg border border-autronis-border rounded-xl px-4 py-3 text-sm text-autronis-text-primary focus:outline-none focus:ring-2 focus:ring-autronis-accent/50">
               <option value="dagelijks">Dagelijks</option>
               <option value="weekelijks">Weekelijks</option>
             </select>
           </div>
-
           <div>
             <label className="text-sm text-autronis-text-secondary mb-1 block">Streefwaarde (optioneel)</label>
-            <input
-              type="text"
-              value={streefwaarde}
-              onChange={(e) => setStreefwaarde(e.target.value)}
-              placeholder="Bijv. 30 min, 1 persoon"
-              className="w-full bg-autronis-bg border border-autronis-border rounded-xl px-4 py-3 text-sm text-autronis-text-primary placeholder:text-autronis-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-autronis-accent/50 focus:border-autronis-accent transition-colors"
-            />
+            <input type="text" value={streefwaarde} onChange={(e) => setStreefwaarde(e.target.value)} placeholder="Bijv. 30 min"
+              className="w-full bg-autronis-bg border border-autronis-border rounded-xl px-4 py-3 text-sm text-autronis-text-primary placeholder:text-autronis-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-autronis-accent/50" />
           </div>
         </div>
-
         <div className="flex gap-3 mt-6">
-          <button
-            onClick={onClose}
-            className="flex-1 px-4 py-3 border border-autronis-border rounded-xl text-sm text-autronis-text-secondary hover:bg-autronis-border/30 transition-colors"
-          >
-            Annuleren
-          </button>
-          <button
-            onClick={() => {
-              if (!naam.trim()) return;
-              onSave({ naam: naam.trim(), icoon, frequentie, streefwaarde });
-            }}
-            disabled={!naam.trim()}
-            className="flex-1 px-4 py-3 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 btn-press"
-          >
+          <button onClick={onClose} className="flex-1 px-4 py-3 border border-autronis-border rounded-xl text-sm text-autronis-text-secondary hover:bg-autronis-border/30 transition-colors">Annuleren</button>
+          <button onClick={() => { if (!naam.trim()) return; onSave({ naam: naam.trim(), icoon, frequentie, streefwaarde }); }} disabled={!naam.trim()}
+            className="flex-1 px-4 py-3 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 btn-press">
             {gewoonte ? "Opslaan" : "Toevoegen"}
           </button>
         </div>
@@ -320,6 +330,7 @@ function GewoonteModal({
   );
 }
 
+// ─── Main Page ───
 export default function GewoontesPagina() {
   const { addToast } = useToast();
   const [gewoontesList, setGewoontesList] = useState<Gewoonte[]>([]);
@@ -331,6 +342,8 @@ export default function GewoontesPagina() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editGewoonte, setEditGewoonte] = useState<Gewoonte | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [showSuggesties, setShowSuggesties] = useState(false);
+  const [showStats, setShowStats] = useState(true);
 
   const fetchData = useCallback(async () => {
     try {
@@ -352,12 +365,14 @@ export default function GewoontesPagina() {
     }
   }, [addToast]);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const toggleGewoonte = async (gewoonteId: number) => {
     const vandaag = new Date().toISOString().slice(0, 10);
+    // Optimistic update first
+    setGewoontesList((prev) =>
+      prev.map((g) => g.id === gewoonteId ? { ...g, voltooidVandaag: !g.voltooidVandaag } : g)
+    );
     try {
       const res = await fetch("/api/gewoontes/logboek", {
         method: "POST",
@@ -365,21 +380,17 @@ export default function GewoontesPagina() {
         body: JSON.stringify({ gewoonteId, datum: vandaag }),
       });
       if (!res.ok) throw new Error();
-      // Optimistic update
-      setGewoontesList((prev) =>
-        prev.map((g) =>
-          g.id === gewoonteId ? { ...g, voltooidVandaag: !g.voltooidVandaag } : g
-        )
-      );
-      // Refresh stats
-      fetch("/api/gewoontes/statistieken")
-        .then((r) => r.json())
-        .then((d) => {
-          setStatistieken(d.statistieken || []);
-          setWeekRate(d.weekCompletionRate || 0);
-          setMaandRate(d.maandCompletionRate || 0);
-        });
+      // Refresh stats in background
+      fetch("/api/gewoontes/statistieken").then((r) => r.json()).then((d) => {
+        setStatistieken(d.statistieken || []);
+        setWeekRate(d.weekCompletionRate || 0);
+        setMaandRate(d.maandCompletionRate || 0);
+      });
     } catch {
+      // Revert optimistic update
+      setGewoontesList((prev) =>
+        prev.map((g) => g.id === gewoonteId ? { ...g, voltooidVandaag: !g.voltooidVandaag } : g)
+      );
       addToast("Kon gewoonte niet bijwerken", "fout");
     }
   };
@@ -387,28 +398,18 @@ export default function GewoontesPagina() {
   const handleSave = async (data: { naam: string; icoon: string; frequentie: string; streefwaarde: string }) => {
     try {
       if (editGewoonte) {
-        const res = await fetch(`/api/gewoontes/${editGewoonte.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
+        const res = await fetch(`/api/gewoontes/${editGewoonte.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
         if (!res.ok) throw new Error();
         addToast("Gewoonte bijgewerkt", "succes");
       } else {
-        const res = await fetch("/api/gewoontes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
+        const res = await fetch("/api/gewoontes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
         if (!res.ok) throw new Error();
         addToast("Gewoonte toegevoegd", "succes");
       }
       setModalOpen(false);
       setEditGewoonte(null);
       fetchData();
-    } catch {
-      addToast("Kon gewoonte niet opslaan", "fout");
-    }
+    } catch { addToast("Kon gewoonte niet opslaan", "fout"); }
   };
 
   const handleDelete = async () => {
@@ -419,28 +420,38 @@ export default function GewoontesPagina() {
       addToast("Gewoonte verwijderd", "succes");
       setDeleteId(null);
       fetchData();
-    } catch {
-      addToast("Kon gewoonte niet verwijderen", "fout");
-    }
+    } catch { addToast("Kon gewoonte niet verwijderen", "fout"); }
   };
 
   const addSuggestie = async (s: Suggestie) => {
     try {
-      const res = await fetch("/api/gewoontes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(s),
-      });
+      const res = await fetch("/api/gewoontes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(s) });
       if (!res.ok) throw new Error();
       addToast(`${s.naam} toegevoegd`, "succes");
       fetchData();
-    } catch {
-      addToast("Kon suggestie niet toevoegen", "fout");
-    }
+    } catch { addToast("Kon suggestie niet toevoegen", "fout"); }
   };
 
   const voltooid = gewoontesList.filter((g) => g.voltooidVandaag).length;
   const totaal = gewoontesList.length;
+  const allesGedaan = totaal > 0 && voltooid === totaal;
+
+  // Gamification
+  const totaalPunten = useMemo(() => statistieken.reduce((s, st) => s + st.totaalVoltooid, 0), [statistieken]);
+  const levelInfo = useMemo(() => calculateLevel(totaalPunten), [totaalPunten]);
+  const badges = useMemo(() => getBadges(statistieken), [statistieken]);
+  const behaalBadges = badges.filter((b) => b.behaald);
+
+  // Combined heatmap data (all habits)
+  const combinedHeatmap = useMemo(() => {
+    const combined: Record<string, number> = {};
+    for (const stat of statistieken) {
+      for (const [datum, waarde] of Object.entries(stat.heatmap)) {
+        combined[datum] = (combined[datum] || 0) + waarde;
+      }
+    }
+    return combined;
+  }, [statistieken]);
 
   if (loading) {
     return (
@@ -452,168 +463,143 @@ export default function GewoontesPagina() {
 
   return (
     <PageTransition>
-      <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-8">
+      <div className="max-w-7xl mx-auto p-4 lg:p-8 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white tracking-tight">Gewoontes</h1>
             <p className="text-base text-autronis-text-secondary mt-1">
-              Bouw consistente gewoontes op en track je voortgang
+              {totaal > 0 ? `${voltooid}/${totaal} vandaag` : "Bouw consistente gewoontes op"}
             </p>
           </div>
-          <button
-            onClick={() => {
-              setEditGewoonte(null);
-              setModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2 px-5 py-3 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-autronis-accent/20 btn-press"
-          >
-            <Plus className="w-4 h-4" />
-            Nieuwe gewoonte
+          <button onClick={() => { setEditGewoonte(null); setModalOpen(true); }}
+            className="inline-flex items-center gap-2 px-5 py-3 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-autronis-accent/20 btn-press">
+            <Plus className="w-4 h-4" /> Nieuwe gewoonte
           </button>
         </div>
 
-        {/* Suggesties (alleen als er geen gewoontes zijn) */}
-        {suggesties.length > 0 && (
-          <div className="bg-autronis-card border border-autronis-accent/20 rounded-2xl p-6 lg:p-7 card-gradient">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-5 h-5 text-autronis-accent" />
-              <h2 className="text-lg font-semibold text-white">Aanbevolen gewoontes</h2>
-            </div>
-            <p className="text-sm text-autronis-text-secondary mb-4">
-              Klik op een gewoonte om deze toe te voegen aan je tracker.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {suggesties.map((s) => {
-                const Icon = ICON_MAP[s.icoon] || Target;
-                return (
-                  <button
-                    key={s.naam}
-                    onClick={() => addSuggestie(s)}
-                    className="flex items-center gap-3 bg-autronis-bg/50 rounded-xl p-4 text-left hover:bg-autronis-bg/80 transition-colors group border border-transparent hover:border-autronis-accent/30"
-                  >
-                    <div className="p-2 bg-autronis-accent/10 rounded-xl group-hover:bg-autronis-accent/20 transition-colors">
-                      <Icon className="w-5 h-5 text-autronis-accent" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-autronis-text-primary">{s.naam}</p>
-                      {s.streefwaarde && (
-                        <p className="text-xs text-autronis-text-secondary">{s.streefwaarde}</p>
-                      )}
-                    </div>
-                    <Plus className="w-4 h-4 text-autronis-text-secondary ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Vandaag overzicht + KPI's */}
         {totaal > 0 && (
           <>
-            {/* Score vandaag */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-emerald-500/10 rounded-xl">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            {/* ─── KPIs + Level ─── */}
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* Today's score */}
+              <div className={cn("rounded-2xl border p-5 card-glow col-span-2 lg:col-span-1",
+                allesGedaan ? "bg-emerald-500/10 border-emerald-500/30" : "bg-autronis-card border-autronis-border")}>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-xl bg-emerald-500/10">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   </div>
-                  <span className="text-sm text-autronis-text-secondary">Vandaag</span>
                 </div>
-                <p className="text-3xl font-bold text-white tabular-nums">
-                  {voltooid}/{totaal}
+                <p className="text-3xl font-bold text-white tabular-nums">{voltooid}/{totaal}</p>
+                <p className="text-xs text-autronis-text-secondary mt-1">
+                  {allesGedaan ? "Alles gedaan!" : "Vandaag"}
                 </p>
-                <p className="text-sm text-autronis-text-secondary mt-1">gewoontes voltooid</p>
               </div>
-              <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-blue-500/10 rounded-xl">
-                    <TrendingUp className="w-5 h-5 text-blue-400" />
-                  </div>
-                  <span className="text-sm text-autronis-text-secondary">Deze week</span>
+
+              {/* Week rate */}
+              <div className="bg-autronis-card border border-autronis-border rounded-2xl p-5 card-glow">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-xl bg-blue-500/10"><TrendingUp className="w-4 h-4 text-blue-400" /></div>
                 </div>
-                <p className="text-3xl font-bold text-white tabular-nums">{weekRate}%</p>
-                <p className="text-sm text-autronis-text-secondary mt-1">completion rate</p>
+                <p className="text-2xl font-bold text-white tabular-nums">{weekRate}%</p>
+                <p className="text-xs text-autronis-text-secondary mt-1">Week</p>
               </div>
-              <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-purple-500/10 rounded-xl">
-                    <Calendar className="w-5 h-5 text-purple-400" />
-                  </div>
-                  <span className="text-sm text-autronis-text-secondary">Deze maand</span>
+
+              {/* Month rate */}
+              <div className="bg-autronis-card border border-autronis-border rounded-2xl p-5 card-glow">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-xl bg-purple-500/10"><Calendar className="w-4 h-4 text-purple-400" /></div>
                 </div>
-                <p className="text-3xl font-bold text-white tabular-nums">{maandRate}%</p>
-                <p className="text-sm text-autronis-text-secondary mt-1">completion rate</p>
+                <p className="text-2xl font-bold text-white tabular-nums">{maandRate}%</p>
+                <p className="text-xs text-autronis-text-secondary mt-1">Maand</p>
+              </div>
+
+              {/* Total points */}
+              <div className="bg-autronis-card border border-autronis-border rounded-2xl p-5 card-glow">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-xl bg-yellow-500/10"><Zap className="w-4 h-4 text-yellow-400" /></div>
+                </div>
+                <p className="text-2xl font-bold text-yellow-400 tabular-nums">{totaalPunten}</p>
+                <p className="text-xs text-autronis-text-secondary mt-1">Punten</p>
+              </div>
+
+              {/* Level */}
+              <div className="bg-autronis-card border border-autronis-border rounded-2xl p-5 card-glow">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-xl bg-autronis-accent/10"><Award className="w-4 h-4 text-autronis-accent" /></div>
+                </div>
+                <p className="text-lg font-bold text-autronis-accent">{levelInfo.naam}</p>
+                <div className="w-full h-1.5 bg-autronis-border rounded-full mt-2 overflow-hidden">
+                  <div className="h-full bg-autronis-accent rounded-full transition-all" style={{ width: `${levelInfo.voortgang}%` }} />
+                </div>
               </div>
             </div>
 
-            {/* Gewoontes lijst vandaag */}
-            <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7 card-glow">
-              <h2 className="text-xl font-semibold text-white mb-5 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-autronis-accent" />
-                Vandaag
-              </h2>
-              <div className="space-y-3">
+            {/* ─── Vandaag: habit list with large checkboxes ─── */}
+            <div className={cn("rounded-2xl border p-6 lg:p-7 card-glow",
+              allesGedaan ? "bg-emerald-500/5 border-emerald-500/20" : "bg-autronis-card border-autronis-border")}>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-autronis-accent" />
+                  Vandaag
+                </h2>
+                {allesGedaan && (
+                  <span className="text-sm font-bold text-emerald-400 flex items-center gap-1.5">
+                    <Flame className="w-5 h-5 animate-pulse" /> Alles gedaan!
+                  </span>
+                )}
+              </div>
+              <div className="space-y-2">
                 {gewoontesList.map((g) => {
                   const Icon = ICON_MAP[g.icoon] || Target;
                   const stat = statistieken.find((s) => s.id === g.id);
                   return (
-                    <div
-                      key={g.id}
+                    <div key={g.id}
+                      onClick={() => toggleGewoonte(g.id)}
                       className={cn(
-                        "bg-autronis-bg/50 rounded-xl p-4 flex items-center gap-4 group transition-all",
-                        g.voltooidVandaag && "bg-emerald-500/5 border border-emerald-500/20"
+                        "rounded-xl p-4 flex items-center gap-4 group transition-all cursor-pointer select-none",
+                        g.voltooidVandaag
+                          ? "bg-emerald-500/10 border border-emerald-500/20"
+                          : "bg-autronis-bg/50 hover:bg-autronis-bg/80 border border-transparent"
                       )}
                     >
-                      <button
-                        onClick={() => toggleGewoonte(g.id)}
-                        className={cn(
-                          "w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0",
-                          g.voltooidVandaag
-                            ? "bg-emerald-500 border-emerald-500 text-white"
-                            : "border-autronis-border hover:border-emerald-500/50"
-                        )}
-                      >
-                        {g.voltooidVandaag && <CheckCircle2 className="w-4 h-4" />}
-                      </button>
-                      <div className="p-2 bg-autronis-accent/10 rounded-xl flex-shrink-0">
-                        <Icon className="w-4 h-4 text-autronis-accent" />
+                      {/* Large checkbox */}
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl border-2 flex items-center justify-center transition-all flex-shrink-0",
+                        g.voltooidVandaag
+                          ? "bg-emerald-500 border-emerald-500 text-white scale-105"
+                          : "border-autronis-border group-hover:border-emerald-500/50"
+                      )}>
+                        {g.voltooidVandaag && <CheckCircle2 className="w-6 h-6" />}
                       </div>
+
+                      <div className="p-2 bg-autronis-accent/10 rounded-xl flex-shrink-0">
+                        <Icon className="w-5 h-5 text-autronis-accent" />
+                      </div>
+
                       <div className="flex-1 min-w-0">
-                        <p className={cn(
-                          "text-base font-medium transition-colors",
-                          g.voltooidVandaag ? "text-emerald-400 line-through" : "text-autronis-text-primary"
-                        )}>
+                        <p className={cn("text-base font-medium transition-colors",
+                          g.voltooidVandaag ? "text-emerald-400" : "text-autronis-text-primary")}>
                           {g.naam}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          {g.streefwaarde && (
-                            <span className="text-xs text-autronis-text-secondary">{g.streefwaarde}</span>
-                          )}
+                          {g.streefwaarde && <span className="text-xs text-autronis-text-secondary">{g.streefwaarde}</span>}
                           <span className="text-xs text-autronis-text-secondary capitalize">{g.frequentie}</span>
                         </div>
                       </div>
-                      {stat && stat.huidigeStreak > 0 && (
-                        <span className="inline-flex items-center gap-1 text-sm font-bold text-orange-400 tabular-nums flex-shrink-0">
-                          <Flame className="w-4 h-4" />
-                          {stat.huidigeStreak}
-                        </span>
-                      )}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                        <button
-                          onClick={() => {
-                            setEditGewoonte(g);
-                            setModalOpen(true);
-                          }}
-                          className="p-1.5 rounded-lg text-autronis-text-secondary hover:text-white hover:bg-autronis-border/50 transition-colors"
-                        >
+
+                      {/* Streak - prominent */}
+                      <StreakFlame streak={stat?.huidigeStreak || 0} />
+
+                      {/* Edit/Delete */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                        onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => { setEditGewoonte(g); setModalOpen(true); }}
+                          className="p-2 rounded-lg text-autronis-text-secondary hover:text-white hover:bg-autronis-border/50 transition-colors">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
-                        <button
-                          onClick={() => setDeleteId(g.id)}
-                          className="p-1.5 rounded-lg text-autronis-text-secondary hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                        >
+                        <button onClick={() => setDeleteId(g.id)}
+                          className="p-2 rounded-lg text-autronis-text-secondary hover:text-red-400 hover:bg-red-500/10 transition-colors">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -623,106 +609,165 @@ export default function GewoontesPagina() {
               </div>
             </div>
 
-            {/* Statistieken per gewoonte */}
-            <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7 card-glow">
-              <h2 className="text-xl font-semibold text-white mb-5 flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-autronis-accent" />
-                Statistieken
-              </h2>
-              <div className="space-y-6">
-                {statistieken.map((stat) => {
-                  const Icon = ICON_MAP[stat.icoon] || Target;
-                  return (
-                    <div key={stat.id} className="bg-autronis-bg/50 rounded-xl p-5">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-autronis-accent/10 rounded-xl">
-                          <Icon className="w-4 h-4 text-autronis-accent" />
-                        </div>
-                        <span className="text-base font-semibold text-autronis-text-primary">{stat.naam}</span>
+            {/* ─── Badges ─── */}
+            {badges.length > 0 && (
+              <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-yellow-400" />
+                  Badges
+                  <span className="text-xs text-autronis-text-secondary ml-1">{behaalBadges.length}/{badges.length}</span>
+                </h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                  {badges.map((badge) => (
+                    <div key={badge.naam}
+                      className={cn("flex flex-col items-center gap-2 p-4 rounded-xl border transition-colors",
+                        badge.behaald
+                          ? "bg-autronis-bg/50 border-autronis-border"
+                          : "bg-autronis-bg/20 border-autronis-border/30 opacity-40")}>
+                      <div className={cn("p-2.5 rounded-xl", badge.behaald ? badge.kleur : "bg-autronis-border/30 text-autronis-text-secondary")}>
+                        <badge.icoon className="w-5 h-5" />
                       </div>
-                      {/* Stats grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
-                        <div>
-                          <p className="text-xs text-autronis-text-secondary">Huidige streak</p>
-                          <p className="text-lg font-bold text-orange-400 tabular-nums flex items-center gap-1">
-                            <Flame className="w-4 h-4" />
-                            {stat.huidigeStreak} dagen
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-autronis-text-secondary">Langste streak</p>
-                          <p className="text-lg font-bold text-autronis-text-primary tabular-nums">
-                            {stat.langsteStreak} dagen
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-autronis-text-secondary">Beste dag</p>
-                          <p className="text-lg font-bold text-emerald-400">{stat.besteDag}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-autronis-text-secondary">Completion rate</p>
-                          <p className="text-lg font-bold text-blue-400 tabular-nums">{stat.completionRate}%</p>
-                        </div>
-                      </div>
-                      {/* Heatmap */}
-                      <Heatmap data={stat.heatmap} naam={stat.naam} />
+                      <span className="text-[11px] text-center text-autronis-text-secondary font-medium">{badge.naam}</span>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
+            )}
+
+            {/* ─── Combined Heatmap ─── */}
+            <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
+              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-autronis-accent" />
+                Activiteit
+              </h2>
+              <Heatmap data={combinedHeatmap} totaalGewoontes={totaal} />
             </div>
 
-            {/* AI Tips */}
+            {/* ─── Per-habit Statistieken (collapsible) ─── */}
+            <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7 card-glow">
+              <button onClick={() => setShowStats(!showStats)}
+                className="flex items-center justify-between w-full mb-4">
+                <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-autronis-accent" />
+                  Statistieken per gewoonte
+                </h2>
+                {showStats ? <ChevronUp className="w-5 h-5 text-autronis-text-secondary" /> : <ChevronDown className="w-5 h-5 text-autronis-text-secondary" />}
+              </button>
+              {showStats && (
+                <div className="space-y-5">
+                  {statistieken.map((stat) => {
+                    const Icon = ICON_MAP[stat.icoon] || Target;
+                    const isRecordStreak = stat.huidigeStreak > 0 && stat.huidigeStreak >= stat.langsteStreak;
+                    return (
+                      <div key={stat.id} className="bg-autronis-bg/50 rounded-xl p-5">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="p-2 bg-autronis-accent/10 rounded-xl"><Icon className="w-4 h-4 text-autronis-accent" /></div>
+                          <span className="text-base font-semibold text-autronis-text-primary">{stat.naam}</span>
+                          {isRecordStreak && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400 font-bold">RECORD!</span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-5">
+                          <div>
+                            <p className="text-[10px] text-autronis-text-secondary uppercase">Streak</p>
+                            <StreakFlame streak={stat.huidigeStreak} />
+                            {stat.huidigeStreak === 0 && <p className="text-sm text-autronis-text-secondary">0</p>}
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-autronis-text-secondary uppercase">Record</p>
+                            <p className="text-sm font-bold text-autronis-text-primary tabular-nums">{stat.langsteStreak} dagen</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-autronis-text-secondary uppercase">Beste dag</p>
+                            <p className="text-sm font-bold text-emerald-400">{stat.besteDag}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-autronis-text-secondary uppercase">Slechtste dag</p>
+                            <p className="text-sm font-bold text-red-400/70">{stat.slechteDag}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-autronis-text-secondary uppercase">Rate</p>
+                            <p className="text-sm font-bold text-blue-400 tabular-nums">{stat.completionRate}%</p>
+                          </div>
+                        </div>
+                        <Heatmap data={stat.heatmap} naam="" />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* ─── AI Tips ─── */}
             {statistieken.some((s) => s.totaalVoltooid > 3) && (
-              <div className="bg-autronis-card border border-amber-500/20 rounded-2xl p-6 lg:p-7 card-glow card-gradient">
-                <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+              <div className="bg-autronis-card border border-amber-500/20 rounded-2xl p-6 lg:p-7 card-glow">
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                   <Lightbulb className="w-5 h-5 text-amber-400" />
                   Slimme tips
                 </h2>
                 <div className="space-y-3">
-                  {statistieken
-                    .filter((s) => s.totaalVoltooid > 3)
-                    .map((stat) => {
-                      const tips: string[] = [];
-
-                      if (stat.slechteDag !== "-" && stat.slechteDag !== stat.besteDag) {
-                        tips.push(
-                          `Je mist "${stat.naam}" vaak op ${stat.slechteDag}. Probeer het in de ochtend in te plannen.`
-                        );
-                      }
-
-                      if (stat.huidigeStreak > 5) {
-                        tips.push(
-                          `Sterk! Je streak van ${stat.huidigeStreak} dagen voor "${stat.naam}" is indrukwekkend. Blijf doorgaan!`
-                        );
-                      }
-
-                      if (stat.completionRate < 50) {
-                        tips.push(
-                          `"${stat.naam}" heeft een lage completion rate (${stat.completionRate}%). Overweeg de streefwaarde te verlagen.`
-                        );
-                      }
-
-                      if (stat.completionRate >= 80) {
-                        tips.push(
-                          `"${stat.naam}" loopt goed (${stat.completionRate}%). Misschien tijd om de lat hoger te leggen?`
-                        );
-                      }
-
-                      return tips.map((tip, i) => (
-                        <div
-                          key={`${stat.id}-${i}`}
-                          className="flex items-start gap-3 bg-amber-500/5 rounded-xl p-4 border border-amber-500/10"
-                        >
-                          <Lightbulb className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
-                          <p className="text-sm text-autronis-text-primary leading-relaxed">{tip}</p>
-                        </div>
-                      ));
-                    })}
+                  {statistieken.filter((s) => s.totaalVoltooid > 3).flatMap((stat) => {
+                    const tips: string[] = [];
+                    if (stat.slechteDag !== "-" && stat.slechteDag !== stat.besteDag) {
+                      tips.push(`Je mist "${stat.naam}" vaak op ${stat.slechteDag}. Probeer het in de ochtend in te plannen.`);
+                    }
+                    if (stat.huidigeStreak > 5) {
+                      tips.push(`Sterk! Je streak van ${stat.huidigeStreak} dagen voor "${stat.naam}" is indrukwekkend.`);
+                    }
+                    if (stat.completionRate < 50) {
+                      tips.push(`"${stat.naam}" heeft een lage rate (${stat.completionRate}%). Overweeg de streefwaarde te verlagen.`);
+                    }
+                    if (stat.completionRate >= 80) {
+                      tips.push(`"${stat.naam}" loopt top (${stat.completionRate}%). Misschien de lat hoger leggen?`);
+                    }
+                    return tips.map((tip, i) => (
+                      <div key={`${stat.id}-${i}`} className="flex items-start gap-3 bg-amber-500/5 rounded-xl p-4 border border-amber-500/10">
+                        <Lightbulb className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-autronis-text-primary leading-relaxed">{tip}</p>
+                      </div>
+                    ));
+                  })}
                 </div>
               </div>
             )}
           </>
+        )}
+
+        {/* ─── Suggesties (always shown if available) ─── */}
+        {suggesties.length > 0 && (
+          <div className="bg-autronis-card border border-autronis-accent/20 rounded-2xl p-6 card-glow">
+            <button onClick={() => setShowSuggesties(!showSuggesties)}
+              className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-autronis-accent" />
+                <h2 className="text-lg font-semibold text-white">
+                  {totaal === 0 ? "Aanbevolen gewoontes" : "Meer gewoontes toevoegen"}
+                </h2>
+                <span className="text-xs text-autronis-text-secondary">{suggesties.length} beschikbaar</span>
+              </div>
+              {totaal > 0 && (showSuggesties ? <ChevronUp className="w-5 h-5 text-autronis-text-secondary" /> : <ChevronDown className="w-5 h-5 text-autronis-text-secondary" />)}
+            </button>
+            {(totaal === 0 || showSuggesties) && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+                {suggesties.map((s) => {
+                  const Icon = ICON_MAP[s.icoon] || Target;
+                  return (
+                    <button key={s.naam} onClick={() => addSuggestie(s)}
+                      className="flex items-center gap-3 bg-autronis-bg/50 rounded-xl p-4 text-left hover:bg-autronis-bg/80 transition-colors group border border-transparent hover:border-autronis-accent/30">
+                      <div className="p-2 bg-autronis-accent/10 rounded-xl group-hover:bg-autronis-accent/20 transition-colors">
+                        <Icon className="w-4 h-4 text-autronis-accent" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-autronis-text-primary">{s.naam}</p>
+                        {s.streefwaarde && <p className="text-[11px] text-autronis-text-secondary truncate">{s.streefwaarde}</p>}
+                      </div>
+                      <Plus className="w-4 h-4 text-autronis-text-secondary opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Empty state */}
@@ -732,38 +777,16 @@ export default function GewoontesPagina() {
               <Target className="w-10 h-10 text-autronis-accent" />
             </div>
             <h2 className="text-xl font-bold text-white mb-2">Geen gewoontes</h2>
-            <p className="text-autronis-text-secondary mb-6">
-              Voeg je eerste gewoonte toe om te beginnen met tracken.
-            </p>
-            <button
-              onClick={() => setModalOpen(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors btn-press"
-            >
-              <Plus className="w-4 h-4" />
-              Eerste gewoonte toevoegen
+            <p className="text-autronis-text-secondary mb-6">Voeg je eerste gewoonte toe om te beginnen.</p>
+            <button onClick={() => setModalOpen(true)}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors btn-press">
+              <Plus className="w-4 h-4" /> Eerste gewoonte toevoegen
             </button>
           </div>
         )}
 
-        {/* Modal */}
-        <GewoonteModal
-          open={modalOpen}
-          onClose={() => {
-            setModalOpen(false);
-            setEditGewoonte(null);
-          }}
-          onSave={handleSave}
-          gewoonte={editGewoonte}
-        />
-
-        {/* Delete dialog */}
-        <ConfirmDialog
-          open={deleteId !== null}
-          titel="Gewoonte verwijderen"
-          bericht="Weet je zeker dat je deze gewoonte wilt verwijderen? De bijbehorende statistieken gaan verloren."
-          onBevestig={handleDelete}
-          onClose={() => setDeleteId(null)}
-        />
+        <GewoonteModal open={modalOpen} onClose={() => { setModalOpen(false); setEditGewoonte(null); }} onSave={handleSave} gewoonte={editGewoonte} />
+        <ConfirmDialog open={deleteId !== null} titel="Gewoonte verwijderen" bericht="Weet je zeker dat je deze gewoonte wilt verwijderen? De bijbehorende statistieken gaan verloren." onBevestig={handleDelete} onClose={() => setDeleteId(null)} />
       </div>
     </PageTransition>
   );

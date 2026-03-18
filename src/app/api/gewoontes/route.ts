@@ -5,12 +5,14 @@ import { gewoontes, gewoonteLogboek } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth";
 
 const STANDAARD_GEWOONTES = [
-  { naam: "Sporten", icoon: "Dumbbell", streefwaarde: null },
-  { naam: "Lezen", icoon: "BookOpen", streefwaarde: "30 min" },
-  { naam: "Content posten", icoon: "Megaphone", streefwaarde: "LinkedIn" },
-  { naam: "Netwerken", icoon: "Users", streefwaarde: "1 persoon bereiken" },
-  { naam: "Sales", icoon: "Target", streefwaarde: "1 lead opvolgen" },
-  { naam: "Leren", icoon: "GraduationCap", streefwaarde: "iets nieuws" },
+  { naam: "Sporten", icoon: "Dumbbell", streefwaarde: null, frequentie: "dagelijks" },
+  { naam: "Lezen", icoon: "BookOpen", streefwaarde: "30 min", frequentie: "dagelijks" },
+  { naam: "Content posten", icoon: "Megaphone", streefwaarde: "LinkedIn", frequentie: "dagelijks" },
+  { naam: "Netwerken", icoon: "Users", streefwaarde: "2x per week", frequentie: "weekelijks" },
+  { naam: "Sales outreach", icoon: "Target", streefwaarde: "1 lead opvolgen", frequentie: "dagelijks" },
+  { naam: "Leren / cursus", icoon: "GraduationCap", streefwaarde: "30 min", frequentie: "dagelijks" },
+  { naam: "Water drinken", icoon: "Sparkles", streefwaarde: "2 liter", frequentie: "dagelijks" },
+  { naam: "Voor 23:00 slapen", icoon: "Calendar", streefwaarde: null, frequentie: "dagelijks" },
 ];
 
 export async function GET() {
@@ -49,9 +51,15 @@ export async function GET() {
       voltooidVandaag: logMap.has(g.id) && logMap.get(g.id)!.voltooid === 1,
     }));
 
+    // Always return suggestions, filtered by what user already has
+    const bestaandeNamen = new Set(items.map((g) => g.naam.toLowerCase()));
+    const beschikbareSuggesties = STANDAARD_GEWOONTES.filter(
+      (s) => !bestaandeNamen.has(s.naam.toLowerCase())
+    );
+
     return NextResponse.json({
       gewoontes: result,
-      suggesties: items.length === 0 ? STANDAARD_GEWOONTES : [],
+      suggesties: beschikbareSuggesties,
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Onbekende fout";
