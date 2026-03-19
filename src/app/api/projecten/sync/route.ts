@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { db, sqlite } from "@/lib/db";
+import { db } from "@/lib/db";
 import { projecten, taken, klanten } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { createNotionDocument, searchNotionDocuments } from "@/lib/notion";
 import { DocumentPayload } from "@/types/documenten";
 import fs from "fs";
@@ -458,11 +458,15 @@ export async function POST() {
       }
 
       // Recalculate project progress
-      const stats = sqlite
-        .prepare(
-          "SELECT COUNT(*) as totaal, SUM(CASE WHEN status = 'afgerond' THEN 1 ELSE 0 END) as af FROM taken WHERE project_id = ?"
-        )
-        .get(project.id) as { totaal: number; af: number };
+      const statsResult = db
+        .select({
+          totaal: sql<number>`COUNT(*)`,
+          af: sql<number>`SUM(CASE WHEN ${taken.status} = 'afgerond' THEN 1 ELSE 0 END)`,
+        })
+        .from(taken)
+        .where(eq(taken.projectId, project.id))
+        .get();
+      const stats = { totaal: statsResult?.totaal ?? 0, af: statsResult?.af ?? 0 };
 
       const voortgang = stats.totaal > 0 ? Math.round((stats.af / stats.totaal) * 100) : 0;
       await db.update(projecten).set({ voortgangPercentage: voortgang }).where(eq(projecten.id, project.id));
