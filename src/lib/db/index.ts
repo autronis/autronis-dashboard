@@ -1,7 +1,7 @@
 import * as schema from "./schema";
 import { drizzle as drizzleSqlite } from "drizzle-orm/better-sqlite3";
 
-// Type for the drizzle instance (same API for both drivers)
+// Use the better-sqlite3 type as base — libsql is API-compatible at runtime
 type DrizzleDB = ReturnType<typeof drizzleSqlite<typeof schema>>;
 
 const isTurso = !!process.env.TURSO_DATABASE_URL;
