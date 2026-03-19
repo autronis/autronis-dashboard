@@ -1,14 +1,16 @@
 import * as schema from "./schema";
+import { drizzle as drizzleSqlite } from "drizzle-orm/better-sqlite3";
+
+// Type for the drizzle instance (same API for both drivers)
+type DrizzleDB = ReturnType<typeof drizzleSqlite<typeof schema>>;
 
 const isTurso = !!process.env.TURSO_DATABASE_URL;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let db: any;
+let db: DrizzleDB;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let sqlite: any = null;
 
 if (isTurso) {
-  // Production: Turso (libsql)
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { createClient } = require("@libsql/client");
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -19,13 +21,10 @@ if (isTurso) {
     authToken: process.env.TURSO_AUTH_TOKEN,
   });
 
-  db = drizzle(client, { schema });
+  db = drizzle(client, { schema }) as DrizzleDB;
 } else {
-  // Development: local SQLite
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Database = require("better-sqlite3");
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { drizzle } = require("drizzle-orm/better-sqlite3");
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const path = require("path");
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -40,7 +39,7 @@ if (isTurso) {
   sqliteDb.pragma("journal_mode = WAL");
   sqliteDb.pragma("foreign_keys = ON");
   sqlite = sqliteDb;
-  db = drizzle(sqliteDb, { schema });
+  db = drizzleSqlite(sqliteDb, { schema });
 }
 
 export { db, sqlite };

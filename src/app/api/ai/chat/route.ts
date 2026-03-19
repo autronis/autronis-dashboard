@@ -85,7 +85,7 @@ async function gatherBusinessContext(gebruikerId: number): Promise<string> {
     )
     .all();
 
-  const openFacturenWaarde = openFacturen.reduce((sum, f) => sum + (f.bedrag ?? 0), 0);
+  const openFacturenWaarde = openFacturen.reduce((sum: number, f: { bedrag: number | null }) => sum + (f.bedrag ?? 0), 0);
 
   // Leads pipeline
   const leadsData = db
@@ -100,7 +100,7 @@ async function gatherBusinessContext(gebruikerId: number): Promise<string> {
     .all();
 
   const leadsSamenvatting = leadsData
-    .map((l) => `${l.status}: ${l.count} (€${Math.round(l.waarde)})`)
+    .map((l: { status: string | null; count: number; waarde: number }) => `${l.status}: ${l.count} (€${Math.round(l.waarde)})`)
     .join(", ");
 
   // Recent time entries
@@ -118,7 +118,7 @@ async function gatherBusinessContext(gebruikerId: number): Promise<string> {
     .all();
 
   const recenteTijdenTekst = recenteTijden
-    .map((t) => {
+    .map((t: { omschrijving: string | null; duur: number | null; datum: string | null; projectNaam: string | null }) => {
       const duur = t.duur ? `${Math.round(t.duur / 60 * 10) / 10}u` : "lopend";
       return `- ${t.projectNaam ?? "Geen project"}: ${t.omschrijving ?? "Geen omschrijving"} (${duur})`;
     })
@@ -135,7 +135,7 @@ async function gatherBusinessContext(gebruikerId: number): Promise<string> {
     .all();
 
   const klantenTekst = klantenData
-    .map((k) => `- ${k.bedrijfsnaam} (${k.actieveProjecten} actieve projecten)`)
+    .map((k: { bedrijfsnaam: string; actieveProjecten: number }) => `- ${k.bedrijfsnaam} (${k.actieveProjecten} actieve projecten)`)
     .join("\n");
 
   // Open taken
@@ -146,11 +146,11 @@ async function gatherBusinessContext(gebruikerId: number): Promise<string> {
     .get();
 
   const projectenTekst = actieveProjecten
-    .map((p) => `- ${p.naam} (${p.klantNaam ?? "Intern"}, ${p.voortgang ?? 0}% klaar)`)
+    .map((p: { naam: string; klantNaam: string | null; voortgang: number | null }) => `- ${p.naam} (${p.klantNaam ?? "Intern"}, ${p.voortgang ?? 0}% klaar)`)
     .join("\n");
 
   const openFacturenTekst = openFacturen
-    .map((f) => `- ${f.factuurnummer} — ${f.klantNaam ?? "Onbekend"}: €${Math.round(f.bedrag ?? 0)} (${f.status})`)
+    .map((f: { factuurnummer: string; klantNaam: string | null; bedrag: number | null; status: string | null }) => `- ${f.factuurnummer} — ${f.klantNaam ?? "Onbekend"}: €${Math.round(f.bedrag ?? 0)} (${f.status})`)
     .join("\n");
 
   // Screen time vandaag
@@ -216,10 +216,10 @@ ${leadsSamenvatting || "Geen actieve leads"}
 ${klantenTekst || "Geen actieve klanten"}
 
 🖥️ SCREEN TIME VANDAAG
-${screenTimeSamenvatting.map(s => `- ${s.categorie}: ${Math.round(s.totaal / 60)} minuten`).join("\n") || "Geen data"}
+${screenTimeSamenvatting.map((s: { categorie: string | null; totaal: number }) => `- ${s.categorie ?? "overig"}: ${Math.round(s.totaal / 60)} minuten`).join("\n") || "Geen data"}
 
 Top apps vandaag:
-${topAppsVandaag.map(a => `- ${a.app}: ${Math.round(a.totaal / 60)} minuten`).join("\n") || "Geen data"}
+${topAppsVandaag.map((a: { app: string; totaal: number }) => `- ${a.app}: ${Math.round(a.totaal / 60)} minuten`).join("\n") || "Geen data"}
 
 Regels:
 - Antwoord altijd in het Nederlands
