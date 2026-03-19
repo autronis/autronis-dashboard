@@ -35,7 +35,7 @@ export async function GET(
       return NextResponse.json({ fout: "Contract niet gevonden." }, { status: 404 });
     }
 
-    const [bedrijf] = db.select().from(bedrijfsinstellingen).limit(1).all();
+    const [bedrijf] = await db.select().from(bedrijfsinstellingen).limit(1).all();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdfBuffer = await renderToBuffer(

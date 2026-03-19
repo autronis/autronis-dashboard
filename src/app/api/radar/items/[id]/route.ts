@@ -36,7 +36,7 @@ export async function PUT(
     if (categorie !== undefined) updates.categorie = categorie;
     if (nietRelevant !== undefined) updates.nietRelevant = nietRelevant;
 
-    db.update(radarItems)
+    await db.update(radarItems)
       .set(updates)
       .where(eq(radarItems.id, itemId))
       .run();
@@ -80,7 +80,7 @@ export async function DELETE(
       );
     }
 
-    db.delete(radarItems)
+    await db.delete(radarItems)
       .where(eq(radarItems.id, itemId))
       .run();
 

@@ -28,7 +28,7 @@ export async function GET(
       updates.status = "geklikt";
     }
     if (Object.keys(updates).length > 0) {
-      db.update(outreachEmails)
+      await db.update(outreachEmails)
         .set(updates)
         .where(eq(outreachEmails.id, email.id))
         .run();

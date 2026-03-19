@@ -61,7 +61,7 @@ export async function POST() {
 
       const categorie = res.categorie as Categorie;
 
-      db.insert(screenTimeRegels).values({
+      await db.insert(screenTimeRegels).values({
         type: "app",
         patroon: `^${res.app.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
         categorie,
@@ -70,7 +70,7 @@ export async function POST() {
 
       nieuweRegels.push({ app: res.app, categorie });
 
-      db.update(screenTimeEntries)
+      await db.update(screenTimeEntries)
         .set({ categorie })
         .where(
           and(

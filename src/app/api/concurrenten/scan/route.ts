@@ -90,7 +90,7 @@ async function runScanAll(
         stateItem.stap = stap;
       });
 
-      db.update(concurrentScans)
+      await db.update(concurrentScans)
         .set({
           status: "voltooid",
           websiteChanges: result.websiteChanges ? JSON.stringify(result.websiteChanges) : null,
@@ -107,7 +107,7 @@ async function runScanAll(
       stateItem.status = "voltooid";
       stateItem.stap = undefined;
     } catch (error) {
-      db.update(concurrentScans)
+      await db.update(concurrentScans)
         .set({ status: "mislukt" })
         .where(eq(concurrentScans.id, scanRecord.id))
         .run();

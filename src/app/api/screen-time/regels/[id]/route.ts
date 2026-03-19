@@ -32,7 +32,7 @@ export async function PUT(
     if (body.klantId !== undefined) updateData.klantId = body.klantId;
     if (body.prioriteit !== undefined) updateData.prioriteit = body.prioriteit;
 
-    db.update(screenTimeRegels)
+    await db.update(screenTimeRegels)
       .set(updateData)
       .where(eq(screenTimeRegels.id, Number(id)))
       .run();
@@ -55,7 +55,7 @@ export async function DELETE(
     await requireAuth();
     const { id } = await params;
 
-    db.update(screenTimeRegels)
+    await db.update(screenTimeRegels)
       .set({ isActief: 0 })
       .where(eq(screenTimeRegels.id, Number(id)))
       .run();

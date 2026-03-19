@@ -101,7 +101,7 @@ export async function POST() {
         ];
 
         for (const deadline of deadlinesToCreate) {
-          db.insert(belastingDeadlines).values(deadline).run();
+          await db.insert(belastingDeadlines).values(deadline).run();
           resultaat.deadlines++;
         }
       }
@@ -115,7 +115,7 @@ export async function POST() {
 
       if (bestaandeAangiftes.length === 0) {
         for (let kwartaal = 1; kwartaal <= 4; kwartaal++) {
-          db.insert(btwAangiftes).values({
+          await db.insert(btwAangiftes).values({
             kwartaal,
             jaar,
             btwOntvangen: 0,

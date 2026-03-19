@@ -104,7 +104,7 @@ export async function POST() {
           .where(eq(factuurRegels.factuurId, f.id))
           .all();
         for (const r of regels) {
-          db.insert(factuurRegels)
+          await db.insert(factuurRegels)
             .values({
               factuurId: nieuw.id,
               omschrijving: r.omschrijving,
@@ -172,7 +172,7 @@ export async function POST() {
         }
 
         // Check if this project is in the ideeen table
-        const idee = db.select().from(ideeen)
+        const idee = await db.select().from(ideeen)
           .where(sql`LOWER(REPLACE(${ideeen.naam}, ' ', '-')) = ${entry.toLowerCase()}`)
           .get();
 
@@ -204,12 +204,12 @@ export async function POST() {
       }
 
       // Get idee stats
-      const ideeStats = db.select({
+      const ideeStats = await db.select({
         status: ideeen.status,
         count: sql<number>`COUNT(*)`,
       }).from(ideeen).groupBy(ideeen.status).all();
 
-      const totalIdeeen = db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).get();
+      const totalIdeeen = await db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).get();
 
       // Generate markdown
       let md = `# Autronis Projecten Overzicht\n\n`;

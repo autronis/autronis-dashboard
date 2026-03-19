@@ -70,7 +70,7 @@ export async function requireApiKey(req: NextRequest): Promise<number> {
     throw new Error("Ongeldige API key");
   }
 
-  db.update(apiKeys)
+  await db.update(apiKeys)
     .set({ laatstGebruiktOp: new Date().toISOString() })
     .where(eq(apiKeys.keyHash, hash))
     .run();

@@ -20,7 +20,7 @@ export async function GET(
     .get();
 
   if (email && !email.geopendOp) {
-    db.update(outreachEmails)
+    await db.update(outreachEmails)
       .set({
         geopendOp: new Date().toISOString(),
         status: "geopend",

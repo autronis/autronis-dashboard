@@ -40,12 +40,12 @@ export async function POST(request: NextRequest) {
     let projectNaam: string | undefined;
 
     if ("klantId" in payload && payload.klantId) {
-      const klant = db.select({ bedrijfsnaam: klanten.bedrijfsnaam }).from(klanten).where(eq(klanten.id, payload.klantId)).get();
+      const klant = await db.select({ bedrijfsnaam: klanten.bedrijfsnaam }).from(klanten).where(eq(klanten.id, payload.klantId)).get();
       klantNaam = klant?.bedrijfsnaam;
     }
 
     if ("projectId" in payload && payload.projectId) {
-      const project = db.select({ naam: projecten.naam }).from(projecten).where(eq(projecten.id, payload.projectId)).get();
+      const project = await db.select({ naam: projecten.naam }).from(projecten).where(eq(projecten.id, payload.projectId)).get();
       projectNaam = project?.naam;
     }
 

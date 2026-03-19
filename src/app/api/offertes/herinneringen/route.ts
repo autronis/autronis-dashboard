@@ -16,7 +16,7 @@ export async function POST() {
 
     const resend = new Resend(apiKey);
 
-    const bedrijf = db.select().from(bedrijfsinstellingen).get();
+    const bedrijf = await db.select().from(bedrijfsinstellingen).get();
     const fromEmail = bedrijf?.email || "zakelijk@autronis.com";
     const bedrijfsnaam = bedrijf?.bedrijfsnaam || "Autronis";
 
@@ -83,7 +83,7 @@ ${bedrijfsnaam}
 ${fromEmail}`,
         });
 
-        db.update(offertes)
+        await db.update(offertes)
           .set({
             herinneringVerstuurdOp: new Date().toISOString(),
             bijgewerktOp: sql`(datetime('now'))`,

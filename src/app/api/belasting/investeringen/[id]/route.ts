@@ -54,7 +54,7 @@ export async function PUT(
       .returning()
       .all();
 
-    db.insert(belastingAuditLog).values({
+    await db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
       actie: "investering_bijgewerkt",
       entiteitType: "investering",
@@ -95,9 +95,9 @@ export async function DELETE(
       );
     }
 
-    db.delete(investeringen).where(eq(investeringen.id, investId)).run();
+    await db.delete(investeringen).where(eq(investeringen.id, investId)).run();
 
-    db.insert(belastingAuditLog).values({
+    await db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
       actie: "investering_verwijderd",
       entiteitType: "investering",

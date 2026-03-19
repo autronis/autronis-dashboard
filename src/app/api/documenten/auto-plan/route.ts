@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
 
       let klantNaam: string | undefined;
       if (project.klantId) {
-        const klant = db.select({ bedrijfsnaam: klanten.bedrijfsnaam }).from(klanten).where(eq(klanten.id, project.klantId)).get();
+        const klant = await db.select({ bedrijfsnaam: klanten.bedrijfsnaam }).from(klanten).where(eq(klanten.id, project.klantId)).get();
         klantNaam = klant?.bedrijfsnaam;
       }
 
@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
 
       let klantNaam: string | undefined;
       if (match.klantId) {
-        const klant = db.select({ bedrijfsnaam: klanten.bedrijfsnaam }).from(klanten).where(eq(klanten.id, match.klantId)).get();
+        const klant = await db.select({ bedrijfsnaam: klanten.bedrijfsnaam }).from(klanten).where(eq(klanten.id, match.klantId)).get();
         klantNaam = klant?.bedrijfsnaam;
       }
 
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
       for (const p of allProjects) {
         let klantNaam: string | undefined;
         if (p.klantId) {
-          const klant = db.select({ bedrijfsnaam: klanten.bedrijfsnaam }).from(klanten).where(eq(klanten.id, p.klantId)).get();
+          const klant = await db.select({ bedrijfsnaam: klanten.bedrijfsnaam }).from(klanten).where(eq(klanten.id, p.klantId)).get();
           klantNaam = klant?.bedrijfsnaam;
         }
         projectList.push({ id: p.id, naam: p.naam, klantNaam });

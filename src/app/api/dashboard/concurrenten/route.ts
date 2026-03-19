@@ -31,7 +31,7 @@ export async function GET() {
         wijzigingenDezeWeek += changes.filter((c) => c.veranderd).length;
       }
 
-      const concurrent = db.select({ naam: concurrenten.naam })
+      const concurrent = await db.select({ naam: concurrenten.naam })
         .from(concurrenten)
         .where(eq(concurrenten.id, scan.concurrentId!))
         .get();

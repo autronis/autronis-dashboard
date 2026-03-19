@@ -121,7 +121,7 @@ export async function POST() {
       if (bestaand) {
         // Update score/samenvatting als die er nog niet was
         if (!bestaand.score && item.score) {
-          db.update(radarItems)
+          await db.update(radarItems)
             .set({
               score: item.score,
               scoreRedenering: item.score_reasoning,
@@ -136,7 +136,7 @@ export async function POST() {
       }
 
       // Nieuw item invoegen
-      db.insert(radarItems)
+      await db.insert(radarItems)
         .values({
           bronId,
           titel: item.title,

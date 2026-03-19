@@ -19,7 +19,7 @@ export async function POST(
     await requireAuth();
     const { id } = await params;
 
-    const idee = db.select().from(ideeen).where(eq(ideeen.id, Number(id))).get();
+    const idee = await db.select().from(ideeen).where(eq(ideeen.id, Number(id))).get();
     if (!idee) {
       return NextResponse.json({ fout: "Idee niet gevonden" }, { status: 404 });
     }
@@ -38,7 +38,7 @@ export async function POST(
       klantNaam: "Autronis (intern)",
     });
 
-    db.update(ideeen)
+    await db.update(ideeen)
       .set({ notionPageId: result.notionId, bijgewerktOp: new Date().toISOString() })
       .where(eq(ideeen.id, Number(id)))
       .run();

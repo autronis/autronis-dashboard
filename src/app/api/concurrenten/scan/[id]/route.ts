@@ -45,7 +45,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
     try {
       const result = await scanConcurrent(concurrentId);
 
-      db.update(concurrentScans)
+      await db.update(concurrentScans)
         .set({
           status: "voltooid",
           websiteChanges: result.websiteChanges ? JSON.stringify(result.websiteChanges) : null,
@@ -61,7 +61,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
 
       return NextResponse.json({ scan: { ...scanRecord, ...result, status: "voltooid" } });
     } catch (error) {
-      db.update(concurrentScans)
+      await db.update(concurrentScans)
         .set({ status: "mislukt" })
         .where(eq(concurrentScans.id, scanRecord.id))
         .run();

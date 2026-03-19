@@ -60,7 +60,7 @@ export async function DELETE(request: NextRequest) {
       return Response.json({ fout: "Gesprek niet gevonden" }, { status: 404 });
     }
 
-    db.delete(aiGesprekken).where(eq(aiGesprekken.id, id)).run();
+    await db.delete(aiGesprekken).where(eq(aiGesprekken.id, id)).run();
 
     return Response.json({ succes: true });
   } catch {

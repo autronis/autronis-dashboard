@@ -91,7 +91,7 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    db.update(screenTimeSuggesties)
+    await db.update(screenTimeSuggesties)
       .set({
         status: status as UpdateStatus,
         verwerktOp: new Date().toISOString(),
@@ -128,7 +128,7 @@ export async function PUT(req: NextRequest) {
         .get();
 
       if (overlapping) {
-        db.update(screenTimeSuggesties)
+        await db.update(screenTimeSuggesties)
           .set({ status: "openstaand", verwerktOp: null })
           .where(eq(screenTimeSuggesties.id, id))
           .run();
@@ -143,7 +143,7 @@ export async function PUT(req: NextRequest) {
       const eindMs = new Date(suggestie.eindTijd).getTime();
       const duurMinuten = Math.round((eindMs - startMs) / 60000);
 
-      db.insert(tijdregistraties)
+      await db.insert(tijdregistraties)
         .values({
           gebruikerId: gebruiker.id,
           projectId: voorstelData.projectId ?? null,

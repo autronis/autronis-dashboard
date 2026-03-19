@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get default user
-    const defaultUser = db.select().from(gebruikers).limit(1).get();
+    const defaultUser = await db.select().from(gebruikers).limit(1).get();
     const userId = defaultUser?.id ?? 1;
 
     let matched = 0;
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
         );
 
         if (match) {
-          db.update(taken)
+          await db.update(taken)
             .set({
               status: "afgerond",
               bijgewerktOp: sql`(datetime('now'))`,
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
           .get();
 
         if (!bestaat) {
-          db.insert(taken).values({
+          await db.insert(taken).values({
             projectId: project.id,
             toegewezenAan: userId,
             aangemaaktDoor: userId,
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
       ? Math.round(((takenStats.afgerond ?? 0) / takenStats.totaal) * 100)
       : 0;
 
-    db.update(projecten)
+    await db.update(projecten)
       .set({
         voortgangPercentage: voortgang,
         bijgewerktOp: sql`(datetime('now'))`,

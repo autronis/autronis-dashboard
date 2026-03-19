@@ -37,7 +37,7 @@ export async function POST() {
       return NextResponse.json({ verzonden: 0, bericht: "Geen te late facturen gevonden." });
     }
 
-    const [bedrijf] = db.select().from(bedrijfsinstellingen).limit(1).all();
+    const [bedrijf] = await db.select().from(bedrijfsinstellingen).limit(1).all();
     const bedrijfNaam = bedrijf?.bedrijfsnaam || "Autronis";
     const iban = bedrijf?.iban;
 
@@ -94,7 +94,7 @@ export async function POST() {
       }
 
       // Update status to te_laat
-      db.update(facturen)
+      await db.update(facturen)
         .set({ status: "te_laat", bijgewerktOp: new Date().toISOString() })
         .where(eq(facturen.id, f.id))
         .run();

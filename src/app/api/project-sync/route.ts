@@ -117,7 +117,7 @@ export async function POST() {
     }
 
     // 5. Create project in dashboard
-    db.insert(projecten)
+    await db.insert(projecten)
       .values({
         klantId: autronisId,
         naam: parsed.naam,

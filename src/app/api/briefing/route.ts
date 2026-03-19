@@ -409,7 +409,7 @@ Schrijf een persoonlijke samenvatting van 2-3 zinnen. Begin met "${begroeting} $
     let briefingId: number;
 
     if (bestaande) {
-      db.update(briefings)
+      await db.update(briefings)
         .set({
           samenvatting,
           agendaItems: agendaJson,

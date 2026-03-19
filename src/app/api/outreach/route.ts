@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
     });
 
     // KPIs
-    const alleEmails = db.select().from(outreachEmails).all();
+    const alleEmails = await db.select().from(outreachEmails).all();
     const verstuurd = alleEmails.filter((e) => e.verstuurdOp).length;
     const geopend = alleEmails.filter((e) => e.geopendOp).length;
     const geklikt = alleEmails.filter((e) => e.gekliktOp).length;

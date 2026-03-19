@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
     }
 
     for (let kwartaal = 1; kwartaal <= 4; kwartaal++) {
-      db.insert(btwAangiftes).values({
+      await db.insert(btwAangiftes).values({
         kwartaal,
         jaar,
         btwOntvangen: 0,

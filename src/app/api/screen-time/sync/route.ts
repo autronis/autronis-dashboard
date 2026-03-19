@@ -290,7 +290,7 @@ export async function POST(req: NextRequest) {
         // Cap duration at MAX_ENTRY_DURATION_SECONDS
         const cappedDuur = Math.min(chunk.duurSeconden, MAX_ENTRY_DURATION_SECONDS);
 
-        db.insert(screenTimeEntries).values({
+        await db.insert(screenTimeEntries).values({
           clientId: chunk.clientId,
           gebruikerId,
           app: chunk.app,

@@ -91,11 +91,11 @@ export async function POST(req: NextRequest) {
 
     if (existing) {
       // Toggle: if exists and completed, remove it
-      db.delete(gewoonteLogboek).where(eq(gewoonteLogboek.id, existing.id)).run();
+      await db.delete(gewoonteLogboek).where(eq(gewoonteLogboek.id, existing.id)).run();
       return NextResponse.json({ voltooid: false });
     } else {
       // Create new log
-      db.insert(gewoonteLogboek)
+      await db.insert(gewoonteLogboek)
         .values({
           gewoonteId: Number(gewoonteId),
           gebruikerId: gebruiker.id,

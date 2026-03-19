@@ -43,7 +43,7 @@ async function berekenGeschatteBelasting(jaar: number): Promise<number> {
   const totaleKosten = kostenResult?.totaal ?? 0;
 
   // Afschrijvingen
-  const alleInvesteringen = db.select().from(investeringen).all();
+  const alleInvesteringen = await db.select().from(investeringen).all();
   let totaleAfschrijvingen = 0;
   for (const inv of alleInvesteringen) {
     const aanschafJaar = new Date(inv.datum).getFullYear();
@@ -70,7 +70,7 @@ async function berekenGeschatteBelasting(jaar: number): Promise<number> {
   const brutowinst = brutoOmzet - totaleKosten - totaleAfschrijvingen - kmAftrek;
 
   // Uren criterium
-  const urenRecord = db.select().from(urenCriterium).where(eq(urenCriterium.jaar, jaar)).limit(1).get();
+  const urenRecord = await db.select().from(urenCriterium).where(eq(urenCriterium.jaar, jaar)).limit(1).get();
   let totaalUren = urenRecord?.behaaldUren ?? 0;
   if (!urenRecord) {
     const urenResult = db
@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
       .returning()
       .all();
 
-    db.insert(belastingAuditLog).values({
+    await db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
       actie: "reservering_aangemaakt",
       entiteitType: "reservering",

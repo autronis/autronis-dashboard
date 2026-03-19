@@ -86,7 +86,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ fout: "ID is verplicht" }, { status: 400 });
     }
 
-    db.delete(opgeslagenRoutes)
+    await db.delete(opgeslagenRoutes)
       .where(and(eq(opgeslagenRoutes.id, Number(id)), eq(opgeslagenRoutes.gebruikerId, gebruiker.id)))
       .run();
 
@@ -110,7 +110,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ fout: "ID is verplicht" }, { status: 400 });
     }
 
-    db.update(opgeslagenRoutes)
+    await db.update(opgeslagenRoutes)
       .set({ aantalKeerGebruikt: sql`${opgeslagenRoutes.aantalKeerGebruikt} + 1` })
       .where(and(eq(opgeslagenRoutes.id, Number(id)), eq(opgeslagenRoutes.gebruikerId, gebruiker.id)))
       .run();

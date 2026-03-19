@@ -186,7 +186,7 @@ Koppel schermtijd aan agenda items als die overlappen (bijv. "Tijdens de meeting
       .get();
 
     if (bestaand) {
-      db.update(screenTimeSamenvattingen)
+      await db.update(screenTimeSamenvattingen)
         .set({
           samenvattingKort: parsed.kort,
           samenvattingDetail: parsed.detail,
@@ -197,7 +197,7 @@ Koppel schermtijd aan agenda items als die overlappen (bijv. "Tijdens de meeting
         .where(eq(screenTimeSamenvattingen.id, bestaand.id))
         .run();
     } else {
-      db.insert(screenTimeSamenvattingen).values({
+      await db.insert(screenTimeSamenvattingen).values({
         gebruikerId: gebruiker.id,
         datum,
         samenvattingKort: parsed.kort,

@@ -123,7 +123,7 @@ async function scanWebsite(
 
     const veranderd = !vorige || vorige.contentHash !== hash;
 
-    db.insert(concurrentSnapshots).values({
+    await db.insert(concurrentSnapshots).values({
       concurrentId: concurrent.id,
       url,
       contentHash: hash,
@@ -144,7 +144,7 @@ async function scanWebsite(
     if (alleSnapshots.length > 2) {
       const teVerwijderen = alleSnapshots.slice(2).map((s) => s.id);
       for (const snapId of teVerwijderen) {
-        db.delete(concurrentSnapshots)
+        await db.delete(concurrentSnapshots)
           .where(eq(concurrentSnapshots.id, snapId))
           .run();
       }

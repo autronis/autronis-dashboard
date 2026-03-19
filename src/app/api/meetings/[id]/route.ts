@@ -128,7 +128,7 @@ export async function PUT(
     if (body.titel !== undefined) updates.titel = body.titel;
 
     if (Object.keys(updates).length > 0) {
-      db.update(meetings)
+      await db.update(meetings)
         .set(updates)
         .where(eq(meetings.id, meetingId))
         .run();
@@ -217,7 +217,7 @@ export async function PATCH(
     const buffer = Buffer.from(await audio.arrayBuffer());
     await writeFile(audioPad, buffer);
 
-    db.update(meetings)
+    await db.update(meetings)
       .set({ audioPad })
       .where(eq(meetings.id, meetingId))
       .run();
@@ -262,7 +262,7 @@ export async function DELETE(
       }
     }
 
-    db.delete(meetings).where(eq(meetings.id, Number(id))).run();
+    await db.delete(meetings).where(eq(meetings.id, Number(id))).run();
 
     return NextResponse.json({ succes: true });
   } catch (e: unknown) {

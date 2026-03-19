@@ -336,7 +336,7 @@ export async function POST(request: NextRequest) {
           };
           bestaandeBerichten.push(assistentBericht);
 
-          db.update(aiGesprekken)
+          await db.update(aiGesprekken)
             .set({
               berichten: JSON.stringify(bestaandeBerichten),
               bijgewerktOp: new Date().toISOString(),

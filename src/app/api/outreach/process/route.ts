@@ -19,10 +19,10 @@ export async function POST(req: NextRequest) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${req.headers.get("host")}`;
 
     // Reset dagelijkse tellers als het een nieuwe dag is
-    const domeinen = db.select().from(outreachDomeinen).where(eq(outreachDomeinen.isActief, 1)).all();
+    const domeinen = await db.select().from(outreachDomeinen).where(eq(outreachDomeinen.isActief, 1)).all();
     for (const domein of domeinen) {
       if (domein.laatsteResetDatum !== vandaag) {
-        db.update(outreachDomeinen)
+        await db.update(outreachDomeinen)
           .set({ vandaagVerstuurd: 0, laatsteResetDatum: vandaag })
           .where(eq(outreachDomeinen.id, domein.id))
           .run();
@@ -56,23 +56,23 @@ export async function POST(req: NextRequest) {
     for (const email of teVersturenEmails) {
       try {
         // Haal sequentie + lead + domein op
-        const sequentie = db.select().from(outreachSequenties).where(eq(outreachSequenties.id, email.sequentieId)).get();
+        const sequentie = await db.select().from(outreachSequenties).where(eq(outreachSequenties.id, email.sequentieId)).get();
         if (!sequentie?.leadId || !sequentie?.domeinId) continue;
 
-        const lead = db.select().from(leads).where(eq(leads.id, sequentie.leadId)).get();
+        const lead = await db.select().from(leads).where(eq(leads.id, sequentie.leadId)).get();
         if (!lead?.email) continue;
 
         // Check opt-out
-        const optOut = db.select().from(outreachOptOuts).where(eq(outreachOptOuts.email, lead.email)).get();
+        const optOut = await db.select().from(outreachOptOuts).where(eq(outreachOptOuts.email, lead.email)).get();
         if (optOut) {
-          db.update(outreachEmails)
+          await db.update(outreachEmails)
             .set({ status: "geannuleerd" })
             .where(eq(outreachEmails.id, email.emailId))
             .run();
           continue;
         }
 
-        const domein = db.select().from(outreachDomeinen).where(eq(outreachDomeinen.id, sequentie.domeinId)).get();
+        const domein = await db.select().from(outreachDomeinen).where(eq(outreachDomeinen.id, sequentie.domeinId)).get();
         if (!domein || !domein.isActief) continue;
 
         // Check dag limiet
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
         });
 
         // Update email record
-        db.update(outreachEmails)
+        await db.update(outreachEmails)
           .set({
             verstuurdOp: new Date().toISOString(),
             status: "verstuurd",
@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
           .run();
 
         // Update domein teller
-        db.update(outreachDomeinen)
+        await db.update(outreachDomeinen)
           .set({
             vandaagVerstuurd: huidigVerstuurd + 1,
             laatsteResetDatum: vandaag,
@@ -126,10 +126,10 @@ export async function POST(req: NextRequest) {
       .all();
 
     for (const seq of actieveSequenties) {
-      const emails = db.select().from(outreachEmails).where(eq(outreachEmails.sequentieId, seq.id)).all();
+      const emails = await db.select().from(outreachEmails).where(eq(outreachEmails.sequentieId, seq.id)).all();
       const alleVerwerkt = emails.every((e) => e.status !== "gepland");
       if (alleVerwerkt) {
-        db.update(outreachSequenties)
+        await db.update(outreachSequenties)
           .set({ status: "voltooid", bijgewerktOp: new Date().toISOString() })
           .where(eq(outreachSequenties.id, seq.id))
           .run();

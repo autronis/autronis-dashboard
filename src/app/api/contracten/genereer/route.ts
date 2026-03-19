@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch bedrijf info
-    const [bedrijf] = db.select().from(bedrijfsinstellingen).limit(1).all();
+    const [bedrijf] = await db.select().from(bedrijfsinstellingen).limit(1).all();
     const bedrijfsnaam = bedrijf?.bedrijfsnaam || "Autronis";
 
     const prompt = generateContractPrompt(

@@ -52,7 +52,7 @@ export async function PUT(
     if (type !== undefined) updates.type = type;
     if (actief !== undefined) updates.actief = actief;
 
-    db.update(radarBronnen)
+    await db.update(radarBronnen)
       .set(updates)
       .where(eq(radarBronnen.id, bronId))
       .run();
@@ -96,7 +96,7 @@ export async function DELETE(
       );
     }
 
-    db.delete(radarBronnen)
+    await db.delete(radarBronnen)
       .where(eq(radarBronnen.id, bronId))
       .run();
 

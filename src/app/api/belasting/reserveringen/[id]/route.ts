@@ -48,7 +48,7 @@ export async function PUT(
       .returning()
       .all();
 
-    db.insert(belastingAuditLog).values({
+    await db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
       actie: "reservering_bijgewerkt",
       entiteitType: "reservering",
@@ -89,9 +89,9 @@ export async function DELETE(
       );
     }
 
-    db.delete(belastingReserveringen).where(eq(belastingReserveringen.id, resId)).run();
+    await db.delete(belastingReserveringen).where(eq(belastingReserveringen.id, resId)).run();
 
-    db.insert(belastingAuditLog).values({
+    await db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
       actie: "reservering_verwijderd",
       entiteitType: "reservering",

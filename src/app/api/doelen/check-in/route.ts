@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     if (existing) {
       // Update existing check-in
-      db.update(okrCheckIns)
+      await db.update(okrCheckIns)
         .set({
           voortgang: body.voortgang,
           blocker: body.blocker?.trim() || null,

@@ -126,7 +126,7 @@ function parseTodos(todoContent: string, projectId: number, userId: number): num
   for (const line of lines) {
     const taskMatch = line.match(/^\s*\[[ x]?\]\s*(.+)/);
     if (taskMatch) {
-      db.insert(taken)
+      await db.insert(taken)
         .values({
           titel: taskMatch[1].trim(),
           projectId,
@@ -178,7 +178,7 @@ export async function POST() {
         .get();
 
       if (bestaand) {
-        db.update(ideeen)
+        await db.update(ideeen)
           .set({
             status: item.status,
             omschrijving: item.omschrijving || bestaand.omschrijving,
@@ -190,7 +190,7 @@ export async function POST() {
           .run();
         bijgewerkt++;
       } else {
-        db.insert(ideeen)
+        await db.insert(ideeen)
           .values({
             nummer: item.nummer,
             naam: item.naam,
@@ -280,7 +280,7 @@ export async function POST() {
           klantNaam: "Autronis (intern)",
         });
 
-        db.update(ideeen)
+        await db.update(ideeen)
           .set({ notionPageId: notionResult.notionId })
           .where(eq(ideeen.id, idee.id))
           .run();
@@ -291,7 +291,7 @@ export async function POST() {
       }
 
       // Update idee with projectId
-      db.update(ideeen)
+      await db.update(ideeen)
         .set({
           projectId: project.id,
           bijgewerktOp: new Date().toISOString(),

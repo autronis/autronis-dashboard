@@ -20,12 +20,12 @@ export async function GET(
 
   // Zoek een email met dit token (via lead email)
   // We moeten de email zoeken via de sequenties → leads keten
-  const alleSequenties = db.select().from(outreachSequenties).all();
+  const alleSequenties = await db.select().from(outreachSequenties).all();
   let gevondenEmail: string | null = null;
 
   for (const seq of alleSequenties) {
     if (!seq.leadId) continue;
-    const lead = db.select().from(leads).where(eq(leads.id, seq.leadId)).get();
+    const lead = await db.select().from(leads).where(eq(leads.id, seq.leadId)).get();
     if (lead?.email && verifyUnsubscribeToken(lead.email, token)) {
       gevondenEmail = lead.email;
       break;
@@ -43,13 +43,13 @@ export async function GET(
   }
 
   // Voeg toe aan opt-out lijst
-  const bestaand = db.select().from(outreachOptOuts).where(eq(outreachOptOuts.email, gevondenEmail)).get();
+  const bestaand = await db.select().from(outreachOptOuts).where(eq(outreachOptOuts.email, gevondenEmail)).get();
   if (!bestaand) {
-    db.insert(outreachOptOuts).values({ email: gevondenEmail }).run();
+    await db.insert(outreachOptOuts).values({ email: gevondenEmail }).run();
   }
 
   // Stop alle actieve sequenties voor dit email
-  const leadRecords = db.select().from(leads).where(eq(leads.email, gevondenEmail)).all();
+  const leadRecords = await db.select().from(leads).where(eq(leads.email, gevondenEmail)).all();
   for (const lead of leadRecords) {
     const actieveSeqs = db
       .select()
@@ -63,13 +63,13 @@ export async function GET(
       .all();
 
     for (const seq of actieveSeqs) {
-      db.update(outreachSequenties)
+      await db.update(outreachSequenties)
         .set({ status: "gestopt", bijgewerktOp: new Date().toISOString() })
         .where(eq(outreachSequenties.id, seq.id))
         .run();
 
       // Annuleer geplande emails
-      db.update(outreachEmails)
+      await db.update(outreachEmails)
         .set({ status: "geannuleerd" })
         .where(
           and(

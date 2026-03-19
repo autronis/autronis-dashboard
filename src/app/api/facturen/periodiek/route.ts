@@ -91,7 +91,7 @@ export async function POST() {
         .all();
 
       for (const regel of bronRegels) {
-        db.insert(factuurRegels)
+        await db.insert(factuurRegels)
           .values({
             factuurId: nieuw.id,
             omschrijving: regel.omschrijving,

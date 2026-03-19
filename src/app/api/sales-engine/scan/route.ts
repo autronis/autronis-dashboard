@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
       .get();
 
     if (existingLead) {
-      db.update(leads)
+      await db.update(leads)
         .set({
           bedrijfsnaam: body.bedrijfsnaam,
           contactpersoon: body.naam,
@@ -156,7 +156,7 @@ export async function POST(req: NextRequest) {
     try {
       // Scrape website
       const scrapeResult = await scrapeWebsite(body.websiteUrl);
-      db.update(salesEngineScans)
+      await db.update(salesEngineScans)
         .set({
           scrapeResultaat: JSON.stringify(scrapeResult),
           bijgewerktOp: new Date().toISOString(),
@@ -175,7 +175,7 @@ export async function POST(req: NextRequest) {
 
       // Save kansen
       for (const kans of analysis.kansen) {
-        db.insert(salesEngineKansen)
+        await db.insert(salesEngineKansen)
           .values({
             scanId: scan.id,
             titel: kans.titel,
@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Update scan to completed
-      db.update(salesEngineScans)
+      await db.update(salesEngineScans)
         .set({
           aiAnalyse: JSON.stringify(analysis),
           samenvatting: analysis.samenvatting,
@@ -207,7 +207,7 @@ export async function POST(req: NextRequest) {
       // Pipeline integratie: update lead met scan resultaten
       const hoogImpactKansen = analysis.kansen.filter((k) => k.impact === "hoog").length;
       const geschatteWaarde = hoogImpactKansen * 2000;
-      db.update(leads)
+      await db.update(leads)
         .set({
           waarde: geschatteWaarde,
           status: "contact",
@@ -220,11 +220,11 @@ export async function POST(req: NextRequest) {
 
       // Auto-outreach: genereer email sequentie als gevraagd
       let sequentieId: number | null = null;
-      const lead = db.select().from(leads).where(eq(leads.id, existingLead.id)).get();
+      const lead = await db.select().from(leads).where(eq(leads.id, existingLead.id)).get();
       if (rawBody.autoOutreach && lead?.email) {
         try {
           // Check opt-out
-          const optOut = db.select().from(outreachOptOuts).where(eq(outreachOptOuts.email, lead.email)).get();
+          const optOut = await db.select().from(outreachOptOuts).where(eq(outreachOptOuts.email, lead.email)).get();
           if (!optOut) {
             // Check bestaande sequentie
             const bestaand = db
@@ -273,7 +273,7 @@ export async function POST(req: NextRequest) {
                   geplandDatum.setDate(geplandDatum.getDate() + dagOffsets[i]);
                   geplandDatum.setHours(9 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60), 0, 0);
 
-                  db.insert(outreachEmails)
+                  await db.insert(outreachEmails)
                     .values({
                       sequentieId: seq.id,
                       stapNummer: i + 1,
@@ -295,7 +295,7 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({ success: true, scanId: scan.id, leadId: existingLead.id, sequentieId }, { status: 201 });
     } catch (processingError) {
-      db.update(salesEngineScans)
+      await db.update(salesEngineScans)
         .set({
           status: "failed",
           foutmelding: processingError instanceof Error ? processingError.message : "Onbekende fout",

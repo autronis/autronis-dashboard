@@ -24,7 +24,7 @@ function validateUrl(url: string): boolean {
 async function processScanInBackground(scanId: number, leadId: number, bedrijfsnaam: string, websiteUrl: string) {
   try {
     const scrapeResult = await scrapeWebsite(websiteUrl);
-    db.update(salesEngineScans)
+    await db.update(salesEngineScans)
       .set({
         scrapeResultaat: JSON.stringify(scrapeResult),
         bijgewerktOp: new Date().toISOString(),
@@ -41,7 +41,7 @@ async function processScanInBackground(scanId: number, leadId: number, bedrijfsn
     });
 
     for (const kans of analysis.kansen) {
-      db.insert(salesEngineKansen)
+      await db.insert(salesEngineKansen)
         .values({
           scanId,
           titel: kans.titel,
@@ -57,7 +57,7 @@ async function processScanInBackground(scanId: number, leadId: number, bedrijfsn
         .run();
     }
 
-    db.update(salesEngineScans)
+    await db.update(salesEngineScans)
       .set({
         aiAnalyse: JSON.stringify(analysis),
         samenvatting: analysis.samenvatting,
@@ -72,7 +72,7 @@ async function processScanInBackground(scanId: number, leadId: number, bedrijfsn
     // Pipeline integratie
     const hoogImpactKansen = analysis.kansen.filter((k) => k.impact === "hoog").length;
     const geschatteWaarde = hoogImpactKansen * 2000;
-    db.update(leads)
+    await db.update(leads)
       .set({
         waarde: geschatteWaarde,
         status: "contact",
@@ -83,7 +83,7 @@ async function processScanInBackground(scanId: number, leadId: number, bedrijfsn
       .where(eq(leads.id, leadId))
       .run();
   } catch (error) {
-    db.update(salesEngineScans)
+    await db.update(salesEngineScans)
       .set({
         status: "failed",
         foutmelding: error instanceof Error ? error.message : "Onbekende fout",

@@ -63,7 +63,7 @@ export async function DELETE(
     const { id } = await params;
 
     // Soft delete
-    db.update(gewoontes)
+    await db.update(gewoontes)
       .set({ isActief: 0 })
       .where(
         and(eq(gewoontes.id, Number(id)), eq(gewoontes.gebruikerId, gebruiker.id))

@@ -301,7 +301,7 @@ async function autoCreateProjectPlan(
     const samenvatting = `Projectplan voor ${projectNaam}. Automatisch gegenereerd uit PROJECT_BRIEF.md en TODO.md.`;
 
     // Get klant name
-    const klant = db.select({ bedrijfsnaam: klanten.bedrijfsnaam }).from(klanten).where(eq(klanten.id, AUTRONIS_KLANT_ID)).get();
+    const klant = await db.select({ bedrijfsnaam: klanten.bedrijfsnaam }).from(klanten).where(eq(klanten.id, AUTRONIS_KLANT_ID)).get();
 
     const payload: DocumentPayload = {
       type: "plan",

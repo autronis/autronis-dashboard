@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Stop de sequentie
-    db.update(outreachSequenties)
+    await db.update(outreachSequenties)
       .set({ status: "gestopt", bijgewerktOp: new Date().toISOString() })
       .where(eq(outreachSequenties.id, sequentie.id))
       .run();
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       [0];
 
     if (laatsteVerstuurd) {
-      db.update(outreachEmails)
+      await db.update(outreachEmails)
         .set({
           beantwoordOp: new Date().toISOString(),
           status: "beantwoord",
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     // Annuleer geplande emails
     for (const email of emails) {
       if (email.status === "gepland") {
-        db.update(outreachEmails)
+        await db.update(outreachEmails)
           .set({ status: "geannuleerd" })
           .where(eq(outreachEmails.id, email.id))
           .run();
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Update lead status
-    db.update(leads)
+    await db.update(leads)
       .set({
         status: "contact",
         volgendeActie: "Reply ontvangen op outreach - opvolgen",

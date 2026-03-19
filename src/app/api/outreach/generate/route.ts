@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Haal scan + lead + kansen op
-    const scan = db.select().from(salesEngineScans).where(eq(salesEngineScans.id, scanId)).get();
+    const scan = await db.select().from(salesEngineScans).where(eq(salesEngineScans.id, scanId)).get();
     if (!scan || scan.status !== "completed") {
       return NextResponse.json({ fout: "Scan niet gevonden of niet voltooid" }, { status: 404 });
     }
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check opt-out
-    const optOut = db.select().from(outreachOptOuts).where(eq(outreachOptOuts.email, lead.email)).get();
+    const optOut = await db.select().from(outreachOptOuts).where(eq(outreachOptOuts.email, lead.email)).get();
     if (optOut) {
       return NextResponse.json({ fout: "Dit email adres staat op de opt-out lijst" }, { status: 400 });
     }
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
       // Verstuur tussen 9:00 en 11:00 (random)
       geplandDatum.setHours(9 + Math.floor(Math.random() * 2), Math.floor(Math.random() * 60), 0, 0);
 
-      db.insert(outreachEmails)
+      await db.insert(outreachEmails)
         .values({
           sequentieId: sequentie.id,
           stapNummer: i + 1,

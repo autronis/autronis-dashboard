@@ -132,12 +132,12 @@ Antwoord als JSON:
   return JSON.parse(cleaned) as AnalyseResultaat;
 }
 
-function createTakenFromActiepunten(
+async function createTakenFromActiepunten(
   actiepunten: Actiepunt[],
   projectId: number | null,
   aanmakerGebruikerId: number
 ) {
-  const alleGebruikers = db.select().from(gebruikers).all();
+  const alleGebruikers = await db.select().from(gebruikers).all();
 
   for (const punt of actiepunten) {
     if (punt.verantwoordelijke === "Sem" || punt.verantwoordelijke === "Syb") {
@@ -146,7 +146,7 @@ function createTakenFromActiepunten(
       );
 
       if (gebruiker) {
-        db.insert(taken)
+        await db.insert(taken)
           .values({
             titel: punt.tekst,
             projectId,
@@ -197,7 +197,7 @@ export async function POST(
         }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "Transcriptie mislukt";
-        db.update(meetings)
+        await db.update(meetings)
           .set({ status: "mislukt" })
           .where(eq(meetings.id, meetingId))
           .run();
@@ -206,7 +206,7 @@ export async function POST(
     }
 
     if (!transcript) {
-      db.update(meetings)
+      await db.update(meetings)
         .set({ status: "mislukt" })
         .where(eq(meetings.id, meetingId))
         .run();
@@ -222,7 +222,7 @@ export async function POST(
       analyse = await analyseTranscript(transcript);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "AI analyse mislukt";
-      db.update(meetings)
+      await db.update(meetings)
         .set({ transcript, status: "mislukt" })
         .where(eq(meetings.id, meetingId))
         .run();
@@ -239,7 +239,7 @@ export async function POST(
     // Step 4: Update meeting
     const duur = duurFromAudio || analyse.duurMinuten || null;
 
-    db.update(meetings)
+    await db.update(meetings)
       .set({
         transcript,
         samenvatting: analyse.samenvatting,

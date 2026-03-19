@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       .all();
 
     // Audit log
-    db.insert(belastingAuditLog).values({
+    await db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
       actie: "investering_aangemaakt",
       entiteitType: "investering",

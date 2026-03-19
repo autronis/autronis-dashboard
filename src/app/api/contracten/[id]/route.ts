@@ -63,7 +63,7 @@ export async function PUT(
     if (inhoud !== undefined) updates.inhoud = inhoud;
     if (status !== undefined) updates.status = status;
 
-    db.update(contracten)
+    await db.update(contracten)
       .set(updates)
       .where(eq(contracten.id, Number(id)))
       .run();
@@ -86,7 +86,7 @@ export async function DELETE(
     await requireAuth();
     const { id } = await params;
 
-    db.delete(contracten)
+    await db.delete(contracten)
       .where(eq(contracten.id, Number(id)))
       .run();
 

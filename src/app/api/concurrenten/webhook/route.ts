@@ -14,7 +14,7 @@ async function runScanForConcurrent(concurrentId: number) {
 
   try {
     const result = await scanConcurrent(concurrentId);
-    db.update(concurrentScans).set({
+    await db.update(concurrentScans).set({
       status: "voltooid",
       websiteChanges: result.websiteChanges ? JSON.stringify(result.websiteChanges) : null,
       vacatures: result.vacatures ? JSON.stringify(result.vacatures) : null,
@@ -26,7 +26,7 @@ async function runScanForConcurrent(concurrentId: number) {
     }).where(eq(concurrentScans.id, scanRecord.id)).run();
     return { ...scanRecord, ...result, status: "voltooid" };
   } catch (error) {
-    db.update(concurrentScans).set({ status: "mislukt" })
+    await db.update(concurrentScans).set({ status: "mislukt" })
       .where(eq(concurrentScans.id, scanRecord.id)).run();
     return { ...scanRecord, status: "mislukt", fout: error instanceof Error ? error.message : "Onbekende fout" };
   }
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ scan });
       }
 
-      const actieve = db.select().from(concurrenten).where(eq(concurrenten.isActief, 1)).all();
+      const actieve = await db.select().from(concurrenten).where(eq(concurrenten.isActief, 1)).all();
       const results = [];
       for (const c of actieve) {
         const scan = await runScanForConcurrent(c.id);
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ fout: "concurrentId is verplicht" }, { status: 400 });
       }
 
-      const concurrent = db.select().from(concurrenten)
+      const concurrent = await db.select().from(concurrenten)
         .where(eq(concurrenten.id, body.concurrentId)).get();
       if (!concurrent) {
         return NextResponse.json({ fout: "Concurrent niet gevonden" }, { status: 404 });

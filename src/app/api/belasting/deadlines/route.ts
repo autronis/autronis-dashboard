@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
     ];
 
     for (const deadline of deadlinesToCreate) {
-      db.insert(belastingDeadlines).values(deadline).run();
+      await db.insert(belastingDeadlines).values(deadline).run();
     }
 
     const deadlines = db

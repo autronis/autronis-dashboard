@@ -162,7 +162,7 @@ export async function GET(req: NextRequest) {
     const btwAfgedragenTotaal = Math.round((btwOntvangenTotaal - btwBetaaldTotaal) * 100) / 100;
 
     // === UREN ===
-    const urenRecord = db.select().from(urenCriterium).where(eq(urenCriterium.jaar, jaar)).limit(1).get();
+    const urenRecord = await db.select().from(urenCriterium).where(eq(urenCriterium.jaar, jaar)).limit(1).get();
     let totaalUren = urenRecord?.behaaldUren ?? 0;
     if (!urenRecord) {
       const urenResult = db
@@ -185,7 +185,7 @@ export async function GET(req: NextRequest) {
     const kmAftrekBedrag = Math.round(totaalKm * 0.23 * 100) / 100;
 
     // === INVESTERINGEN ===
-    const alleInvesteringen = db.select().from(investeringen).all();
+    const alleInvesteringen = await db.select().from(investeringen).all();
     const investeringenDitJaar = alleInvesteringen.filter(
       (inv) => inv.datum >= jaarStart && inv.datum <= jaarEind
     );

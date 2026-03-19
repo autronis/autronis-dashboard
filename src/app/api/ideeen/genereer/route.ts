@@ -159,7 +159,7 @@ Alleen JSON, geen uitleg.`,
 async function syncToBacklogFile() {
   const { writeFile } = await import("fs/promises");
 
-  const alleIdeeen = db.select().from(ideeen).orderBy(ideeen.nummer).all();
+  const alleIdeeen = await db.select().from(ideeen).orderBy(ideeen.nummer).all();
 
   const statusEmoji: Record<string, string> = {
     gebouwd: "\u2705",

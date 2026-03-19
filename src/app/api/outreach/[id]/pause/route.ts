@@ -13,7 +13,7 @@ export async function POST(
     const { id } = await params;
     const seqId = parseInt(id, 10);
 
-    const sequentie = db.select().from(outreachSequenties).where(eq(outreachSequenties.id, seqId)).get();
+    const sequentie = await db.select().from(outreachSequenties).where(eq(outreachSequenties.id, seqId)).get();
     if (!sequentie) {
       return NextResponse.json({ fout: "Sequentie niet gevonden" }, { status: 404 });
     }
@@ -22,7 +22,7 @@ export async function POST(
       return NextResponse.json({ fout: `Kan sequentie met status '${sequentie.status}' niet pauzeren` }, { status: 400 });
     }
 
-    db.update(outreachSequenties)
+    await db.update(outreachSequenties)
       .set({ status: "gepauzeerd", bijgewerktOp: new Date().toISOString() })
       .where(eq(outreachSequenties.id, seqId))
       .run();

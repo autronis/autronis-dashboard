@@ -57,7 +57,7 @@ export async function PUT(
 
     // Recalculate aiScore if manual scores are set
     if (body.impact !== undefined || body.effort !== undefined || body.revenuePotential !== undefined) {
-      const existing = db.select().from(ideeen).where(eq(ideeen.id, Number(id))).get();
+      const existing = await db.select().from(ideeen).where(eq(ideeen.id, Number(id))).get();
       const impact = body.impact ?? existing?.impact ?? 5;
       const effort = body.effort ?? existing?.effort ?? 5;
       const revenue = body.revenuePotential ?? existing?.revenuePotential ?? 5;
@@ -131,7 +131,7 @@ export async function DELETE(
       return NextResponse.json({ fout: "Idee niet gevonden." }, { status: 404 });
     }
 
-    db.delete(ideeen).where(eq(ideeen.id, Number(id))).run();
+    await db.delete(ideeen).where(eq(ideeen.id, Number(id))).run();
 
     return NextResponse.json({ succes: true });
   } catch (error) {

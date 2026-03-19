@@ -84,7 +84,7 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     const concurrentId = parseInt(id, 10);
 
-    db.update(concurrenten)
+    await db.update(concurrenten)
       .set({ isActief: 0, bijgewerktOp: new Date().toISOString() })
       .where(eq(concurrenten.id, concurrentId))
       .run();
