@@ -21,7 +21,7 @@ fn default_dashboard_dir() -> String {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            api_url: "http://localhost:3000".to_string(),
+            api_url: "https://dashboard.autronis.nl".to_string(),
             api_token: String::new(),
             track_interval_secs: 5,
             sync_interval_secs: 30,

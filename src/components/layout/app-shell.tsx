@@ -7,7 +7,6 @@ import { BottomNav } from "./bottom-nav";
 import { WavesBackground } from "./waves-background";
 import { ToastContainer } from "@/components/ui/toast";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
-import { QuickActionButton } from "@/components/ui/quick-action-button";
 import { CommandPalette } from "@/components/ui/command-palette";
 import { KeyboardShortcutsOverlay } from "@/components/ui/keyboard-shortcuts-overlay";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
@@ -79,7 +78,6 @@ export function AppShell({ gebruiker, children }: AppShellProps) {
       <BottomNav />
 
       {/* Floating elements */}
-      <QuickActionButton />
       <ScrollToTop />
 
       {/* Modals */}
