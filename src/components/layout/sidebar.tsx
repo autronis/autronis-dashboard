@@ -265,11 +265,10 @@ export function Sidebar() {
       >
         {/* Logo */}
         <div className="flex items-center justify-between px-4 h-16 border-b border-white/[0.06] flex-shrink-0">
-          <Link href="/" className="flex-shrink-0">
-            {!isCollapsed ? (
-              <Image src="/logo-gold.png" alt="Autronis" width={200} height={60} className="h-10 w-auto" priority />
-            ) : (
-              <Image src="/icon.png" alt="Autronis" width={32} height={32} className="h-8 w-8 object-contain" priority />
+          <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+            <Image src="/logo.png" alt="Autronis" width={34} height={34} className="h-8 w-auto" priority />
+            {!isCollapsed && (
+              <span className="text-lg font-bold text-white tracking-tight">Autronis</span>
             )}
           </Link>
           <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-white/5 text-autronis-text-secondary lg:hidden ml-auto">
