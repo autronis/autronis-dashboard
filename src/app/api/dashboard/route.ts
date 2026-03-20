@@ -71,19 +71,6 @@ export async function GET() {
       return sum + ((r.duurMinuten || 0) / 60) * (r.uurtarief || 0);
     }, 0);
 
-    // Uren deze week - eigen (tijdregistraties)
-    const [eigenUren] = await db
-      .select({ totaal: sql<number>`coalesce(sum(${tijdregistraties.duurMinuten}), 0)` })
-      .from(tijdregistraties)
-      .where(
-        and(
-          eq(tijdregistraties.gebruikerId, gebruiker.id),
-          gte(tijdregistraties.startTijd, week.van),
-          lte(tijdregistraties.startTijd, week.tot),
-          sql`${tijdregistraties.eindTijd} IS NOT NULL`
-        )
-      );
-
     // Uren deze week - eigen (screen time, excl. inactief/afleiding)
     const [eigenScreenTime] = await db
       .select({ totaal: sql<number>`coalesce(sum(${screenTimeEntries.duurSeconden}), 0)` })
@@ -284,8 +271,8 @@ export async function GET() {
       kpis: {
         omzetDezeMaand: Math.round(omzetDezeMaand * 100) / 100,
         urenDezeWeek: {
-          totaal: (eigenUren?.totaal || 0) + teamgenootUren + Math.round((eigenScreenTime?.totaal || 0) / 60),
-          eigen: (eigenUren?.totaal || 0) + Math.round((eigenScreenTime?.totaal || 0) / 60),
+          totaal: Math.round((eigenScreenTime?.totaal || 0) / 60) + teamgenootUren,
+          eigen: Math.round((eigenScreenTime?.totaal || 0) / 60),
           teamgenoot: teamgenootUren,
         },
         actieveProjecten: actieveProjectenCount?.count || 0,
