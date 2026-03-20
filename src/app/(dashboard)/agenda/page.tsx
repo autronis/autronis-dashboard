@@ -434,7 +434,7 @@ export default function AgendaPage() {
 
   return (
     <PageTransition>
-    <div className="p-4 lg:p-5 xl:p-6 space-y-4">
+    <div className="p-3 sm:p-4 lg:p-5 xl:p-6 space-y-3 sm:space-y-4">
      <div className="max-w-[1400px] mx-auto space-y-3">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -449,46 +449,48 @@ export default function AgendaPage() {
             )}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {googleConnected === false && (
             <button
               onClick={handleGoogleConnect}
               disabled={googleLoading}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-autronis-bg border border-autronis-border hover:border-autronis-accent/40 text-autronis-text-secondary rounded-xl text-sm transition-colors"
+              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-autronis-bg border border-autronis-border hover:border-autronis-accent/40 text-autronis-text-secondary rounded-xl text-xs sm:text-sm transition-colors"
             >
               {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calendar className="w-4 h-4" />}
-              Google Calendar koppelen
+              <span className="hidden sm:inline">Google Calendar koppelen</span>
+              <span className="sm:hidden">Google</span>
             </button>
           )}
           {googleConnected === true && (
             <button
               onClick={handleGoogleDisconnect}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-green-500/10 border border-green-500/30 text-green-400 rounded-xl text-sm transition-colors hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400"
+              className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-green-500/10 border border-green-500/30 text-green-400 rounded-xl text-xs sm:text-sm transition-colors hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-400"
             >
               <CalendarCheck className="w-4 h-4" />
-              Google gekoppeld
+              <span className="hidden sm:inline">Google gekoppeld</span>
             </button>
           )}
           <button
             onClick={() => setKalenderSettingsOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-autronis-bg border border-autronis-border hover:border-autronis-accent/40 text-autronis-text-secondary rounded-xl text-sm transition-colors"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-autronis-bg border border-autronis-border hover:border-autronis-accent/40 text-autronis-text-secondary rounded-xl text-xs sm:text-sm transition-colors"
           >
             <Link2 className="w-4 h-4" />
-            Kalenders
+            <span className="hidden sm:inline">Kalenders</span>
           </button>
           <button
             onClick={() => openNieuwModal()}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-autronis-accent/20"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-autronis-accent hover:bg-autronis-accent-hover text-autronis-bg rounded-xl text-xs sm:text-sm font-semibold transition-colors shadow-lg shadow-autronis-accent/20"
           >
             <Plus className="w-4 h-4" />
-            Nieuw item
+            <span className="hidden xs:inline">Nieuw item</span>
+            <span className="xs:hidden">Nieuw</span>
           </button>
         </div>
       </div>
 
       {/* Vandaag-strip */}
-      <div className="bg-autronis-card border border-autronis-border rounded-xl p-3">
-        <div className="flex items-center gap-4 flex-wrap">
+      <div className="bg-autronis-card border border-autronis-border rounded-xl p-2.5 sm:p-3">
+        <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
           {/* Vandaag label + datum */}
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-autronis-accent animate-pulse" />
@@ -604,11 +606,11 @@ export default function AgendaPage() {
       </div>
      </div>
 
-      <div className="max-w-[1400px] mx-auto grid gap-4 grid-cols-1 lg:grid-cols-[1fr_300px]">
+      <div className="max-w-[1400px] mx-auto grid gap-3 sm:gap-4 grid-cols-1 lg:grid-cols-[1fr_300px]">
         {/* Kalender */}
-        <div className="bg-autronis-card border border-autronis-border rounded-xl p-4 lg:p-5">
+        <div className="bg-autronis-card border border-autronis-border rounded-xl p-3 sm:p-4 lg:p-5">
           {/* Navigatie */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
             <div className="flex items-center gap-1">
               <button
                 onClick={() => navigeer(-1)}
@@ -616,7 +618,7 @@ export default function AgendaPage() {
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <h2 className="text-xl font-bold text-autronis-text-primary px-2">
+              <h2 className="text-lg sm:text-xl font-bold text-autronis-text-primary px-1 sm:px-2">
                 {MAANDEN[maand]} {jaar}
               </h2>
               <button
@@ -637,7 +639,7 @@ export default function AgendaPage() {
                     if (v === "week") setWeekOffset(0);
                   }}
                   className={cn(
-                    "px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize",
+                    "px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-medium rounded-md transition-colors capitalize",
                     weergave === v
                       ? "bg-autronis-accent text-autronis-bg"
                       : "text-autronis-text-secondary hover:text-autronis-text-primary"
@@ -676,16 +678,16 @@ export default function AgendaPage() {
           ) : weergave === "maand" ? (
             <>
               {/* Dag headers */}
-              <div className="grid grid-cols-7 gap-1 mb-2">
+              <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1 sm:mb-2">
                 {DAGEN.map((dag) => (
-                  <div key={dag} className="text-center text-xs font-semibold text-autronis-text-secondary uppercase tracking-wider py-2">
+                  <div key={dag} className="text-center text-[10px] sm:text-xs font-semibold text-autronis-text-secondary uppercase tracking-wider py-1 sm:py-2">
                     {dag}
                   </div>
                 ))}
               </div>
 
               {/* Kalender grid */}
-              <div className="grid grid-cols-7 gap-1">
+              <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
                 {cellen.map((cel, i) => {
                   const ds = datumStr(cel.jaar, cel.maand, cel.dag);
                   const dagItems = itemsPerDag[ds] || [];
@@ -700,7 +702,7 @@ export default function AgendaPage() {
                       onMouseEnter={() => dagItems.length > 3 ? setHoveredDay(ds) : setHoveredDay(null)}
                       onMouseLeave={() => setHoveredDay(null)}
                       className={cn(
-                        "relative min-h-[100px] p-1.5 rounded-xl border cursor-pointer transition-all",
+                        "relative min-h-[56px] sm:min-h-[80px] lg:min-h-[100px] p-0.5 sm:p-1 lg:p-1.5 rounded-lg sm:rounded-xl border cursor-pointer transition-all",
                         ds === selectedDay
                           ? "bg-autronis-accent/10 border-autronis-accent/50"
                           : cel.isHuidigeMaand
@@ -711,7 +713,7 @@ export default function AgendaPage() {
                     >
                       <span
                         className={cn(
-                          "text-sm font-medium inline-flex items-center justify-center w-7 h-7 rounded-full",
+                          "text-[10px] sm:text-sm font-medium inline-flex items-center justify-center w-5 h-5 sm:w-7 sm:h-7 rounded-full",
                           isVandaag
                             ? "bg-autronis-accent text-autronis-bg font-bold shadow-lg shadow-autronis-accent/30"
                             : cel.isHuidigeMaand
@@ -721,7 +723,7 @@ export default function AgendaPage() {
                       >
                         {cel.dag}
                       </span>
-                      <div className="mt-1 space-y-1">
+                      <div className="mt-0.5 sm:mt-1 space-y-0.5 sm:space-y-1">
                         {dagItems.slice(0, 3).map((item) => {
                           // Deadline events (from taken/projecten/facturen)
                           if ("linkHref" in item) {
@@ -732,10 +734,11 @@ export default function AgendaPage() {
                                 key={dl.id}
                                 href={dl.linkHref}
                                 onClick={(e) => e.stopPropagation()}
-                                className="block w-full text-left text-xs font-medium px-1.5 py-1 rounded truncate leading-tight"
+                                className="block w-full text-left text-[10px] sm:text-xs font-medium px-1 sm:px-1.5 py-0.5 sm:py-1 rounded truncate leading-tight"
                                 style={{ backgroundColor: `${dlColor}15`, color: dlColor, borderLeft: `2px dashed ${dlColor}` }}
                               >
-                                {dl.titel}
+                                <span className="hidden sm:inline">{dl.titel}</span>
+                                <span className="sm:hidden">·</span>
                               </Link>
                             );
                           }
@@ -749,11 +752,14 @@ export default function AgendaPage() {
                             return (
                               <div
                                 key={item.id}
-                                className="w-full text-left text-xs font-medium px-1.5 py-1 rounded truncate border-l-2 border-transparent leading-tight"
+                                className="w-full text-left text-[10px] sm:text-xs font-medium px-1 sm:px-1.5 py-0.5 sm:py-1 rounded truncate border-l-2 border-transparent leading-tight"
                                 style={{ backgroundColor: ec.bg, color: ec.text, borderLeftColor: ec.border }}
                               >
-                                {startTime && <span className="text-[10px] opacity-70 mr-1 tabular-nums">{startTime}</span>}
-                                {ext.titel}
+                                <span className="hidden sm:inline">
+                                  {startTime && <span className="text-[10px] opacity-70 mr-1 tabular-nums">{startTime}</span>}
+                                  {ext.titel}
+                                </span>
+                                <span className="sm:hidden">·</span>
                               </div>
                             );
                           }
@@ -766,20 +772,24 @@ export default function AgendaPage() {
                             <button
                               key={item.id}
                               onClick={(e) => { e.stopPropagation(); openItemDetail(ai); }}
-                              className="w-full text-left text-xs font-medium px-1.5 py-1 rounded border-l-2 border-transparent truncate leading-tight"
+                              className="w-full text-left text-[10px] sm:text-xs font-medium px-1 sm:px-1.5 py-0.5 sm:py-1 rounded border-l-2 border-transparent truncate leading-tight"
                               style={{ backgroundColor: `${tc.borderColor}20`, color: tc.borderColor, borderLeftColor: tc.borderColor }}
                             >
-                              {startTime && <span className="text-[10px] opacity-70 mr-1 tabular-nums">{startTime}</span>}
-                              {ai.titel}
+                              <span className="hidden sm:inline">
+                                {startTime && <span className="text-[10px] opacity-70 mr-1 tabular-nums">{startTime}</span>}
+                                {ai.titel}
+                              </span>
+                              <span className="sm:hidden">·</span>
                             </button>
                           );
                         })}
                         {dagItems.length > 3 && (
                           <button
                             onClick={(e) => { e.stopPropagation(); setSelectedDay(ds); }}
-                            className="text-[11px] text-autronis-accent font-medium pl-1 hover:underline"
+                            className="text-[9px] sm:text-[11px] text-autronis-accent font-medium pl-0.5 sm:pl-1 hover:underline"
                           >
-                            +{dagItems.length - 3} meer
+                            <span className="hidden sm:inline">+{dagItems.length - 3} meer</span>
+                            <span className="sm:hidden">+{dagItems.length - 3}</span>
                           </button>
                         )}
                       </div>
@@ -832,19 +842,114 @@ export default function AgendaPage() {
             </>
           ) : (
             /* Week view */
-            <div className="overflow-x-auto">
+            <div>
               {/* Week navigatie */}
-              <div className="flex items-center justify-between mb-3">
-                <button onClick={() => setWeekOffset((o) => o - 1)} className="p-2 text-autronis-text-secondary hover:text-autronis-text-primary rounded-lg transition-colors">
-                  <ChevronLeft className="w-5 h-5" />
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <button onClick={() => setWeekOffset((o) => o - 1)} className="p-1.5 sm:p-2 text-autronis-text-secondary hover:text-autronis-text-primary rounded-lg transition-colors">
+                  <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
-                <span className="text-sm font-medium text-autronis-text-secondary">
+                <span className="text-xs sm:text-sm font-medium text-autronis-text-secondary">
                   {weekDagen[0].datum.toLocaleDateString("nl-NL", { day: "numeric", month: "short" })} – {weekDagen[6].datum.toLocaleDateString("nl-NL", { day: "numeric", month: "short", year: "numeric" })}
                 </span>
-                <button onClick={() => setWeekOffset((o) => o + 1)} className="p-2 text-autronis-text-secondary hover:text-autronis-text-primary rounded-lg transition-colors">
-                  <ChevronRight className="w-5 h-5" />
+                <button onClick={() => setWeekOffset((o) => o + 1)} className="p-1.5 sm:p-2 text-autronis-text-secondary hover:text-autronis-text-primary rounded-lg transition-colors">
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
+
+              {/* Mobile: lijst-layout per dag */}
+              <div className="sm:hidden space-y-2">
+                {weekDagen.map((wd) => {
+                  const isVandaag = wd.datumStr === vandaagStr;
+                  const dagItems = itemsPerDag[wd.datumStr] || [];
+                  const dagNaam = wd.datum.toLocaleDateString("nl-NL", { weekday: "short" });
+                  const dagNum = wd.datum.getDate();
+                  const maandNaam = wd.datum.toLocaleDateString("nl-NL", { month: "short" });
+
+                  return (
+                    <div
+                      key={wd.datumStr}
+                      className={cn(
+                        "rounded-xl border p-3",
+                        isVandaag
+                          ? "border-autronis-accent/40 bg-autronis-accent/5"
+                          : dagItems.length > 0
+                          ? "border-autronis-border bg-autronis-bg/30"
+                          : "border-autronis-border/30 bg-transparent"
+                      )}
+                      onClick={() => { setWeergave("dag"); setSelectedDag(wd.datum); }}
+                    >
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                          isVandaag
+                            ? "bg-autronis-accent text-autronis-bg"
+                            : "text-autronis-text-primary"
+                        )}>
+                          {dagNum}
+                        </span>
+                        <span className={cn(
+                          "text-xs font-semibold uppercase",
+                          isVandaag ? "text-autronis-accent" : "text-autronis-text-secondary"
+                        )}>
+                          {dagNaam} {maandNaam}
+                        </span>
+                        {dagItems.length > 0 && (
+                          <span className="text-[10px] text-autronis-text-secondary ml-auto">{dagItems.length} item{dagItems.length !== 1 ? "s" : ""}</span>
+                        )}
+                      </div>
+                      {dagItems.length > 0 ? (
+                        <div className="space-y-1 ml-10">
+                          {dagItems.slice(0, 4).map((item) => {
+                            const isExtern = "bron" in item;
+                            const isDeadline = "linkHref" in item;
+                            const titel = item.titel;
+                            const startStr = "startDatum" in item ? item.startDatum : "";
+                            const startTime = startStr.length > 10
+                              ? new Date(startStr).toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit" })
+                              : null;
+
+                            let bgColor: string, textColor: string, borderColor: string;
+                            if (isDeadline) {
+                              const dl = item as DeadlineEvent;
+                              const c = dl.type === "factuur" ? "#f97316" : dl.type === "project" ? "#8b5cf6" : "#ef4444";
+                              bgColor = `${c}15`; textColor = c; borderColor = c;
+                            } else if (isExtern) {
+                              const ec = getExternEventColor(item as ExternEvent);
+                              bgColor = ec.bg; textColor = ec.text; borderColor = ec.border;
+                            } else {
+                              const tc = typeConfig[(item as AgendaItem).type] || typeConfig.afspraak;
+                              bgColor = `${tc.borderColor}15`; textColor = tc.borderColor; borderColor = tc.borderColor;
+                            }
+
+                            return (
+                              <div
+                                key={item.id}
+                                className="flex items-center gap-2 px-2 py-1.5 rounded-lg border-l-[3px] text-xs"
+                                style={{ backgroundColor: bgColor, borderLeftColor: borderColor, color: textColor }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!isExtern && !isDeadline) openItemDetail(item as AgendaItem);
+                                }}
+                              >
+                                {startTime && <span className="tabular-nums opacity-70 shrink-0">{startTime}</span>}
+                                <span className="font-medium truncate">{titel}</span>
+                              </div>
+                            );
+                          })}
+                          {dagItems.length > 4 && (
+                            <p className="text-[10px] text-autronis-accent ml-2">+{dagItems.length - 4} meer</p>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-[10px] text-autronis-text-secondary/40 ml-10">Geen items</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop: grid week view */}
+              <div className="hidden sm:block overflow-x-auto -mx-1 px-1">
               {/* Dag headers */}
               <div className="grid grid-cols-[48px_repeat(7,1fr)] gap-0">
                 <div /> {/* Lege cel voor tijdkolom */}
@@ -932,8 +1037,9 @@ export default function AgendaPage() {
                       duurMin = Math.max(20, (eindDate.getTime() - startDate.getTime()) / 60000);
                     }
 
-                    const topOffset = (startUur - weekStart) * 64 + (startMin / 60) * 64;
-                    const height = Math.max(22, (duurMin / 60) * 64);
+                    const slotH = 64;
+                    const topOffset = (startUur - weekStart) * slotH + (startMin / 60) * slotH;
+                    const height = Math.max(18, (duurMin / 60) * slotH);
 
                     let bgColor: string, borderColor: string, textColor: string;
                     if (isExtern) {
@@ -1009,7 +1115,7 @@ export default function AgendaPage() {
 
                   return (
                     <div
-                      className="absolute top-0 left-[60px] right-0 grid grid-cols-7 gap-0 -translate-y-full bg-autronis-card border-b border-autronis-border/30 py-1"
+                      className="absolute top-0 left-[48px] right-0 grid grid-cols-7 gap-0 -translate-y-full bg-autronis-card border-b border-autronis-border/30 py-1"
                     >
                       {weekDagen.map((wd, idx) => {
                         const evts = heleDagEvents[idx];
@@ -1057,7 +1163,8 @@ export default function AgendaPage() {
                   // Check of vandaag in deze week zit
                   const vandaagIdx = weekDagen.findIndex((wd) => wd.datumStr === vandaagStr);
                   if (vandaagIdx === -1) return null;
-                  const topOffset = (nuUur - wStart) * 64 + (nuMin / 60) * 64;
+                  const slotHNu = 64;
+                  const topOffset = (nuUur - wStart) * slotHNu + (nuMin / 60) * slotHNu;
                   return (
                     <div
                       className="absolute left-[48px] right-0 flex items-center z-20 pointer-events-none"
@@ -1079,6 +1186,7 @@ export default function AgendaPage() {
                     </div>
                   );
                 })()}
+              </div>
               </div>
             </div>
           )}
@@ -1378,7 +1486,7 @@ export default function AgendaPage() {
 
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-autronis-text-secondary">Type</label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                   {Object.entries(typeConfig).map(([key, tc]) => {
                     const TypeIcon = tc.icon;
                     return (
@@ -1386,13 +1494,13 @@ export default function AgendaPage() {
                         key={key}
                         onClick={() => setType(key)}
                         className={cn(
-                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border",
+                          "flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors border",
                           type === key
                             ? cn(tc.bg, tc.color)
                             : "border-autronis-border text-autronis-text-secondary hover:text-autronis-text-primary"
                         )}
                       >
-                        <TypeIcon className="w-3.5 h-3.5" />
+                        <TypeIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         {tc.label}
                       </button>
                     );
@@ -1400,7 +1508,7 @@ export default function AgendaPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-1.5">
                   <label className="block text-sm font-medium text-autronis-text-secondary">Datum</label>
                   <input
@@ -1424,7 +1532,7 @@ export default function AgendaPage() {
               </div>
 
               {!heleDag && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <div className="space-y-1.5">
                     <label className="block text-sm font-medium text-autronis-text-secondary">Begintijd</label>
                     <input
