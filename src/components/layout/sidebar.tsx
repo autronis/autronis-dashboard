@@ -259,7 +259,7 @@ export function Sidebar() {
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className={cn(
           "fixed top-0 left-0 h-full z-30 flex flex-col bg-[#0c1215]/95 backdrop-blur-xl border-r border-white/[0.06]",
-          "max-lg:translate-x-full max-lg:w-64 max-lg:transition-transform max-lg:duration-300",
+          "max-lg:-translate-x-full max-lg:w-64 max-lg:transition-transform max-lg:duration-300",
           isOpen && "max-lg:translate-x-0"
         )}
       >
