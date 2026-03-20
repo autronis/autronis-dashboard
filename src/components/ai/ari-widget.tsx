@@ -278,7 +278,7 @@ export function AriWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-24 md:bottom-8 right-6 z-50 w-14 h-14 rounded-full bg-autronis-accent text-white shadow-xl shadow-autronis-accent/30 flex items-center justify-center hover:bg-autronis-accent-hover hover:scale-105 transition-all group"
+          className="fixed bottom-24 md:bottom-8 right-6 z-50 w-14 h-14 rounded-full bg-autronis-accent text-white shadow-xl shadow-autronis-accent/30 hidden md:flex items-center justify-center hover:bg-autronis-accent-hover hover:scale-105 transition-all group"
           title="A.R.I. openen (Ctrl+A)"
         >
           <Sparkles className="w-6 h-6" />

@@ -267,7 +267,7 @@ export function Sidebar() {
         <div className="flex items-center justify-between px-4 h-16 border-b border-white/[0.06] flex-shrink-0">
           <Link href="/" className="flex-shrink-0">
             {!isCollapsed ? (
-              <Image src="/logo-dashboard.png" alt="Autronis Dashboard" width={140} height={140} className="h-10 w-auto" priority />
+              <Image src="/logo-gold.png" alt="Autronis" width={200} height={60} className="h-10 w-auto" priority />
             ) : (
               <Image src="/icon.png" alt="Autronis" width={32} height={32} className="h-8 w-8 object-contain" priority />
             )}

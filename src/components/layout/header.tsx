@@ -64,19 +64,14 @@ export function Header({ gebruiker }: HeaderProps) {
       )}
     >
       <div className="flex items-center justify-between h-full px-4">
-        {/* Left: hamburger + logo (mobile only) */}
-        <div className="flex items-center gap-2 lg:hidden">
-          <button
-            onClick={() => setOpen(true)}
-            className="p-2 rounded-lg hover:bg-autronis-border text-autronis-text-secondary"
-            aria-label="Menu openen"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <Link href="/">
-            <Image src="/icon.png" alt="Autronis" width={36} height={36} className="h-9 w-9 object-contain" priority />
-          </Link>
-        </div>
+        {/* Left: hamburger (mobile only) */}
+        <button
+          onClick={() => setOpen(true)}
+          className="p-2 rounded-lg hover:bg-autronis-border text-autronis-text-secondary lg:hidden"
+          aria-label="Menu openen"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
 
         {/* Spacer for desktop */}
         <div className="hidden lg:block" />

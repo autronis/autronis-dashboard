@@ -1171,12 +1171,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Spacer for sticky timer bar + mobile bottom nav */}
-        <div className="h-24 md:h-16" />
+        {/* Spacer for sticky timer bar (desktop) / bottom nav (mobile) */}
+        <div className="h-4 md:h-16" />
       </div>
 
-      {/* Fixed timer bar — above bottom nav on mobile */}
-      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-50 bg-autronis-card/95 backdrop-blur-md border-t border-autronis-border shadow-2xl shadow-black/40 p-2 sm:p-3">
+      {/* Fixed timer bar — hidden on mobile (use bottom nav Timer link instead) */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-autronis-card/95 backdrop-blur-md border-t border-autronis-border shadow-2xl shadow-black/40 p-2 sm:p-3 hidden md:block">
         <div className="max-w-[1400px] mx-auto">
         <div className="bg-autronis-card border border-autronis-border rounded-xl p-2 sm:p-3 card-glow">
           {timer.isRunning ? (
