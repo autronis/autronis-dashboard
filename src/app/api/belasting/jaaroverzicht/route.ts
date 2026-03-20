@@ -7,6 +7,7 @@ import {
   kilometerRegistraties,
   urenCriterium,
   tijdregistraties,
+  screenTimeEntries,
   btwAangiftes,
   belastingReserveringen,
   voorlopigeAanslagen,
@@ -165,12 +166,26 @@ export async function GET(req: NextRequest) {
     const urenRecord = await db.select().from(urenCriterium).where(eq(urenCriterium.jaar, jaar)).limit(1).get();
     let totaalUren = urenRecord?.behaaldUren ?? 0;
     if (!urenRecord) {
+      // Tijdregistraties (handmatige timer)
       const urenResult = await db
         .select({ totaal: sql<number>`COALESCE(SUM(${tijdregistraties.duurMinuten}), 0)` })
         .from(tijdregistraties)
         .where(and(gte(tijdregistraties.startTijd, jaarStart), lte(tijdregistraties.startTijd, jaarEind)))
         .get();
-      totaalUren = Math.round(((urenResult?.totaal ?? 0) / 60) * 100) / 100;
+      // Screen time (productief, excl. inactief/afleiding)
+      const screenTimeResult = await db
+        .select({ totaal: sql<number>`COALESCE(SUM(${screenTimeEntries.duurSeconden}), 0)` })
+        .from(screenTimeEntries)
+        .where(and(
+          gte(screenTimeEntries.startTijd, jaarStart),
+          lte(screenTimeEntries.startTijd, jaarEind),
+          sql`${screenTimeEntries.categorie} NOT IN ('inactief', 'afleiding')`
+        ))
+        .get();
+      const tijdregUren = (urenResult?.totaal ?? 0) / 60;
+      const screenUren = (screenTimeResult?.totaal ?? 0) / 3600;
+      // Gebruik de hoogste van de twee (voorkom dubbeltelling)
+      totaalUren = Math.round(Math.max(tijdregUren, screenUren) * 100) / 100;
     }
     const urenVoldoet = totaalUren >= 1225;
 

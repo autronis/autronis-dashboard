@@ -374,13 +374,13 @@ export default function ProjectenPage() {
         {/* Tabs + Search */}
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Tabs */}
-          <div className="flex gap-1 bg-autronis-card border border-autronis-border rounded-xl p-1">
+          <div className="flex gap-1 bg-autronis-card border border-autronis-border rounded-xl p-1 overflow-x-auto">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
-                  "flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium transition-colors",
+                  "flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap",
                   activeTab === tab.key
                     ? "bg-autronis-accent text-white"
                     : "text-autronis-text-secondary hover:text-autronis-text-primary"

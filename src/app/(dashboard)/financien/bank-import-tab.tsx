@@ -329,7 +329,7 @@ export function BankImportTab() {
         </div>
 
         {/* Status filter */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
           {[
             { key: "alle", label: "Alle" },
             { key: "onbekend", label: "Onbekend" },
@@ -340,7 +340,7 @@ export function BankImportTab() {
               key={f.key}
               onClick={() => setStatusFilter(f.key)}
               className={cn(
-                "px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                "px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap",
                 statusFilter === f.key
                   ? "bg-autronis-accent text-autronis-bg"
                   : "text-autronis-text-secondary hover:text-autronis-text-primary hover:bg-autronis-bg/50"

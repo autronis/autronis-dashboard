@@ -156,7 +156,7 @@ export function DocumentPreview({
         </div>
 
         {/* Meta bar */}
-        <div className="flex flex-wrap gap-x-6 gap-y-2 border border-gray-100 rounded-lg px-4 py-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 border border-gray-100 rounded-lg px-4 py-3 mb-6">
           <MetaItem label={nummerLabel} value={nummer || "Auto"} muted={!nummer} />
           <MetaItem label={dateLabel} value={datum ? formatDatum(datum) : "\u2014"} />
           {isFactuur && vervaldatum && (

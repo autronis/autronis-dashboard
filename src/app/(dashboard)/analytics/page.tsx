@@ -1141,11 +1141,9 @@ export default function AnalyticsPage() {
 
         {/* === ACTIONABLE GOALS (NEW — replaces old DoelenSectie) + Team vergelijking === */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {decisionData ? (
+          {decisionData?.actionableGoals && decisionData.actionableGoals.length > 0 ? (
             <ActionableGoalsSectie goals={decisionData.actionableGoals} />
-          ) : (
-            <Skeleton className="h-64 rounded-2xl" />
-          )}
+          ) : null}
           <TeamVergelijking gebruikers={vergelijkData ?? []} />
         </div>
       </div>
