@@ -7,13 +7,13 @@ import {
   kilometerRegistraties,
   urenCriterium,
   tijdregistraties,
-  screenTimeEntries,
   btwAangiftes,
   belastingReserveringen,
   voorlopigeAanslagen,
 } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { berekenActieveUren } from "@/lib/screen-time-uren";
 
 interface KwartaalOmzet {
   kwartaal: number;
@@ -166,26 +166,9 @@ export async function GET(req: NextRequest) {
     const urenRecord = await db.select().from(urenCriterium).where(eq(urenCriterium.jaar, jaar)).limit(1).get();
     let totaalUren = urenRecord?.behaaldUren ?? 0;
     if (!urenRecord) {
-      // Tijdregistraties (handmatige timer)
-      const urenResult = await db
-        .select({ totaal: sql<number>`COALESCE(SUM(${tijdregistraties.duurMinuten}), 0)` })
-        .from(tijdregistraties)
-        .where(and(gte(tijdregistraties.startTijd, jaarStart), lte(tijdregistraties.startTijd, jaarEind)))
-        .get();
-      // Screen time (productief, excl. inactief/afleiding)
-      const screenTimeResult = await db
-        .select({ totaal: sql<number>`COALESCE(SUM(${screenTimeEntries.duurSeconden}), 0)` })
-        .from(screenTimeEntries)
-        .where(and(
-          gte(screenTimeEntries.startTijd, jaarStart),
-          lte(screenTimeEntries.startTijd, jaarEind),
-          sql`${screenTimeEntries.categorie} NOT IN ('inactief', 'afleiding')`
-        ))
-        .get();
-      const tijdregUren = (urenResult?.totaal ?? 0) / 60;
-      const screenUren = (screenTimeResult?.totaal ?? 0) / 3600;
-      // Gebruik de hoogste van de twee (voorkom dubbeltelling)
-      totaalUren = Math.round(Math.max(tijdregUren, screenUren) * 100) / 100;
+      // Screen time (zelfde sessie-merge logica als Tijd pagina)
+      const gebruiker = await requireAuth();
+      totaalUren = await berekenActieveUren(gebruiker.id, jaarStart, jaarEind);
     }
     const urenVoldoet = totaalUren >= 1225;
 
