@@ -20,7 +20,7 @@ export async function PUT(
       .from(investeringen)
       .where(eq(investeringen.id, investId))
       .limit(1)
-      .all();
+      ;
 
     if (bestaand.length === 0) {
       return NextResponse.json(
@@ -52,7 +52,7 @@ export async function PUT(
       })
       .where(eq(investeringen.id, investId))
       .returning()
-      .all();
+      ;
 
     await db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,
@@ -86,7 +86,7 @@ export async function DELETE(
       .from(investeringen)
       .where(eq(investeringen.id, investId))
       .limit(1)
-      .all();
+      ;
 
     if (bestaand.length === 0) {
       return NextResponse.json(

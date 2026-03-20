@@ -104,7 +104,7 @@ export async function GET(req: NextRequest) {
       .from(uitgaven)
       .where(and(gte(uitgaven.datum, jaarStart), lte(uitgaven.datum, jaarEind)))
       .groupBy(uitgaven.categorie)
-      .all();
+      ;
 
     const kostenPerCategorie: Record<string, number> = {};
     let kostenTotaal = 0;
@@ -122,7 +122,7 @@ export async function GET(req: NextRequest) {
       .from(btwAangiftes)
       .where(eq(btwAangiftes.jaar, jaar))
       .orderBy(btwAangiftes.kwartaal)
-      .all();
+      ;
 
     // Enrich BTW from facturen/uitgaven
     const btwPerKwartaal: KwartaalBtw[] = [];
@@ -185,7 +185,7 @@ export async function GET(req: NextRequest) {
     const kmAftrekBedrag = Math.round(totaalKm * 0.23 * 100) / 100;
 
     // === INVESTERINGEN ===
-    const alleInvesteringen = await db.select().from(investeringen).all();
+    const alleInvesteringen = await db.select().from(investeringen);
     const investeringenDitJaar = alleInvesteringen.filter(
       (inv) => inv.datum >= jaarStart && inv.datum <= jaarEind
     );
@@ -224,7 +224,7 @@ export async function GET(req: NextRequest) {
       .select()
       .from(belastingReserveringen)
       .where(and(gte(belastingReserveringen.maand, maandStart), lte(belastingReserveringen.maand, maandEind)))
-      .all();
+      ;
 
     const totaalGereserveerd = Math.round(
       reserveringen.reduce((s, r) => s + r.bedrag, 0) * 100
@@ -240,7 +240,7 @@ export async function GET(req: NextRequest) {
       .select()
       .from(voorlopigeAanslagen)
       .where(eq(voorlopigeAanslagen.jaar, jaar))
-      .all();
+      ;
 
     const aanslagenTotaal = Math.round(aanslagen.reduce((s, a) => s + a.bedrag, 0) * 100) / 100;
     const aanslagenBetaald = Math.round(aanslagen.reduce((s, a) => s + (a.betaaldBedrag ?? 0), 0) * 100) / 100;

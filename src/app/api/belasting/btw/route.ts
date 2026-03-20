@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       .from(btwAangiftes)
       .where(eq(btwAangiftes.jaar, jaar))
       .orderBy(btwAangiftes.kwartaal)
-      .all();
+      ;
 
     // Auto-calculate BTW from facturen and uitgaven per quarter
     const enrichedAangiftes = await Promise.all(aangiftes.map(async (aangifte) => {
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       .select()
       .from(btwAangiftes)
       .where(eq(btwAangiftes.jaar, jaar))
-      .all();
+      ;
 
     if (bestaande.length > 0) {
       return NextResponse.json(
@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
       .from(btwAangiftes)
       .where(eq(btwAangiftes.jaar, jaar))
       .orderBy(btwAangiftes.kwartaal)
-      .all();
+      ;
 
     return NextResponse.json({ aangiftes }, { status: 201 });
   } catch (error) {

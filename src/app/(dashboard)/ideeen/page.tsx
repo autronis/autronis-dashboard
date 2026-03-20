@@ -47,10 +47,10 @@ import { motion } from "framer-motion";
 // ============ CONSTANTS ============
 
 const statusOpties = [
-  { key: "idee", label: "Idee", emoji: "💡" },
-  { key: "uitgewerkt", label: "Uitgewerkt", emoji: "📝" },
-  { key: "actief", label: "Actief", emoji: "🚀" },
-  { key: "gebouwd", label: "Gebouwd", emoji: "✅" },
+  { key: "idee", label: "Idee" },
+  { key: "uitgewerkt", label: "Uitgewerkt" },
+  { key: "actief", label: "Actief" },
+  { key: "gebouwd", label: "Gebouwd" },
 ] as const;
 
 const categorieOpties = [
@@ -379,8 +379,8 @@ export default function IdeeenPage() {
     <PageTransition>
     <div className="max-w-[1400px] mx-auto p-4 lg:p-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Ideeën</h1>
-        <p className="text-base text-autronis-text-secondary mt-1">Van idee naar executie</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Ideeën</h1>
+        <p className="text-sm sm:text-base text-autronis-text-secondary mt-1">Van idee naar executie</p>
       </div>
 
       {/* Tabs */}
@@ -430,23 +430,26 @@ export default function IdeeenPage() {
             <BarChart3 className="w-5 h-5 text-blue-400" />
             <h2 className="text-base font-semibold text-autronis-text-primary">Pipeline</h2>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             {statusOpties.map((s, i) => {
               const count = pipelineStats[s.key as keyof typeof pipelineStats] || 0;
-              const width = totaal > 0 ? Math.max((count / totaal) * 100, 8) : 25;
               const colors = { idee: "bg-gray-500/30", uitgewerkt: "bg-blue-500/30", actief: "bg-autronis-accent/30", gebouwd: "bg-emerald-500/30" };
               const textColors = { idee: "text-gray-400", uitgewerkt: "text-blue-400", actief: "text-autronis-accent", gebouwd: "text-emerald-400" };
+              const icons = { idee: Lightbulb, uitgewerkt: FileText, actief: Zap, gebouwd: CheckCircle2 };
+              const Icon = icons[s.key as keyof typeof icons];
               return (
-                <div key={s.key} className="flex items-center gap-2 flex-1">
+                <div key={s.key} className="flex items-center gap-2 flex-shrink-0 flex-1 min-w-[80px]">
                   <motion.div
                     className={cn("rounded-xl p-3 text-center flex-1 cursor-pointer hover:opacity-80 transition-opacity", colors[s.key as keyof typeof colors])}
                     initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: i * 0.1, duration: 0.4 }}
                     onClick={() => setFilterStatus(filterStatus === s.key ? "" : s.key)}
                   >
                     <p className={cn("text-2xl font-bold tabular-nums", textColors[s.key as keyof typeof textColors])}>{count}</p>
-                    <p className="text-[10px] text-autronis-text-secondary uppercase tracking-wide mt-0.5">{s.emoji} {s.label}</p>
+                    <p className="flex items-center justify-center gap-1 text-[10px] text-autronis-text-secondary uppercase tracking-wide mt-0.5">
+                      <Icon className={cn("w-3 h-3", textColors[s.key as keyof typeof textColors])} />{s.label}
+                    </p>
                   </motion.div>
-                  {i < statusOpties.length - 1 && <ArrowRight className="w-4 h-4 text-autronis-text-secondary/30 flex-shrink-0" />}
+                  {i < statusOpties.length - 1 && <ArrowRight className="w-4 h-4 text-autronis-text-secondary/30 flex-shrink-0 hidden sm:block" />}
                 </div>
               );
             })}
@@ -553,7 +556,7 @@ export default function IdeeenPage() {
               const score = calcPriorityScore(idee);
               const isScoring = scoringIdee === idee.id;
               return (
-                <div key={idee.id} className="bg-autronis-card border border-autronis-border rounded-2xl p-6 hover:border-autronis-accent/50 transition-all card-glow group">
+                <div key={idee.id} className="bg-autronis-card border border-autronis-border rounded-2xl p-3 sm:p-6 hover:border-autronis-accent/50 transition-all card-glow group">
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <button onClick={() => setDetailIdee(idee)} className="flex items-center gap-2 min-w-0 text-left">
                       {idee.nummer != null && <span className="text-xs text-autronis-text-secondary/60 font-mono flex-shrink-0">#{idee.nummer}</span>}
@@ -655,7 +658,7 @@ export default function IdeeenPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {aiSorted.map((idee) => (
-                <div key={idee.id} className="bg-autronis-card border border-autronis-border rounded-2xl p-6 hover:border-autronis-accent/50 transition-all card-glow">
+                <div key={idee.id} className="bg-autronis-card border border-autronis-border rounded-2xl p-3 sm:p-6 hover:border-autronis-accent/50 transition-all card-glow">
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="min-w-0">
                       <h3 className="text-base font-semibold text-autronis-text-primary truncate">{idee.naam}</h3>
@@ -761,11 +764,11 @@ export default function IdeeenPage() {
               <button onClick={() => setFormOpen(false)} className="p-2 text-autronis-text-secondary hover:text-autronis-text-primary rounded-lg hover:bg-autronis-bg/50 transition-colors"><X className="w-4 h-4" /></button>
             </div>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5"><label className="block text-sm font-medium text-autronis-text-secondary">Naam *</label><input type="text" value={formNaam} onChange={(e) => setFormNaam(e.target.value)} className={inputClasses} placeholder="Naam van het idee" /></div>
                 <div className="space-y-1.5"><label className="block text-sm font-medium text-autronis-text-secondary">Nummer</label><input type="number" value={formNummer} onChange={(e) => setFormNummer(e.target.value)} className={inputClasses} placeholder="Optioneel" /></div>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5"><label className="block text-sm font-medium text-autronis-text-secondary">Categorie</label><select value={formCategorie} onChange={(e) => setFormCategorie(e.target.value)} className={cn(inputClasses)}><option value="">Geen</option>{categorieOpties.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}</select></div>
                 <div className="space-y-1.5"><label className="block text-sm font-medium text-autronis-text-secondary">Status</label><select value={formStatus} onChange={(e) => setFormStatus(e.target.value)} className={cn(inputClasses)}>{statusOpties.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}</select></div>
                 <div className="space-y-1.5"><label className="block text-sm font-medium text-autronis-text-secondary">Prioriteit</label><select value={formPrioriteit} onChange={(e) => setFormPrioriteit(e.target.value)} className={cn(inputClasses)}>{prioriteitOpties.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}</select></div>

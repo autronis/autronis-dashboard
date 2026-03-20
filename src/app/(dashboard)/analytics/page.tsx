@@ -56,7 +56,7 @@ function AnalyticsSkeleton() {
         <Skeleton className="h-8 w-48 mb-2" />
         <Skeleton className="h-4 w-72" />
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5">
         <SkeletonKPI />
         <SkeletonKPI />
         <SkeletonKPI />
@@ -157,13 +157,13 @@ function InsightsPanel({ insights, actions }: { insights: DecisionInsight[]; act
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* AI Insights */}
-      <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+      <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
         <div className="flex items-center gap-3 mb-5">
           <div className="p-2 bg-autronis-accent/10 rounded-xl">
             <Activity className="w-5 h-5 text-autronis-accent" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-autronis-text-primary">Status</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Status</h2>
             <p className="text-xs text-autronis-text-secondary">Wat gaat goed, wat niet</p>
           </div>
         </div>
@@ -191,13 +191,13 @@ function InsightsPanel({ insights, actions }: { insights: DecisionInsight[]; act
       </div>
 
       {/* Next Best Actions */}
-      <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+      <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
         <div className="flex items-center gap-3 mb-5">
           <div className="p-2 bg-orange-500/10 rounded-xl">
             <Zap className="w-5 h-5 text-orange-400" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-autronis-text-primary">Acties</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Acties</h2>
             <p className="text-xs text-autronis-text-secondary">Hoogste impact eerst</p>
           </div>
         </div>
@@ -242,10 +242,10 @@ function ClientDependencySectie({ dep }: { dep: DecisionEngineData["clientDepend
   const totaal = dep.clients.reduce((s, c) => s + c.omzet, 0);
 
   return (
-    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
       <div className="flex items-center gap-3 mb-5">
         <Shield className="w-5 h-5 text-purple-400" />
-        <h2 className="text-lg font-semibold text-autronis-text-primary">Klantafhankelijkheid</h2>
+        <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Klantafhankelijkheid</h2>
         <div className={cn("ml-auto px-3 py-1 rounded-full text-xs font-medium", cfg.bg, cfg.text)}>
           {cfg.label}
         </div>
@@ -297,10 +297,10 @@ function RateAnalysisSectie({ rates }: { rates: DecisionEngineData["rateAnalysis
   if (rates.length === 0) return null;
 
   return (
-    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
       <div className="flex items-center gap-3 mb-5">
         <DollarSign className="w-5 h-5 text-yellow-400" />
-        <h2 className="text-lg font-semibold text-autronis-text-primary">Tarief analyse</h2>
+        <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Tarief analyse</h2>
         <span className="text-xs text-autronis-text-secondary ml-auto">doel vs werkelijk</span>
       </div>
 
@@ -352,10 +352,10 @@ function RateAnalysisSectie({ rates }: { rates: DecisionEngineData["rateAnalysis
 
 function EfficiencySectie({ eff }: { eff: DecisionEngineData["efficiency"] }) {
   return (
-    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
       <div className="flex items-center gap-3 mb-6">
         <Gauge className="w-5 h-5 text-autronis-accent" />
-        <h2 className="text-lg font-semibold text-autronis-text-primary">Efficiency</h2>
+        <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Efficiency</h2>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
@@ -419,10 +419,10 @@ function ProjectInsightsSectie({ projects }: { projects: DecisionEngineData["pro
   };
 
   return (
-    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
       <div className="flex items-center gap-3 mb-5">
         <Layers className="w-5 h-5 text-blue-400" />
-        <h2 className="text-lg font-semibold text-autronis-text-primary">Project waarde</h2>
+        <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Project waarde</h2>
         <span className="text-xs text-autronis-text-secondary ml-auto">welke projecten zijn het waard</span>
       </div>
 
@@ -478,10 +478,10 @@ function ActionableGoalsSectie({ goals }: { goals: DecisionEngineData["actionabl
   const icons = [Euro, Clock, Target];
 
   return (
-    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
       <div className="flex items-center gap-3 mb-6">
         <Target className="w-5 h-5 text-autronis-accent" />
-        <h2 className="text-lg font-semibold text-autronis-text-primary">Doelen</h2>
+        <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Doelen</h2>
         <span className="text-xs text-autronis-text-secondary ml-auto">wat is er nodig</span>
       </div>
 
@@ -517,10 +517,10 @@ function ActionableGoalsSectie({ goals }: { goals: DecisionEngineData["actionabl
 
 function PipelineSectie({ pipeline }: { pipeline: DecisionEngineData["pipeline"] }) {
   return (
-    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
       <div className="flex items-center gap-3 mb-5">
         <Layers className="w-5 h-5 text-cyan-400" />
-        <h2 className="text-lg font-semibold text-autronis-text-primary">Pipeline</h2>
+        <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Pipeline</h2>
         <span className="text-xs text-autronis-text-secondary ml-auto">verwachte toekomstige omzet</span>
       </div>
 
@@ -580,10 +580,10 @@ function CashflowSectie({ cf }: { cf: DecisionEngineData["cashflow"] }) {
   const isGezond = cf.nettoPerMaand >= 0;
 
   return (
-    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
       <div className="flex items-center gap-3 mb-6">
         <Wallet className="w-5 h-5 text-emerald-400" />
-        <h2 className="text-lg font-semibold text-autronis-text-primary">Cash flow</h2>
+        <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Cash flow</h2>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
@@ -634,10 +634,10 @@ function ForecastUpgradedSectie({ forecast }: { forecast: DecisionEngineData["fo
   const maxVal = Math.max(...forecast.maanden.map((m) => m.bestCase), 1);
 
   return (
-    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
       <div className="flex items-center gap-3 mb-2">
         <TrendingUp className="w-5 h-5 text-autronis-accent" />
-        <h2 className="text-lg font-semibold text-autronis-text-primary">Forecast</h2>
+        <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Forecast</h2>
         <div className={cn(
           "ml-auto px-3 py-1 rounded-full text-xs font-medium",
           forecast.opKoers ? "bg-green-500/15 text-green-400" : "bg-red-500/15 text-red-400"
@@ -735,10 +735,10 @@ function TijdsbestedingSectie({
   const maxWeekUren = Math.max(...weeks.map((w) => w.uren), 1);
 
   return (
-    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
       <div className="flex items-center gap-3 mb-6">
         <Clock className="w-5 h-5 text-blue-400" />
-        <h2 className="text-lg font-semibold text-autronis-text-primary">Tijdsbesteding</h2>
+        <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Tijdsbesteding</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -801,18 +801,18 @@ function TeamVergelijking({ gebruikers }: { gebruikers: VergelijkGebruiker[] }) 
   const [a, b] = gebruikers.slice(0, 2);
 
   return (
-    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
-      <div className="flex items-center gap-3 mb-6">
+    <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
+      <div className="flex items-center gap-3 mb-4 sm:mb-6">
         <Users className="w-5 h-5 text-purple-400" />
-        <h2 className="text-lg font-semibold text-autronis-text-primary">Team vergelijking</h2>
+        <h2 className="text-base sm:text-base sm:text-lg font-semibold text-autronis-text-primary">Team vergelijking</h2>
         <span className="text-xs text-autronis-text-secondary ml-auto">deze maand</span>
       </div>
 
-      <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-4 text-center pb-3 border-b border-autronis-border">
-          <span className="text-sm font-semibold text-autronis-text-primary">{a.naam}</span>
+      <div className="space-y-3 sm:space-y-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center pb-3 border-b border-autronis-border">
+          <span className="text-xs sm:text-sm font-semibold text-autronis-text-primary truncate">{a.naam.split(" ")[0]}</span>
           <span className="text-xs text-autronis-text-secondary self-center">vs</span>
-          <span className="text-sm font-semibold text-autronis-text-primary">{b.naam}</span>
+          <span className="text-xs sm:text-sm font-semibold text-autronis-text-primary truncate">{b.naam.split(" ")[0]}</span>
         </div>
 
         {metrics.map((m) => {
@@ -821,27 +821,24 @@ function TeamVergelijking({ gebruikers }: { gebruikers: VergelijkGebruiker[] }) 
           const maxVal = Math.max(valA, valB, 1);
           const Icon = m.icon;
           return (
-            <div key={m.key} className="space-y-2">
+            <div key={m.key} className="space-y-1.5">
               <div className="flex items-center justify-center gap-2 text-xs text-autronis-text-secondary">
                 <Icon className="w-3.5 h-3.5" />
                 <span>{m.label}</span>
               </div>
-              <div className="flex items-center gap-3">
-                {/* Left: value + bar (right-aligned) */}
-                <div className="flex-1 flex items-center gap-2 justify-end">
-                  <span className={cn("text-xs font-medium tabular-nums w-16 text-right shrink-0", valA >= valB ? "text-autronis-accent" : "text-autronis-text-secondary")}>{m.format(valA)}</span>
-                  <div className="w-24 h-2.5 bg-autronis-bg rounded-full overflow-hidden flex justify-end shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex-1 flex items-center gap-1.5 sm:gap-2 justify-end">
+                  <span className={cn("text-xs font-medium tabular-nums text-right shrink-0", valA >= valB ? "text-autronis-accent" : "text-autronis-text-secondary")}>{m.format(valA)}</span>
+                  <div className="flex-1 max-w-24 h-2 sm:h-2.5 bg-autronis-bg rounded-full overflow-hidden flex justify-end shrink-0">
                     <motion.div className={cn("h-full rounded-full", valA >= valB ? "bg-autronis-accent" : "bg-autronis-accent/30")} initial={{ width: "0%" }} animate={{ width: `${(valA / maxVal) * 100}%` }} transition={{ duration: 0.6, ease: "easeOut" }} />
                   </div>
                 </div>
-                {/* Divider */}
                 <div className="w-px h-4 bg-autronis-border shrink-0" />
-                {/* Right: bar + value (left-aligned) */}
-                <div className="flex-1 flex items-center gap-2">
-                  <div className="w-24 h-2.5 bg-autronis-bg rounded-full overflow-hidden shrink-0">
+                <div className="flex-1 flex items-center gap-1.5 sm:gap-2">
+                  <div className="flex-1 max-w-24 h-2 sm:h-2.5 bg-autronis-bg rounded-full overflow-hidden shrink-0">
                     <motion.div className={cn("h-full rounded-full", valB >= valA ? "bg-purple-400" : "bg-purple-400/30")} initial={{ width: "0%" }} animate={{ width: `${(valB / maxVal) * 100}%` }} transition={{ duration: 0.6, ease: "easeOut" }} />
                   </div>
-                  <span className={cn("text-xs font-medium tabular-nums w-16 shrink-0", valB >= valA ? "text-purple-400" : "text-autronis-text-secondary")}>{m.format(valB)}</span>
+                  <span className={cn("text-xs font-medium tabular-nums shrink-0", valB >= valA ? "text-purple-400" : "text-autronis-text-secondary")}>{m.format(valB)}</span>
                 </div>
               </div>
             </div>
@@ -939,8 +936,8 @@ export default function AnalyticsPage() {
         )}
 
         {/* KPI balk */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-5">
-          <div className="bg-gradient-to-br from-autronis-accent/10 to-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5">
+          <div className="bg-gradient-to-br from-autronis-accent/10 to-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 card-glow">
             <div className="p-2.5 bg-autronis-accent/10 rounded-xl w-fit mb-3">
               <Euro className="w-5 h-5 text-autronis-accent" />
             </div>
@@ -952,7 +949,7 @@ export default function AnalyticsPage() {
 
           <div
             className={cn(
-              "border border-autronis-border rounded-2xl p-6 card-glow",
+              "border border-autronis-border rounded-2xl p-4 sm:p-6 card-glow",
               omzetGroei >= 0 ? "bg-gradient-to-br from-green-500/10 to-autronis-card" : "bg-gradient-to-br from-red-500/10 to-autronis-card"
             )}
           >
@@ -967,7 +964,7 @@ export default function AnalyticsPage() {
             <p className="text-sm text-autronis-text-secondary mt-1 uppercase tracking-wide">vs {jaar - 1}</p>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-500/10 to-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
+          <div className="bg-gradient-to-br from-blue-500/10 to-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 card-glow">
             <div className="p-2.5 bg-blue-500/10 rounded-xl w-fit mb-3">
               <Clock className="w-5 h-5 text-blue-400" />
             </div>
@@ -977,7 +974,7 @@ export default function AnalyticsPage() {
             <p className="text-sm text-autronis-text-secondary mt-1 uppercase tracking-wide">Uren {jaar}</p>
           </div>
 
-          <div className="bg-gradient-to-br from-yellow-500/10 to-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
+          <div className="bg-gradient-to-br from-yellow-500/10 to-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 card-glow">
             <div className="p-2.5 bg-yellow-500/10 rounded-xl w-fit mb-3">
               <Euro className="w-5 h-5 text-yellow-400" />
             </div>
@@ -987,7 +984,7 @@ export default function AnalyticsPage() {
             <p className="text-sm text-autronis-text-secondary mt-1 uppercase tracking-wide">Gem. tarief</p>
           </div>
 
-          <div className="bg-gradient-to-br from-purple-500/10 to-autronis-card border border-autronis-border rounded-2xl p-6 card-glow">
+          <div className="bg-gradient-to-br from-purple-500/10 to-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 card-glow">
             <div className="p-2.5 bg-purple-500/10 rounded-xl w-fit mb-3">
               <Users className="w-5 h-5 text-purple-400" />
             </div>
@@ -1002,17 +999,18 @@ export default function AnalyticsPage() {
         {decisionData && <EfficiencySectie eff={decisionData.efficiency} />}
 
         {/* Omzet chart with target line and forecast */}
-        <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
-          <div className="flex items-center gap-3 mb-6">
-            <BarChart3 className="w-5 h-5 text-autronis-accent" />
-            <h2 className="text-lg font-semibold text-autronis-text-primary">Omzet per maand</h2>
-            <div className="flex items-center gap-4 ml-auto text-[10px] text-autronis-text-secondary">
+        <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-6">
+            <BarChart3 className="w-5 h-5 text-autronis-accent flex-shrink-0" />
+            <h2 className="text-base sm:text-base sm:text-lg font-semibold text-autronis-text-primary">Omzet per maand</h2>
+            <div className="flex items-center gap-2 sm:gap-4 ml-auto text-[10px] text-autronis-text-secondary flex-wrap justify-end">
               <span className="flex items-center gap-1.5"><div className="w-6 h-0.5 bg-autronis-accent/40" /> Werkelijk</span>
               <span className="flex items-center gap-1.5"><div className="w-6 h-0.5 border-t border-dashed border-autronis-accent/60" /> Forecast</span>
               <span className="flex items-center gap-1.5"><div className="w-6 h-0.5 border-t border-dashed border-red-400" /> Doel</span>
             </div>
           </div>
-          <div className="relative">
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+          <div className="relative min-w-[320px]">
             <div
               className="absolute left-0 right-0 border-t border-dashed border-red-400/60 z-10 pointer-events-none"
               style={{ bottom: `${(TARGET_OMZET / chartMax) * 100}%` }}
@@ -1054,6 +1052,7 @@ export default function AnalyticsPage() {
               })}
             </div>
           </div>
+          </div>
         </div>
 
         {/* === FORECAST UPGRADED + PIPELINE (NEW) === */}
@@ -1069,10 +1068,10 @@ export default function AnalyticsPage() {
 
         {/* Omzet per klant + Client dependency */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+          <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
             <div className="flex items-center gap-3 mb-6">
               <PieChart className="w-5 h-5 text-autronis-accent" />
-              <h2 className="text-lg font-semibold text-autronis-text-primary">Omzet per klant</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Omzet per klant</h2>
             </div>
             <DonutChart segments={omzetPerKlant} />
           </div>
@@ -1091,10 +1090,10 @@ export default function AnalyticsPage() {
         <TijdsbestedingSectie topProjecten={data.topProjecten} heatmapData={heatmapData ?? []} />
 
         {/* Per medewerker */}
-        <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+        <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
           <div className="flex items-center gap-3 mb-6">
             <PieChart className="w-5 h-5 text-purple-400" />
-            <h2 className="text-lg font-semibold text-autronis-text-primary">Per medewerker</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Per medewerker</h2>
           </div>
           {data.perGebruiker.length === 0 ? (
             <p className="text-sm text-autronis-text-secondary">Geen data beschikbaar.</p>
@@ -1129,10 +1128,10 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Activiteit heatmap */}
-        <div className="bg-autronis-card border border-autronis-border rounded-2xl p-6 lg:p-7">
+        <div className="bg-autronis-card border border-autronis-border rounded-2xl p-4 sm:p-6 lg:p-7">
           <div className="flex items-center gap-3 mb-6">
             <Flame className="w-5 h-5 text-orange-400" />
-            <h2 className="text-lg font-semibold text-autronis-text-primary">Activiteit</h2>
+            <h2 className="text-base sm:text-lg font-semibold text-autronis-text-primary">Activiteit</h2>
             <span className="text-xs text-autronis-text-secondary ml-auto">laatste 365 dagen</span>
           </div>
           <div className="overflow-x-auto">

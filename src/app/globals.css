@@ -212,3 +212,7 @@ body {
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
+
+.env-safe-top {
+  padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+}

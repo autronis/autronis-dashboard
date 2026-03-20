@@ -16,13 +16,12 @@ export async function GET(req: NextRequest) {
       .select()
       .from(belastingAuditLog);
 
-    const logs = (entiteitType
+    const logs = await (entiteitType
       ? query.where(eq(belastingAuditLog.entiteitType, entiteitType))
       : query
     )
       .orderBy(sql`${belastingAuditLog.aangemaaktOp} DESC`)
-      .limit(limiet)
-      .all();
+      .limit(limiet);
 
     return NextResponse.json({ logs });
   } catch (error) {
@@ -62,8 +61,7 @@ export async function POST(req: NextRequest) {
         entiteitId,
         details: typeof details === "string" ? details : JSON.stringify(details),
       })
-      .returning()
-      .all();
+      .returning();
 
     return NextResponse.json({ log: result[0] }, { status: 201 });
   } catch (error) {

@@ -49,7 +49,7 @@ export async function PUT(
       .set(updateData)
       .where(eq(btwAangiftes.id, aangifteId))
       .returning()
-      .all();
+      ;
 
     return NextResponse.json({ aangifte: bijgewerkt });
   } catch (error) {

@@ -58,7 +58,7 @@ export function Header({ gebruiker }: HeaderProps) {
   return (
     <header
       className={cn(
-        "fixed top-0 right-0 z-10 h-16 bg-autronis-card border-b border-autronis-border transition-all duration-300",
+        "fixed top-0 right-0 z-10 bg-autronis-card border-b border-autronis-border transition-all duration-300 h-[calc(4rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)]",
         "left-0 lg:left-64",
         isCollapsed && "lg:left-16"
       )}

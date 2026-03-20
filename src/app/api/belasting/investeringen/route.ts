@@ -28,7 +28,7 @@ export async function GET() {
       .select()
       .from(investeringen)
       .orderBy(sql`${investeringen.datum} DESC`)
-      .all();
+      ;
 
     const enriched = alleInvesteringen.map((inv) => ({
       ...inv,
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
         aangemaaktDoor: gebruiker.id,
       })
       .returning()
-      .all();
+      ;
 
     // Audit log
     await db.insert(belastingAuditLog).values({

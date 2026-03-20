@@ -63,7 +63,7 @@ export function AppShell({ gebruiker, children }: AppShellProps) {
       <ToastContainer />
       <main
         className={cn(
-          "relative z-[1] pt-16 transition-all duration-300",
+          "relative z-[1] transition-all duration-300 env-safe-top",
           "pl-0 lg:pl-64",
           isCollapsed && "lg:pl-16",
           "pb-20 md:pb-6"

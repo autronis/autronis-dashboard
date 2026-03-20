@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       .from(voorlopigeAanslagen)
       .where(eq(voorlopigeAanslagen.jaar, jaar))
       .orderBy(sql`${voorlopigeAanslagen.vervaldatum} ASC`)
-      .all();
+      ;
 
     const totaalBedrag = aanslagen.reduce((sum, a) => sum + a.bedrag, 0);
     const totaalBetaald = aanslagen.reduce((sum, a) => sum + (a.betaaldBedrag ?? 0), 0);
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         notities,
       })
       .returning()
-      .all();
+      ;
 
     await db.insert(belastingAuditLog).values({
       gebruikerId: gebruiker.id,

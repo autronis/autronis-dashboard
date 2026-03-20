@@ -18,7 +18,7 @@ export async function POST() {
         .select()
         .from(belastingDeadlines)
         .where(eq(belastingDeadlines.jaar, jaar))
-        .all();
+        ;
 
       if (bestaandeDeadlines.length === 0) {
         const deadlinesToCreate: {
@@ -111,7 +111,7 @@ export async function POST() {
         .select()
         .from(btwAangiftes)
         .where(eq(btwAangiftes.jaar, jaar))
-        .all();
+        ;
 
       if (bestaandeAangiftes.length === 0) {
         for (let kwartaal = 1; kwartaal <= 4; kwartaal++) {

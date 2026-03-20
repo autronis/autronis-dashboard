@@ -45,7 +45,7 @@ export async function PUT(
       .set(updateData)
       .where(eq(belastingDeadlines.id, deadlineId))
       .returning()
-      .all();
+      ;
 
     return NextResponse.json({ deadline: bijgewerkt });
   } catch (error) {

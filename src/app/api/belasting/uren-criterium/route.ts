@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
           behaaldUren: 0,
         })
         .returning()
-        .all();
+        ;
       record = nieuw;
     }
 
@@ -113,7 +113,7 @@ export async function PUT(req: NextRequest) {
         .set({ doelUren: body.doelUren })
         .where(eq(urenCriterium.id, bestaand.id))
         .returning()
-        .all();
+        ;
       return NextResponse.json({ urenCriterium: bijgewerkt });
     } else {
       const [nieuw] = await db
@@ -124,7 +124,7 @@ export async function PUT(req: NextRequest) {
           doelUren: body.doelUren,
         })
         .returning()
-        .all();
+        ;
       return NextResponse.json({ urenCriterium: nieuw }, { status: 201 });
     }
   } catch (error) {

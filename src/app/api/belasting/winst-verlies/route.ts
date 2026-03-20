@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
         )
       )
       .groupBy(uitgaven.categorie)
-      .all();
+      ;
 
     const kostenPerCategorie: KostenPerCategorie = {};
     let totaleKosten = 0;
@@ -132,7 +132,7 @@ export async function GET(req: NextRequest) {
     const alleInvesteringen = await db
       .select()
       .from(investeringen)
-      .all();
+      ;
 
     let totaleAfschrijvingen = 0;
     for (const inv of alleInvesteringen) {

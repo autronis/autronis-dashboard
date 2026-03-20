@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { DocumentList } from "@/components/documenten/document-list";
 import { DocumentModal } from "@/components/documenten/document-modal";
-import { Plus, Trash2, FolderSync } from "lucide-react";
+import { Plus, Trash2, FolderSync, FileText, DollarSign, Phone, BookOpen, BarChart2, ClipboardList, StickyNote, AlertTriangle, type LucideIcon } from "lucide-react";
 import { AiDocumentButton, AiDocumentPanel } from "@/components/documenten/ai-document-creator";
 import { cn } from "@/lib/utils";
 import type { DocumentType } from "@/types/documenten";
@@ -14,15 +14,15 @@ import { PageTransition } from "@/components/ui/page-transition";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
-const SNELLE_TYPES: { subtype: DocumentSubtype; notionType: DocumentType }[] = [
-  { subtype: "contract", notionType: "contract" },
-  { subtype: "offerte", notionType: "klantdocument" },
-  { subtype: "meeting-notities", notionType: "notitie" },
-  { subtype: "handleiding", notionType: "intern" },
-  { subtype: "rapport", notionType: "klantdocument" },
-  { subtype: "plan", notionType: "plan" },
-  { subtype: "notitie", notionType: "notitie" },
-  { subtype: "belangrijk", notionType: "belangrijke-info" },
+const SNELLE_TYPES: { subtype: DocumentSubtype; notionType: DocumentType; icon: LucideIcon }[] = [
+  { subtype: "contract", notionType: "contract", icon: FileText },
+  { subtype: "offerte", notionType: "klantdocument", icon: DollarSign },
+  { subtype: "meeting-notities", notionType: "notitie", icon: Phone },
+  { subtype: "handleiding", notionType: "intern", icon: BookOpen },
+  { subtype: "rapport", notionType: "klantdocument", icon: BarChart2 },
+  { subtype: "plan", notionType: "plan", icon: ClipboardList },
+  { subtype: "notitie", notionType: "notitie", icon: StickyNote },
+  { subtype: "belangrijk", notionType: "belangrijke-info", icon: AlertTriangle },
 ];
 
 export default function DocumentenPage() {
@@ -95,20 +95,21 @@ export default function DocumentenPage() {
 
   return (
     <PageTransition>
-    <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-3 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-4 sm:space-y-6">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Documenten</h1>
-          <p className="text-sm text-autronis-text-secondary mt-1">Alle documenten in Notion</p>
+          <h1 className="text-xl sm:text-3xl font-bold text-white tracking-tight">Documenten</h1>
+          <p className="text-xs sm:text-sm text-autronis-text-secondary mt-1">Alle documenten in Notion</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <AiDocumentButton onClick={() => setAiPanelOpen(!aiPanelOpen)} />
           <button
             onClick={() => openModal()}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-autronis-accent text-autronis-bg text-sm font-semibold hover:bg-autronis-accent-hover transition-colors shadow-lg shadow-autronis-accent/20 btn-press"
+            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-autronis-accent text-autronis-bg text-xs sm:text-sm font-semibold hover:bg-autronis-accent-hover transition-colors shadow-lg shadow-autronis-accent/20 btn-press"
           >
-            <Plus className="w-4 h-4" />
-            Nieuw document
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="hidden sm:inline">Nieuw document</span>
+            <span className="sm:hidden">Nieuw</span>
           </button>
         </div>
       </div>
@@ -118,19 +119,19 @@ export default function DocumentenPage() {
 
       {/* Snel aanmaken type knoppen */}
       <div className="flex flex-wrap gap-2">
-        {SNELLE_TYPES.map(({ subtype, notionType }) => {
+        {SNELLE_TYPES.map(({ subtype, notionType, icon: Icon }) => {
           const config = DOCUMENT_SUBTYPE_CONFIG[subtype];
           return (
             <button
               key={subtype}
               onClick={() => openModal(notionType)}
               className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors border",
+                "inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs font-medium transition-colors border",
                 "border-autronis-border hover:border-autronis-accent/30",
                 config.bgClass, config.textClass
               )}
             >
-              <span>{config.emoji}</span>
+              <Icon className="w-3.5 h-3.5 flex-shrink-0" />
               {config.label}
             </button>
           );
@@ -138,7 +139,7 @@ export default function DocumentenPage() {
       </div>
 
       {/* Beheer acties */}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={handleCleanup}
           disabled={cleanupLoading}

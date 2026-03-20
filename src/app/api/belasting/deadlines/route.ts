@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       .from(belastingDeadlines)
       .where(eq(belastingDeadlines.jaar, jaar))
       .orderBy(belastingDeadlines.datum)
-      .all();
+      ;
 
     return NextResponse.json({ deadlines });
   } catch (error) {
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       .select()
       .from(belastingDeadlines)
       .where(eq(belastingDeadlines.jaar, jaar))
-      .all();
+      ;
 
     if (bestaande.length > 0) {
       return NextResponse.json(
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
       .from(belastingDeadlines)
       .where(eq(belastingDeadlines.jaar, jaar))
       .orderBy(belastingDeadlines.datum)
-      .all();
+      ;
 
     return NextResponse.json({ deadlines }, { status: 201 });
   } catch (error) {
