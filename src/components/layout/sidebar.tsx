@@ -266,7 +266,7 @@ export function Sidebar() {
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between px-4 h-16 border-b border-white/[0.06] flex-shrink-0">
+        <div className="flex items-center justify-between px-4 h-16 border-b border-white/[0.06] flex-shrink-0 pt-[env(safe-area-inset-top)]">
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
             <Image src="/logo.png" alt="Autronis" width={34} height={34} className="h-8 w-auto" priority />
             {!isCollapsed && (

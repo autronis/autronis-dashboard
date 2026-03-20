@@ -103,12 +103,12 @@ export default function OutreachPage() {
         )}
 
         {/* Filters */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {["alle", "actief", "draft", "gepauzeerd", "gestopt", "voltooid"].map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                 statusFilter === s
                   ? "bg-[var(--accent)] text-white"
                   : "bg-[var(--card)] text-[var(--text-secondary)] hover:bg-[var(--card-hover)]"

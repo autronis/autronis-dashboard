@@ -6,6 +6,7 @@ import {
   klanten,
   tijdregistraties,
   taken,
+  screenTimeEntries,
 } from "@/lib/db/schema";
 import { requireAuth } from "@/lib/auth";
 import { eq, and, gte, lte, sql, isNull, ne, desc } from "drizzle-orm";
@@ -70,8 +71,8 @@ export async function GET() {
       return sum + ((r.duurMinuten || 0) / 60) * (r.uurtarief || 0);
     }, 0);
 
-    // Uren deze week - eigen (tijdregistraties)
-    const [eigenUren] = await db
+    // Uren deze week - eigen (tijdregistraties, afgerond)
+    const [eigenUrenTijdreg] = await db
       .select({ totaal: sql<number>`coalesce(sum(${tijdregistraties.duurMinuten}), 0)` })
       .from(tijdregistraties)
       .where(
@@ -82,6 +83,24 @@ export async function GET() {
           sql`${tijdregistraties.eindTijd} IS NOT NULL`
         )
       );
+
+    // Uren deze week - eigen (screen time, productief)
+    const [eigenUrenScreen] = await db
+      .select({ totaal: sql<number>`coalesce(sum(${screenTimeEntries.duurSeconden}), 0)` })
+      .from(screenTimeEntries)
+      .where(
+        and(
+          eq(screenTimeEntries.gebruikerId, gebruiker.id),
+          gte(screenTimeEntries.startTijd, week.van),
+          lte(screenTimeEntries.startTijd, week.tot),
+          sql`${screenTimeEntries.categorie} NOT IN ('inactief', 'afleiding')`
+        )
+      );
+
+    // Neem de hoogste van tijdregistraties vs screen time (voorkom dubbeltelling)
+    const eigenTijdregMin = eigenUrenTijdreg?.totaal || 0;
+    const eigenScreenMin = Math.round((eigenUrenScreen?.totaal || 0) / 60);
+    const eigenUrenTotaal = Math.max(eigenTijdregMin, eigenScreenMin);
 
     // Uren deze week - teamgenoot
     let teamgenootUren = 0;
@@ -270,8 +289,8 @@ export async function GET() {
       kpis: {
         omzetDezeMaand: Math.round(omzetDezeMaand * 100) / 100,
         urenDezeWeek: {
-          totaal: (eigenUren?.totaal || 0) + teamgenootUren,
-          eigen: eigenUren?.totaal || 0,
+          totaal: eigenUrenTotaal + teamgenootUren,
+          eigen: eigenUrenTotaal,
           teamgenoot: teamgenootUren,
         },
         actieveProjecten: actieveProjectenCount?.count || 0,
