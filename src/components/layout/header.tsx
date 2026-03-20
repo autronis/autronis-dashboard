@@ -74,7 +74,7 @@ export function Header({ gebruiker }: HeaderProps) {
             <Menu className="w-5 h-5" />
           </button>
           <Link href="/">
-            <Image src="/icon.png" alt="Autronis" width={28} height={28} className="h-7 w-7 object-contain" priority />
+            <Image src="/icon.png" alt="Autronis" width={36} height={36} className="h-9 w-9 object-contain" priority />
           </Link>
         </div>
 
