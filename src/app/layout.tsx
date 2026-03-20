@@ -14,8 +14,8 @@ export const metadata: Metadata = {
   description: "Autronis bedrijfsbeheer dashboard",
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo-dashboard.png",
-    apple: "/logo-dashboard.png",
+    icon: "/favicon.png",
+    apple: "/favicon.png",
   },
   appleWebApp: {
     capable: true,
