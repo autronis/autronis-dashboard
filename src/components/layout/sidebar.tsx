@@ -285,7 +285,7 @@ export function Sidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5 scrollbar-thin">
+        <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5 scrollbar-thin pb-[env(safe-area-inset-bottom,16px)]">
           {navSections.map((entry, idx) => {
             if ("section" in entry) {
               return (
@@ -304,9 +304,9 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* Keyboard shortcut hint */}
+        {/* Keyboard shortcut hint (desktop only) */}
         {!isCollapsed && (
-          <div className="border-t border-white/[0.06] p-3">
+          <div className="hidden lg:block border-t border-white/[0.06] p-3">
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] text-autronis-text-secondary/40">
               <span className="text-[10px]">⌘K zoeken</span>
             </div>
