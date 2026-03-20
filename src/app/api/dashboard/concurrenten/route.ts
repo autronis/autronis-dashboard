@@ -20,7 +20,7 @@ export async function GET() {
         gte(concurrentScans.aangemaaktOp, weekGeledenStr)
       ))
       .orderBy(desc(concurrentScans.aangemaaktOp))
-      .all();
+;
 
     let wijzigingenDezeWeek = 0;
     const highlights: Array<{ concurrentNaam: string; tekst: string; type: "waarschuwing" | "kans" }> = [];

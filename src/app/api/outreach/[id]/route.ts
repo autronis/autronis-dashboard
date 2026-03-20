@@ -28,15 +28,15 @@ export async function GET(
     }
 
     const lead = sequentie.leadId
-      ? db.select().from(leads).where(eq(leads.id, sequentie.leadId)).get()
+      ? await db.select().from(leads).where(eq(leads.id, sequentie.leadId)).get()
       : null;
 
     const domein = sequentie.domeinId
-      ? db.select().from(outreachDomeinen).where(eq(outreachDomeinen.id, sequentie.domeinId)).get()
+      ? await db.select().from(outreachDomeinen).where(eq(outreachDomeinen.id, sequentie.domeinId)).get()
       : null;
 
     const scan = sequentie.scanId
-      ? db.select().from(salesEngineScans).where(eq(salesEngineScans.id, sequentie.scanId)).get()
+      ? await db.select().from(salesEngineScans).where(eq(salesEngineScans.id, sequentie.scanId)).get()
       : null;
 
     const emails = await db

@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     const lead = scan.leadId
-      ? db.select().from(leads).where(eq(leads.id, scan.leadId)).get()
+      ? await db.select().from(leads).where(eq(leads.id, scan.leadId)).get()
       : null;
 
     if (!lead?.email) {

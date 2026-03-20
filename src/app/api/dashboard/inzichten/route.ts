@@ -56,7 +56,7 @@ export async function GET() {
           lt(facturen.vervaldatum, vandaag)
         )
       )
-      .all();
+;
 
     if (teLateFact.length > 0) {
       const totaal = teLateFact.reduce((s, f) => s + (f.bedrag ?? 0), 0);
@@ -89,7 +89,7 @@ export async function GET() {
           lte(facturen.vervaldatum, datumISO(drieDAgen))
         )
       )
-      .all();
+;
 
     if (bijnaVerlopen.length > 0) {
       inzichten.push({
@@ -118,7 +118,7 @@ export async function GET() {
           lt(leads.bijgewerktOp, eenWeekGeleden.toISOString())
         )
       )
-      .all();
+;
 
     if (verwaarloosdeLeads.length > 0) {
       inzichten.push({
@@ -168,17 +168,17 @@ export async function GET() {
       .where(
         and(eq(projecten.status, "actief"), eq(projecten.isActief, 1))
       )
-      .all();
+;
 
-    const projectenMetUren = await db
+    const projectenMetUrenRaw = await db
       .select({
         projectId: tijdregistraties.projectId,
       })
       .from(tijdregistraties)
       .where(gte(tijdregistraties.startTijd, eenWeekGeleden.toISOString()))
-      .groupBy(tijdregistraties.projectId)
-      .all()
-      .map((r) => r.projectId);
+      .groupBy(tijdregistraties.projectId);
+
+    const projectenMetUren = projectenMetUrenRaw.map((r) => r.projectId);
 
     const stilleProjecten = actieveProjectenLijst.filter(
       (p) => !projectenMetUren.includes(p.id)
@@ -264,7 +264,7 @@ export async function GET() {
           lt(facturen.aangemaaktOp, eenWeekGeleden.toISOString())
         )
       )
-      .all();
+;
 
     if (oudeConcepten.length > 0) {
       inzichten.push({
@@ -294,7 +294,7 @@ export async function GET() {
       )
       .orderBy(desc(leads.waarde))
       .limit(3)
-      .all();
+;
 
     if (waardevollLeads.length > 0) {
       const totaal = waardevollLeads.reduce((s, l) => s + (l.waarde ?? 0), 0);

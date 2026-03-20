@@ -359,16 +359,16 @@ async function syncProjectToNotion(): Promise<string> {
 
   // Collect stats
   const cnt = (r: { count: number } | undefined) => r?.count ?? 0;
-  const aantalKlanten = cnt(db.select({ count: sql<number>`COUNT(*)` }).from(klanten).where(eq(klanten.isActief, 1)).get());
-  const aantalProjecten = cnt(db.select({ count: sql<number>`COUNT(*)` }).from(projecten).where(eq(projecten.isActief, 1)).get());
-  const aantalFacturen = cnt(db.select({ count: sql<number>`COUNT(*)` }).from(facturen).where(eq(facturen.isActief, 1)).get());
-  const aantalIdeeen = cnt(db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).get());
-  const aantalIdeeenGebouwd = cnt(db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).where(eq(ideeen.status, "gebouwd")).get());
-  const aantalIdeeenActief = cnt(db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).where(eq(ideeen.status, "actief")).get());
-  const aantalTaken = cnt(db.select({ count: sql<number>`COUNT(*)` }).from(taken).get());
-  const aantalMeetings = cnt(db.select({ count: sql<number>`COUNT(*)` }).from(meetings).get());
-  const aantalRadarItems = cnt(db.select({ count: sql<number>`COUNT(*)` }).from(radarItems).get());
-  const aantalLeads = cnt(db.select({ count: sql<number>`COUNT(*)` }).from(leads).where(eq(leads.isActief, 1)).get());
+  const aantalKlanten = cnt(await db.select({ count: sql<number>`COUNT(*)` }).from(klanten).where(eq(klanten.isActief, 1)).get());
+  const aantalProjecten = cnt(await db.select({ count: sql<number>`COUNT(*)` }).from(projecten).where(eq(projecten.isActief, 1)).get());
+  const aantalFacturen = cnt(await db.select({ count: sql<number>`COUNT(*)` }).from(facturen).where(eq(facturen.isActief, 1)).get());
+  const aantalIdeeen = cnt(await db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).get());
+  const aantalIdeeenGebouwd = cnt(await db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).where(eq(ideeen.status, "gebouwd")).get());
+  const aantalIdeeenActief = cnt(await db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).where(eq(ideeen.status, "actief")).get());
+  const aantalTaken = cnt(await db.select({ count: sql<number>`COUNT(*)` }).from(taken).get());
+  const aantalMeetings = cnt(await db.select({ count: sql<number>`COUNT(*)` }).from(meetings).get());
+  const aantalRadarItems = cnt(await db.select({ count: sql<number>`COUNT(*)` }).from(radarItems).get());
+  const aantalLeads = cnt(await db.select({ count: sql<number>`COUNT(*)` }).from(leads).where(eq(leads.isActief, 1)).get());
 
   // Git commits
   let recentCommits: string[] = [];

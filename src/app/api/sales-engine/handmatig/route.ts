@@ -56,8 +56,8 @@ export async function POST(req: NextRequest) {
 
     // Match or create lead
     let existingLead = body.email
-      ? db.select({ id: leads.id }).from(leads).where(eq(leads.email, body.email)).get()
-      : db.select({ id: leads.id }).from(leads).where(eq(leads.bedrijfsnaam, body.bedrijfsnaam)).get();
+      ? await db.select({ id: leads.id }).from(leads).where(eq(leads.email, body.email)).get()
+      : await db.select({ id: leads.id }).from(leads).where(eq(leads.bedrijfsnaam, body.bedrijfsnaam)).get();
 
     if (existingLead) {
       await db.update(leads)

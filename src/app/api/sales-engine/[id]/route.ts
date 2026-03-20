@@ -28,7 +28,7 @@ export async function GET(
     }
 
     const lead = scan.leadId
-      ? db.select().from(leads).where(eq(leads.id, scan.leadId)).get()
+      ? await db.select().from(leads).where(eq(leads.id, scan.leadId)).get()
       : null;
 
     const kansen = await db

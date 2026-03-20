@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
         .all();
 
       const domein = seq.domeinId
-        ? db.select().from(outreachDomeinen).where(eq(outreachDomeinen.id, seq.domeinId)).get()
+        ? await db.select().from(outreachDomeinen).where(eq(outreachDomeinen.id, seq.domeinId)).get()
         : null;
 
       return {

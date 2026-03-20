@@ -151,7 +151,7 @@ export async function POST() {
         )
       )
       .orderBy(asc(agendaItems.startDatum))
-      .all();
+;
 
     const briefingAgenda: BriefingAgendaItem[] = agendaVandaag.map((a) => ({
       titel: a.titel,
@@ -181,7 +181,7 @@ export async function POST() {
       )
       .orderBy(prioriteitVolgorde)
       .limit(5)
-      .all();
+;
 
     const briefingTaken: BriefingTaak[] = topTaken.map((t) => ({
       id: t.id,
@@ -208,7 +208,7 @@ export async function POST() {
         )
       )
       .orderBy(desc(projecten.deadline))
-      .all();
+;
 
     const briefingProjecten: BriefingProject[] = actieveProjecten.map((p) => ({
       naam: p.naam,
@@ -234,7 +234,7 @@ export async function POST() {
         )
       )
       .limit(5)
-      .all();
+;
 
     const briefingQuickWins: BriefingQuickWin[] = quickWinTaken.map((q) => ({
       id: q.id,
@@ -286,7 +286,7 @@ export async function POST() {
       .where(
         and(eq(gewoontes.gebruikerId, gebruiker.id), eq(gewoontes.isActief, 1))
       )
-      .all();
+;
 
     const vandaagLogs = await db
       .select()
@@ -297,21 +297,21 @@ export async function POST() {
           eq(gewoonteLogboek.datum, datum)
         )
       )
-      .all();
+;
 
     const gewoonteVoltooid = vandaagLogs.filter((l) => l.voltooid === 1).length;
     const gewoonteTotaal = actieveGewoontes.length;
 
     // 8. Belasting deadlines komende 30 dagen
-    const alleBelastingDeadlines = await db
+    const alleBelastingDeadlinesRaw = await db
       .select()
       .from(belastingDeadlines)
-      .where(eq(belastingDeadlines.afgerond, 0))
-      .all()
-      .filter(d => {
-        const dagen = Math.ceil((new Date(d.datum).getTime() - new Date().getTime()) / 86400000);
-        return dagen <= 30 && dagen >= -7;
-      });
+      .where(eq(belastingDeadlines.afgerond, 0));
+
+    const alleBelastingDeadlines = alleBelastingDeadlinesRaw.filter(d => {
+      const dagen = Math.ceil((new Date(d.datum).getTime() - new Date().getTime()) / 86400000);
+      return dagen <= 30 && dagen >= -7;
+    });
 
     // 9. Concurrent updates afgelopen week
     const weekGeleden = new Date();
@@ -329,7 +329,7 @@ export async function POST() {
         eq(concurrentScans.status, "voltooid"),
         gte(concurrentScans.aangemaaktOp, weekGeleden.toISOString())
       ))
-      .all();
+;
 
     // 10. Learning Radar — top item van vandaag/gisteren
     const radarTopItems = await db
@@ -344,7 +344,7 @@ export async function POST() {
       .where(gte(radarItems.score, 7))
       .orderBy(desc(radarItems.gepubliceerdOp))
       .limit(3)
-      .all();
+;
 
     // ============ AI Samenvatting ============
 

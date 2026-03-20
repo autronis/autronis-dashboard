@@ -120,38 +120,38 @@ interface DashboardStats {
   aantalDbTabellen: number;
 }
 
-function collectStats(): DashboardStats {
+async function collectStats(): Promise<DashboardStats> {
   const count = (result: { count: number } | undefined) => result?.count ?? 0;
 
   const aantalKlanten = count(
-    db.select({ count: sql<number>`COUNT(*)` }).from(klanten).where(eq(klanten.isActief, 1)).get()
+    await db.select({ count: sql<number>`COUNT(*)` }).from(klanten).where(eq(klanten.isActief, 1)).get()
   );
   const aantalProjecten = count(
-    db.select({ count: sql<number>`COUNT(*)` }).from(projecten).where(eq(projecten.isActief, 1)).get()
+    await db.select({ count: sql<number>`COUNT(*)` }).from(projecten).where(eq(projecten.isActief, 1)).get()
   );
   const aantalFacturen = count(
-    db.select({ count: sql<number>`COUNT(*)` }).from(facturen).where(eq(facturen.isActief, 1)).get()
+    await db.select({ count: sql<number>`COUNT(*)` }).from(facturen).where(eq(facturen.isActief, 1)).get()
   );
   const aantalIdeeen = count(
-    db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).get()
+    await db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).get()
   );
   const aantalIdeeenGebouwd = count(
-    db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).where(eq(ideeen.status, "gebouwd")).get()
+    await db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).where(eq(ideeen.status, "gebouwd")).get()
   );
   const aantalIdeeenActief = count(
-    db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).where(eq(ideeen.status, "actief")).get()
+    await db.select({ count: sql<number>`COUNT(*)` }).from(ideeen).where(eq(ideeen.status, "actief")).get()
   );
   const aantalTaken = count(
-    db.select({ count: sql<number>`COUNT(*)` }).from(taken).get()
+    await db.select({ count: sql<number>`COUNT(*)` }).from(taken).get()
   );
   const aantalMeetings = count(
-    db.select({ count: sql<number>`COUNT(*)` }).from(meetings).get()
+    await db.select({ count: sql<number>`COUNT(*)` }).from(meetings).get()
   );
   const aantalRadarItems = count(
-    db.select({ count: sql<number>`COUNT(*)` }).from(radarItems).get()
+    await db.select({ count: sql<number>`COUNT(*)` }).from(radarItems).get()
   );
   const aantalLeads = count(
-    db.select({ count: sql<number>`COUNT(*)` }).from(leads).where(eq(leads.isActief, 1)).get()
+    await db.select({ count: sql<number>`COUNT(*)` }).from(leads).where(eq(leads.isActief, 1)).get()
   );
 
   return {
@@ -354,7 +354,7 @@ export async function POST() {
   try {
     await requireAuth();
 
-    const stats = collectStats();
+    const stats = await collectStats();
     const recentCommits = getRecentCommits();
     const result = await syncToNotion(stats, recentCommits);
 

@@ -154,10 +154,10 @@ export async function POST() {
       nieuweItems++;
     }
 
-    const totaal = await db
+    const totaalResult = await db
       .select({ id: radarItems.id })
-      .from(radarItems)
-      .all().length;
+      .from(radarItems);
+    const totaal = totaalResult.length;
 
     return NextResponse.json({
       nieuw: nieuweItems,
