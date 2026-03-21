@@ -506,6 +506,8 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
     Object.entries(DESK_POSITIONS).forEach(([id, pos]) => {
       const agent = agents.find((a) => a.id === id);
       if (!agent || !agent.huidigeTaak || agent.status === "idle" || agent.status === "offline") return;
+      // Skip management/reviewers — only show lines between builders
+      if (agent.rol === "reviewer" || agent.rol === "manager" || agent.rol === "architect") return;
       const proj = agent.huidigeTaak.project;
       if (!projectGroups[proj]) projectGroups[proj] = [];
       projectGroups[proj].push({ x: pos.x + 14 * S, y: pos.y + 12 * S, id });
