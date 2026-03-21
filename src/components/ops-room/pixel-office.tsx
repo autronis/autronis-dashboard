@@ -603,6 +603,38 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
       }
     });
 
+    // === Project cards (right side) ===
+    const activeProjects = new Map<string, string[]>();
+    agents.forEach((a) => {
+      if (a.huidigeTaak && a.status !== "idle" && a.status !== "offline") {
+        const proj = a.huidigeTaak.project;
+        if (!activeProjects.has(proj)) activeProjects.set(proj, []);
+        activeProjects.get(proj)!.push(a.naam);
+      }
+    });
+    const cardX = CANVAS_W - 160;
+    let cardY = WALL_H + 20;
+    activeProjects.forEach((agentNames, proj) => {
+      const color = getProjectColor(proj);
+      // Card background
+      ctx.fillStyle = "#0a0f14cc";
+      ctx.fillRect(cardX, cardY, 150, 28);
+      // Left color stripe
+      ctx.fillStyle = color;
+      ctx.fillRect(cardX, cardY, 3, 28);
+      // Project name
+      ctx.font = "bold 10px Inter, system-ui, sans-serif";
+      ctx.fillStyle = color;
+      let projName = proj;
+      while (ctx.measureText(projName).width > 110 && projName.length > 3) projName = projName.slice(0, -2) + ".";
+      ctx.fillText(projName, cardX + 8, cardY + 12);
+      // Agent count
+      ctx.font = "9px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "#6b7b8b";
+      ctx.fillText(`${agentNames.length} agent${agentNames.length > 1 ? "s" : ""}`, cardX + 8, cardY + 23);
+      cardY += 32;
+    });
+
     // === Hover tooltip ===
     if (hovered) {
       const ha = positions.get(hovered);

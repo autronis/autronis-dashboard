@@ -731,30 +731,26 @@ export function drawSemDesk(
   ctx.fillStyle = tick % 4 < 2 ? "#555565" : "#444454";
   ctx.fillRect(x + 6 * s, deskY + s, 12 * s, 3 * s);
 
-  // Name — white, same style as other desks
+  // 3-line label: Sem / CEO / → Autronis
   const labelX = x + 2 * s;
   const labelY = y + 27 * s;
-  ctx.font = "bold 14px Inter, system-ui, sans-serif";
-  const semNameW = ctx.measureText("Sem").width;
-  ctx.font = "10px Inter, system-ui, sans-serif";
-  const ceoW = ctx.measureText("CEO").width;
-  // Background
-  ctx.fillStyle = "#0a0f14ee";
-  ctx.fillRect(labelX - 3, labelY - 13, semNameW + ceoW + 18, 17);
-  // Name (white bold)
-  ctx.font = "bold 14px Inter, system-ui, sans-serif";
+  ctx.fillStyle = "#0a0f14dd";
+  ctx.fillRect(labelX - 4, labelY - 14, 100, 42);
+  // Line 1: Name
+  ctx.font = "bold 13px Inter, system-ui, sans-serif";
   ctx.fillStyle = "#ffffff";
   ctx.fillText("Sem", labelX, labelY);
-  // Role tag (grey)
-  ctx.font = "10px Inter, system-ui, sans-serif";
-  ctx.fillStyle = "#8a9ba0";
-  ctx.fillText("CEO", labelX + semNameW + 8, labelY - 1);
-  // Project (italic)
-  ctx.font = "italic 12px Inter, system-ui, sans-serif";
-  ctx.fillStyle = "#0a0f14dd";
-  ctx.fillRect(labelX - 3, labelY + 5, 100, 15);
+  // Line 2: Rol
+  ctx.font = "11px Inter, system-ui, sans-serif";
+  ctx.fillStyle = "#6b7b8b";
+  ctx.fillText("CEO", labelX, labelY + 12);
+  // Line 3: Project
+  ctx.font = "11px Inter, system-ui, sans-serif";
   ctx.fillStyle = "#23C6B7";
-  ctx.fillText("Autronis", labelX, labelY + 17);
+  ctx.fillText("→ Autronis", labelX, labelY + 24);
+  // Status dot
+  ctx.fillStyle = "#4ade80";
+  ctx.beginPath(); ctx.arc(labelX + 90, labelY - 6, 3, 0, Math.PI * 2); ctx.fill();
 
   if (isSelected) {
     ctx.strokeStyle = "#23C6B7";
