@@ -169,8 +169,18 @@ function drawDesk(
 
   // Hover glow effect
   if (isHovered) {
-    ctx.fillStyle = "#23C6B710";
-    ctx.fillRect(x, y - 2 * s, 28 * s, 30 * s);
+    // Glow under desk
+    const hoverGrad = ctx.createRadialGradient(x + 14 * s, deskY + deskH / 2, 0, x + 14 * s, deskY + deskH / 2, 20 * s);
+    hoverGrad.addColorStop(0, "#23C6B715");
+    hoverGrad.addColorStop(1, "#23C6B700");
+    ctx.fillStyle = hoverGrad;
+    ctx.beginPath();
+    ctx.arc(x + 14 * s, deskY + deskH / 2, 20 * s, 0, Math.PI * 2);
+    ctx.fill();
+    // "→ open" hint
+    ctx.font = "9px Inter, system-ui, sans-serif";
+    ctx.fillStyle = "#23C6B760";
+    ctx.fillText("→ open", x + 2 * s, y + 30 * s);
   }
 
   // Shadow under desk
@@ -395,46 +405,75 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
     ctx.imageSmoothingEnabled = false;
     const tick = tickRef.current;
 
-    // === Dark wood floor (horizontal planks) ===
-    ctx.fillStyle = "#1c1814";
+    // === Gradient background (dark → teal) ===
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+    bgGrad.addColorStop(0, "#0a0f1a");
+    bgGrad.addColorStop(1, "#0a1a1f");
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-    const plankH = 12;
-    for (let py = WALL_H; py < CANVAS_H; py += plankH) {
-      // Alternate plank shades
-      const shade = py % (plankH * 2) === 0 ? "#201c16" : "#1e1a14";
-      ctx.fillStyle = shade;
-      ctx.fillRect(0, py, CANVAS_W, plankH);
-      // Plank gap line (very subtle)
-      ctx.fillStyle = "#161210";
-      ctx.fillRect(0, py, CANVAS_W, 1);
-      // Subtle wood grain (tiny horizontal streaks)
-      ctx.fillStyle = "#24201a08";
-      const offset = (py * 7) % 200;
-      ctx.fillRect(offset, py + 3, 80, 1);
-      ctx.fillRect(offset + 300, py + 7, 60, 1);
-      ctx.fillRect(offset + 600, py + 4, 90, 1);
-      ctx.fillRect(offset + 900, py + 8, 70, 1);
-      ctx.fillRect(offset + 1200, py + 5, 50, 1);
+    // Subtle moving grid (matrix/cyber effect)
+    ctx.strokeStyle = "#23C6B706";
+    ctx.lineWidth = 0.5;
+    const gridOffset = (tick * 0.3) % 40;
+    for (let gx = -40; gx < CANVAS_W + 40; gx += 40) {
+      ctx.beginPath(); ctx.moveTo(gx + gridOffset, WALL_H); ctx.lineTo(gx + gridOffset, CANVAS_H); ctx.stroke();
+    }
+    for (let gy = WALL_H; gy < CANVAS_H; gy += 40) {
+      ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(CANVAS_W, gy); ctx.stroke();
     }
 
-    // === Wall (lighter than floor for contrast) ===
-    ctx.fillStyle = "#2a3545";
+    // Dark wood floor planks (on top of gradient)
+    const plankH = 12;
+    for (let py = WALL_H; py < CANVAS_H; py += plankH) {
+      const shade = py % (plankH * 2) === 0 ? "#0e1318" : "#0c1116";
+      ctx.fillStyle = shade;
+      ctx.fillRect(0, py, CANVAS_W, plankH);
+      ctx.fillStyle = "#080c10";
+      ctx.fillRect(0, py, CANVAS_W, 1);
+    }
+
+    // === Ambient particles (floating turquoise dots) ===
+    for (let p = 0; p < 8; p++) {
+      const px = ((tick * 0.3 + p * 187) % CANVAS_W);
+      const py2 = WALL_H + 50 + ((tick * 0.15 + p * 97) % (CANVAS_H - WALL_H - 80));
+      const alpha = 0.03 + Math.sin(tick * 0.1 + p * 2) * 0.02;
+      ctx.fillStyle = `rgba(35, 198, 183, ${alpha})`;
+      ctx.beginPath();
+      ctx.arc(px, py2, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // === Wall ===
+    const wallGrad = ctx.createLinearGradient(0, 0, 0, WALL_H);
+    wallGrad.addColorStop(0, "#1a2535");
+    wallGrad.addColorStop(1, "#2a3a4a");
+    ctx.fillStyle = wallGrad;
     ctx.fillRect(0, 0, CANVAS_W, WALL_H);
     ctx.fillStyle = "#1e2e3e";
-    ctx.fillRect(0, WALL_H, CANVAS_W, 3);
+    ctx.fillRect(0, WALL_H, CANVAS_W, 2);
 
-    // Windows (no light rays)
+    // Windows with city lights (cyberpunk)
     for (let i = 0; i < 7; i++) {
       const wx = 60 + i * 200;
-      ctx.fillStyle = "#4a5a6a";
+      ctx.fillStyle = "#3a4a5a";
       ctx.fillRect(wx, 4, 44, WALL_H - 8);
-      ctx.fillStyle = "#1a3050";
+      // Night sky through window
+      ctx.fillStyle = "#0a1020";
       const pH = (WALL_H - 16) / 2;
       ctx.fillRect(wx + 3, 7, 17, pH);
       ctx.fillRect(wx + 24, 7, 17, pH);
       ctx.fillRect(wx + 3, 7 + pH + 3, 17, pH);
       ctx.fillRect(wx + 24, 7 + pH + 3, 17, pH);
+      // City lights (small colored dots)
+      const cityColors = ["#ef4444", "#f59e0b", "#23C6B7", "#3b82f6", "#ffffff", "#a855f7"];
+      for (let cl = 0; cl < 4; cl++) {
+        const clx = wx + 5 + ((i * 7 + cl * 11) % 34);
+        const cly = 9 + ((cl * 5 + i * 3) % (pH - 4));
+        const clAlpha = 0.3 + Math.sin(tick * 0.2 + i * 3 + cl * 5) * 0.2;
+        ctx.fillStyle = `${cityColors[(i + cl) % cityColors.length]}${Math.round(clAlpha * 255).toString(16).padStart(2, "0")}`;
+        ctx.fillRect(clx, cly, 1.5, 1.5);
+      }
     }
 
     // (geen separator — bedden staan op dezelfde vloer)
@@ -603,36 +642,54 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
       }
     });
 
-    // === Project cards (right side) ===
-    const activeProjects = new Map<string, string[]>();
+    // === Project sidebar (right side) ===
+    const activeProjects = new Map<string, { names: string[]; hasError: boolean }>();
     agents.forEach((a) => {
       if (a.huidigeTaak && a.status !== "idle" && a.status !== "offline") {
         const proj = a.huidigeTaak.project;
-        if (!activeProjects.has(proj)) activeProjects.set(proj, []);
-        activeProjects.get(proj)!.push(a.naam);
+        if (!activeProjects.has(proj)) activeProjects.set(proj, { names: [], hasError: false });
+        const entry = activeProjects.get(proj)!;
+        entry.names.push(a.naam);
+        if (a.status === "error") entry.hasError = true;
       }
     });
-    const cardX = CANVAS_W - 160;
-    let cardY = WALL_H + 20;
-    activeProjects.forEach((agentNames, proj) => {
+    const cardX = CANVAS_W - 170;
+    let cardY = WALL_H + 16;
+    // Header
+    ctx.font = "bold 9px Inter, system-ui, sans-serif";
+    ctx.fillStyle = "#4a5a6a";
+    ctx.fillText("PROJECTEN", cardX + 6, cardY);
+    cardY += 10;
+
+    activeProjects.forEach(({ names, hasError }, proj) => {
       const color = getProjectColor(proj);
-      // Card background
-      ctx.fillStyle = "#0a0f14cc";
-      ctx.fillRect(cardX, cardY, 150, 28);
+      const isHoveredProj = false; // TODO: track hovered project
+
+      // Card
+      ctx.fillStyle = isHoveredProj ? "#0a0f14ee" : "#0a0f14aa";
+      ctx.beginPath();
+      ctx.roundRect(cardX, cardY, 162, 32, 4);
+      ctx.fill();
       // Left color stripe
       ctx.fillStyle = color;
-      ctx.fillRect(cardX, cardY, 3, 28);
+      ctx.fillRect(cardX, cardY + 2, 3, 28);
+      // Status dot (pulsing)
+      const dotAlpha = hasError ? 1 : (0.6 + Math.sin(tick * 0.2 + cardY * 0.1) * 0.4);
+      ctx.fillStyle = hasError ? "#ef4444" : `rgba(74, 222, 128, ${dotAlpha})`;
+      ctx.beginPath();
+      ctx.arc(cardX + 152, cardY + 16, 3.5, 0, Math.PI * 2);
+      ctx.fill();
       // Project name
-      ctx.font = "bold 10px Inter, system-ui, sans-serif";
-      ctx.fillStyle = color;
+      ctx.font = "bold 11px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "#e2e8f0";
       let projName = proj;
-      while (ctx.measureText(projName).width > 110 && projName.length > 3) projName = projName.slice(0, -2) + ".";
-      ctx.fillText(projName, cardX + 8, cardY + 12);
-      // Agent count
+      while (ctx.measureText(projName).width > 120 && projName.length > 3) projName = projName.slice(0, -2) + ".";
+      ctx.fillText(projName, cardX + 10, cardY + 14);
+      // Agent names
       ctx.font = "9px Inter, system-ui, sans-serif";
       ctx.fillStyle = "#6b7b8b";
-      ctx.fillText(`${agentNames.length} agent${agentNames.length > 1 ? "s" : ""}`, cardX + 8, cardY + 23);
-      cardY += 32;
+      ctx.fillText(names.slice(0, 3).join(", ") + (names.length > 3 ? ` +${names.length - 3}` : ""), cardX + 10, cardY + 26);
+      cardY += 36;
     });
 
     // === Hover tooltip ===
