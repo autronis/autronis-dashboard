@@ -57,8 +57,8 @@ const EMPTY_DESKS = [
 
 const DESKS_BOTTOM = BUILDER_START_Y + UNIT_H * 3;
 
-// Command screen — right side, next to desks
-const MEETING = { x: BUILDER_X + UNIT_W * 3 + 30, y: MGMT_Y + 20, w: CANVAS_W - (BUILDER_X + UNIT_W * 3 + 30) - 180, h: 90 };
+// Command screen — right side, prominent
+const MEETING = { x: BUILDER_X + UNIT_W * 3 + 30, y: MGMT_Y + 10, w: CANVAS_W - (BUILDER_X + UNIT_W * 3 + 30) - 180, h: 110 };
 
 // Slaapkamer — tight, just beds
 const COFFEE_Y = DESKS_BOTTOM + 4;
@@ -432,30 +432,32 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
       ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(CANVAS_W, gy); ctx.stroke();
     }
 
-    // Floor with depth: lighting gradient + plank variation
+    // Warm wooden floor (brown/honey tones)
     const plankH = 12;
     for (let py = WALL_H; py < CANVAS_H; py += plankH) {
-      // Depth: floor gets slightly lighter toward bottom (light from above fades)
-      const depthFactor = (py - WALL_H) / (CANVAS_H - WALL_H);
-      const baseR = 12 + depthFactor * 4;
-      const baseG = 16 + depthFactor * 5;
-      const baseB = 22 + depthFactor * 6;
-      // Alternate plank shades with slight random-feel variation
       const plankIdx = Math.floor(py / plankH);
-      const variation = ((plankIdx * 7 + 13) % 5) - 2; // -2 to +2
-      const r = Math.round(baseR + variation);
-      const g = Math.round(baseG + variation);
-      const b = Math.round(baseB + variation);
+      // 3 wood tones: dark oak, medium walnut, honey
+      const tones = [
+        { r: 30, g: 22, b: 14 },  // dark oak
+        { r: 36, g: 26, b: 16 },  // walnut
+        { r: 32, g: 24, b: 15 },  // chestnut
+      ];
+      const tone = tones[plankIdx % 3];
+      // Subtle per-plank variation
+      const v = ((plankIdx * 7 + 13) % 7) - 3;
+      const r = tone.r + v;
+      const g = tone.g + v;
+      const b = tone.b + v;
       ctx.fillStyle = `rgb(${r},${g},${b})`;
       ctx.fillRect(0, py, CANVAS_W, plankH);
-      // Gap line between planks
-      ctx.fillStyle = `rgb(${r - 4},${g - 4},${b - 4})`;
+      // Gap line (darker)
+      ctx.fillStyle = `rgb(${r - 10},${g - 8},${b - 6})`;
       ctx.fillRect(0, py, CANVAS_W, 1);
-      // Subtle grain streaks
-      if (plankIdx % 3 === 0) {
-        ctx.fillStyle = `rgba(255,255,255,0.008)`;
+      // Wood grain (subtle lighter streak)
+      if (plankIdx % 2 === 0) {
+        ctx.fillStyle = `rgba(255,240,220,0.015)`;
         const gx = (plankIdx * 73) % CANVAS_W;
-        ctx.fillRect(gx, py + 4, 60 + (plankIdx % 40), 1);
+        ctx.fillRect(gx, py + 4, 70 + (plankIdx % 50), 1);
       }
     }
 
