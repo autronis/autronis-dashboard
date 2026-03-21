@@ -594,13 +594,18 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
     ];
     kpis.forEach((kpi, ki) => {
       const kx = scrX + fw + ki * kpiSec + kpiSec / 2;
-      ctx.font = "bold 24px Inter, system-ui, sans-serif";
-      ctx.fillStyle = kpi.color;
+      // Value glow
+      ctx.font = "bold 30px Inter, system-ui, sans-serif";
+      ctx.fillStyle = `${kpi.color}30`;
       ctx.textAlign = "center";
-      ctx.fillText(kpi.val, kx, kpiCy + 4);
-      ctx.font = "bold 8px Inter, system-ui, sans-serif";
-      ctx.fillStyle = "#3a4a55";
-      ctx.fillText(kpi.label, kx, kpiCy + 16);
+      ctx.fillText(kpi.val, kx + 1, kpiCy + 6);
+      // Value
+      ctx.fillStyle = kpi.color;
+      ctx.fillText(kpi.val, kx, kpiCy + 5);
+      // Label
+      ctx.font = "bold 9px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "#5a6a7a";
+      ctx.fillText(kpi.label, kx, kpiCy + 20);
     });
     ctx.textAlign = "left";
     // Separator dots between KPIs
