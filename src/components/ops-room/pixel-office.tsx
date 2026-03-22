@@ -201,28 +201,61 @@ function drawDesk(
   ctx.fillRect(x + 3 * s, deskY + deskH + 2 * s, 2 * s, 2 * s);
   ctx.fillRect(x + 23 * s, deskY + deskH + 2 * s, 2 * s, 2 * s);
 
-  // Monitor (on right corner of desk)
+  // Monitor (angled trapezium — top narrower than bottom, screen faces viewer)
   const monW = 8 * s;
   const monH = 6 * s;
   const monX = x + deskW - 4 * s;
   const monY = deskY - monH + 3 * s;
+  const taper = s * 0.8; // how much narrower the top is
+
+  // Frame (trapezium)
   ctx.fillStyle = "#1a1a25";
-  ctx.fillRect(monX, monY, monW, monH);
-  ctx.fillStyle = isOffline ? "#050508" : isActive ? "#0a0e16" : "#060810";
-  ctx.fillRect(monX + s, monY + s, monW - 2 * s, monH - 2 * s);
+  ctx.beginPath();
+  ctx.moveTo(monX + taper, monY);              // top-left (inset)
+  ctx.lineTo(monX + monW - taper, monY);       // top-right (inset)
+  ctx.lineTo(monX + monW, monY + monH);        // bottom-right
+  ctx.lineTo(monX, monY + monH);               // bottom-left
+  ctx.closePath();
+  ctx.fill();
+
+  // Screen (inner trapezium)
+  const si = s * 0.8;
+  const screenClr = isOffline ? "#050508" : isActive ? "#0a0e16" : "#060810";
+  ctx.fillStyle = screenClr;
+  ctx.beginPath();
+  ctx.moveTo(monX + taper + si, monY + si);
+  ctx.lineTo(monX + monW - taper - si, monY + si);
+  ctx.lineTo(monX + monW - si, monY + monH - si);
+  ctx.lineTo(monX + si, monY + monH - si);
+  ctx.closePath();
+  ctx.fill();
+
   if (isActive) {
-    // Screen glow pulse
-    const screenGlow = 0.03 + Math.sin(tick * 0.3 + x * 0.01) * 0.02;
+    // Screen glow (turquoise/blue pulse)
+    const screenGlow = 0.04 + Math.sin(tick * 0.3 + x * 0.01) * 0.025;
     ctx.fillStyle = `rgba(35, 198, 183, ${screenGlow})`;
-    ctx.fillRect(monX + s, monY + s, monW - 2 * s, monH - 2 * s);
-    // Code lines
+    ctx.beginPath();
+    ctx.moveTo(monX + taper + si, monY + si);
+    ctx.lineTo(monX + monW - taper - si, monY + si);
+    ctx.lineTo(monX + monW - si, monY + monH - si);
+    ctx.lineTo(monX + si, monY + monH - si);
+    ctx.closePath();
+    ctx.fill();
+    // Code lines (follow the taper)
     for (let ln = 0; ln < 3; ln++) {
       const lw = 2 + ((tick + ln * 3) % 4);
       const alpha = 0.12 + ((ln * 2 + tick) % 3) * 0.05;
+      const frac = (ln + 1) / 4;
+      const lineInset = taper * (1 - frac);
       ctx.fillStyle = `#ffffff${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
-      ctx.fillRect(monX + 2 * s, monY + (1.5 + ln * 1.5) * s, lw * s, s * 0.5);
+      ctx.fillRect(monX + lineInset + si + s, monY + (1.5 + ln * 1.5) * s, lw * s, s * 0.5);
     }
+    // Glow spill under monitor
+    ctx.fillStyle = `rgba(35, 198, 183, ${screenGlow * 0.5})`;
+    ctx.fillRect(monX, monY + monH, monW, s * 0.5);
   }
+
+  // Stand
   ctx.fillStyle = "#1a1a25";
   ctx.fillRect(monX + 3 * s, monY + monH, 2 * s, s);
 
@@ -242,15 +275,24 @@ function drawDesk(
     ctx.fill();
     ctx.fillStyle = "#3a3a44";
     ctx.fillRect(kbX + 7.4 * s, kbY + s * 0.1, s * 0.3, s * 0.5);
-    // Water bottle (left corner of desk)
+    // Water bottle (left corner of desk, 3D)
     const wbX = x + 3 * s;
-    const wbY = deskY - 1;
-    ctx.fillStyle = "#87ceeb50";
-    ctx.fillRect(wbX, wbY, s * 0.8, s * 2.5);
-    ctx.fillStyle = "#60b8e830";
-    ctx.fillRect(wbX, wbY + s * 0.8, s * 0.8, s * 1.5);
-    ctx.fillStyle = "#e0e0e0";
-    ctx.fillRect(wbX, wbY - s * 0.3, s * 0.8, s * 0.4);
+    const wbY = deskY - 2;
+    // Bottle body
+    ctx.fillStyle = "#87ceeb40";
+    ctx.fillRect(wbX, wbY - s * 2, s * 1.2, s * 3);
+    // Right side (3D)
+    ctx.fillStyle = "#6ab8d830";
+    ctx.fillRect(wbX + s * 1.2, wbY - s * 1.8, s * 0.4, s * 2.8);
+    // Water level
+    ctx.fillStyle = "#60b8e835";
+    ctx.fillRect(wbX + s * 0.1, wbY - s * 0.5, s * 1, s * 2);
+    // Cap
+    ctx.fillStyle = "#e8e8e8";
+    ctx.fillRect(wbX - s * 0.1, wbY - s * 2.4, s * 1.4, s * 0.5);
+    // Highlight
+    ctx.fillStyle = "#ffffff18";
+    ctx.fillRect(wbX + s * 0.2, wbY - s * 1.8, s * 0.3, s * 2);
   }
 
   // Empty chair (offline)
@@ -524,15 +566,31 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
       ctx.fillStyle = "#2a1808";
       ctx.fillRect(ex + 3 * S, edY + edH + 2 * S, 2 * S, 2 * S);
       ctx.fillRect(ex + 23 * S, edY + edH + 2 * S, 2 * S, 2 * S);
-      // Monitor (off)
+      // Monitor (off, angled trapezium)
       const mX = ex + edW - 4 * S;
       const mY = edY - 6 * S + 3 * S;
+      const mW = 8 * S;
+      const mH = 6 * S;
+      const mTaper = S * 0.8;
       ctx.fillStyle = "#1a1a25";
-      ctx.fillRect(mX, mY, 8 * S, 6 * S);
-      ctx.fillStyle = "#060608";
-      ctx.fillRect(mX + S, mY + S, 6 * S, 4 * S);
+      ctx.beginPath();
+      ctx.moveTo(mX + mTaper, mY);
+      ctx.lineTo(mX + mW - mTaper, mY);
+      ctx.lineTo(mX + mW, mY + mH);
+      ctx.lineTo(mX, mY + mH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#050508";
+      const mSi = S * 0.8;
+      ctx.beginPath();
+      ctx.moveTo(mX + mTaper + mSi, mY + mSi);
+      ctx.lineTo(mX + mW - mTaper - mSi, mY + mSi);
+      ctx.lineTo(mX + mW - mSi, mY + mH - mSi);
+      ctx.lineTo(mX + mSi, mY + mH - mSi);
+      ctx.closePath();
+      ctx.fill();
       ctx.fillStyle = "#1a1a25";
-      ctx.fillRect(mX + 3 * S, mY + 6 * S, 2 * S, S);
+      ctx.fillRect(mX + 3 * S, mY + mH, 2 * S, S);
       // Keyboard on empty desk
       const ekbX = ex + 9 * S;
       const ekbY = edY + 2 * S;
