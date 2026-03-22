@@ -579,9 +579,9 @@ function makeSenna(): CharacterDef {
 function makeAri(): CharacterDef {
   return makeHuman({
     height: H_TALL, skin: "#d4a070", hair: "#1a1210",
-    shirt: "#7dd3fc", pants: "#2a2a3a",
+    shirt: "#7dd3fc", pants: "#e8e8ee",
     eyeColor: "#331a0a",
-    striped: "#ffffff", // Argentina: light blue + white stripes
+    striped: "#ffffff", // Argentina: light blue + white stripes, white shorts
   });
 }
 
@@ -589,7 +589,7 @@ function makeRodi(): CharacterDef {
   // Messi! Barca shirt (blue-red striped), beard
   return makeHuman({
     height: H_NORM, skin: "#e0b890", hair: "#1a1210",
-    shirt: "#2563eb", pants: "#ffffff",
+    shirt: "#2563eb", pants: "#1e40af",
     eyeColor: "#331a0a", stubble: true,
     striped: "#dc2626", // red stripes on blue
   });

@@ -1201,8 +1201,11 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
 
         const tw = 280;
         const th = task ? 82 : 62;
+        const agentY = desk?.y ?? ha.y;
         const ttX = (desk?.x ?? ha.x) + 2 * S;
-        const ttY = (desk?.y ?? ha.y) - th + 22;
+        // If tooltip would go above canvas, show below agent instead
+        const above = agentY - th + 22;
+        const ttY = above < 20 ? agentY + 28 * S : above;
         const tx = Math.max(10, Math.min(ttX, CANVAS_W - tw - 10));
         const ty = Math.max(10, ttY);
 
