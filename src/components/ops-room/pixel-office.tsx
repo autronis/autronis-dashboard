@@ -74,7 +74,7 @@ const COFFEE_H = 80;
 
 const COFFEE_SEATS: { x: number; y: number }[] = [];
 for (let c = 0; c < 14; c++) {
-  COFFEE_SEATS.push({ x: COFFEE_X + 14 + c * 104, y: COFFEE_Y + 16 });
+  COFFEE_SEATS.push({ x: COFFEE_X + 14 + c * 104, y: COFFEE_Y + 30 });
 }
 
 const FRAME_MS = 1000 / 8;
@@ -623,11 +623,11 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
     // "DE BAAS" + "HET BESTUUR" on same line (management row)
     // Hardcoded: each label Y = agent Y - 30
     ctx.fillText("DE GROTE BAAS", SEM.x + 14 * S, SEM.y + 12);
-    ctx.fillText("HET BESTUUR", BUILDER_X + UNIT_W * 2 + UNIT_W / 2, DESK_POSITIONS.theo.y + 30);
+    ctx.fillText("HET BESTUUR", BUILDER_X + UNIT_W * 2, DESK_POSITIONS.theo.y + 30);
     ctx.textAlign = "left";
     ctx.fillText("DE STAF", 45, DESK_POSITIONS.ari.y + 20);
     ctx.textAlign = "center";
-    ctx.fillText("DE ENGINEERS", BUILDER_X + (UNIT_W * 5) / 2 + UNIT_W / 2, DESK_POSITIONS.wout.y - 125);
+    ctx.fillText("DE ENGINEERS", BUILDER_X + (UNIT_W * 5) / 2 - 30, DESK_POSITIONS.wout.y - 125);
     // "STAND-BY" — with same gap above as other labels
     ctx.fillText("STAND-BY", centerX, COFFEE_Y - 10);
     ctx.textAlign = "left";
@@ -861,7 +861,7 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
 
     // Plant 1: next to Sem's coffee table
     const p1TblX = wcX + tW + 10;
-    const p1TblY = tY + 5;
+    const p1TblY = tY - 2;
     drawPlantTable(p1TblX, p1TblY);
     const plantSway1 = Math.sin(tick * 0.06) * 2;
     drawPlant3D(p1TblX + 7, p1TblY - 49, plantSway1);
