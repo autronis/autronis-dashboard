@@ -739,11 +739,11 @@ export function drawSemDesk(
   ctx.fillStyle = "#ffffff";
   ctx.fillText("Sem", labelX, labelY);
   ctx.font = "10px Inter, system-ui, sans-serif";
-  ctx.fillStyle = "#8a9aa5";
+  ctx.fillStyle = "#a0b0ba";
   ctx.fillText("CEO", labelX + 30, labelY);
   ctx.font = "10px Inter, system-ui, sans-serif";
   ctx.fillStyle = "#23C6B7";
-  ctx.fillText("→ Autronis", labelX, labelY + 12);
+  ctx.fillText("→ Autronis", labelX, labelY + 16);
 
   if (isSelected) {
     ctx.strokeStyle = "#23C6B7";

@@ -121,16 +121,16 @@ function drawDesk(
     ctx.font = "bold 12px Inter, system-ui, sans-serif";
     const nmW = ctx.measureText(name).width;
     ctx.font = "10px Inter, system-ui, sans-serif";
-    ctx.fillStyle = "#8a9aa5";
+    ctx.fillStyle = "#a0b0ba";
     ctx.fillText(rolText, labelX + nmW + 4, labelY2 + 10);
 
-    // Line 2: → Project (10px, project color)
+    // Line 2: → Project (more spacing below)
     if (agent.huidigeTaak) {
       ctx.font = "10px Inter, system-ui, sans-serif";
       let proj = agent.huidigeTaak.project;
       while (ctx.measureText("→ " + proj).width > maxW && proj.length > 3) proj = proj.slice(0, -2) + ".";
       ctx.fillStyle = projectColor;
-      ctx.fillText("→ " + proj, labelX, labelY2 + 22);
+      ctx.fillText("→ " + proj, labelX, labelY2 + 26);
     }
 
     ctx.restore();
@@ -254,28 +254,16 @@ function drawDesk(
     ctx.fill();
   }
 
-  // Thinking/working indicator above head
-  if (!isOffline && !isHovered) {
-    const charH = charDef.rows * s;
-    const indicY = deskY - charH + 2 * s - 12;
-    const indicX = x + 10 * s;
-
-    if (isActive) {
-      // Working: animated dots (...)
-      const dotCount = (Math.floor(tick / 3) % 3) + 1;
-      ctx.fillStyle = "#23C6B7";
-      for (let d = 0; d < dotCount; d++) {
-        ctx.beginPath();
-        ctx.arc(indicX + d * 5, indicY, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else if (agent.status === "idle") {
-      // Idle: subtle breathing (tiny up/down on the character already handled by bob)
-      // Show small "zzz" or "..." above
-      const breathAlpha = 0.3 + Math.sin(tick * 0.15 + x) * 0.15;
-      ctx.fillStyle = `rgba(138, 155, 160, ${breathAlpha})`;
-      ctx.font = "8px Inter, system-ui, sans-serif";
-      ctx.fillText("idle", indicX - 4, indicY + 2);
+  // Working indicator: dots next to monitor (right side of desk)
+  if (!isOffline && !isHovered && isActive) {
+    const dotX = x + deskW + 4;
+    const dotY = deskY - 2 * s;
+    const dotCount = (Math.floor(tick / 3) % 3) + 1;
+    ctx.fillStyle = "#23C6B7";
+    for (let d = 0; d < dotCount; d++) {
+      ctx.beginPath();
+      ctx.arc(dotX, dotY + d * 5, 1.5, 0, Math.PI * 2);
+      ctx.fill();
     }
   }
 
