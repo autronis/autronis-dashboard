@@ -47,12 +47,14 @@ const DESK_POSITIONS: Record<string, { x: number; y: number }> = {
 
 // Empty desks
 const EMPTY_DESKS = [
+  // Column 4 (next to Gabriel/Vincent)
   { x: BUILDER_X + UNIT_W * 3, y: BUILDER_START_Y },
   { x: BUILDER_X + UNIT_W * 3, y: BUILDER_START_Y + UNIT_H },
-  { x: BUILDER_X, y: BUILDER_START_Y + UNIT_H * 2 },
-  { x: BUILDER_X + UNIT_W, y: BUILDER_START_Y + UNIT_H * 2 },
-  { x: BUILDER_X + UNIT_W * 2, y: BUILDER_START_Y + UNIT_H * 2 },
   { x: BUILDER_X + UNIT_W * 3, y: BUILDER_START_Y + UNIT_H * 2 },
+  // Column 5 (extra row)
+  { x: BUILDER_X + UNIT_W * 4, y: BUILDER_START_Y },
+  { x: BUILDER_X + UNIT_W * 4, y: BUILDER_START_Y + UNIT_H },
+  { x: BUILDER_X + UNIT_W * 4, y: BUILDER_START_Y + UNIT_H * 2 },
 ];
 
 const DESKS_BOTTOM = BUILDER_START_Y + UNIT_H * 3;
@@ -257,7 +259,7 @@ function drawDesk(
   // Working indicator: dots next to monitor (right side of desk)
   if (!isOffline && !isHovered && isActive) {
     const dotX = x + deskW + 4;
-    const dotY = deskY - 2 * s;
+    const dotY = deskY - 5 * s;
     const dotCount = (Math.floor(tick / 3) % 3) + 1;
     ctx.fillStyle = "#23C6B7";
     for (let d = 0; d < dotCount; d++) {
