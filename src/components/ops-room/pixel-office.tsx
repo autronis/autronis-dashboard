@@ -201,68 +201,42 @@ function drawDesk(
   ctx.fillRect(x + 3 * s, deskY + deskH + 2 * s, 2 * s, 2 * s);
   ctx.fillRect(x + 23 * s, deskY + deskH + 2 * s, 2 * s, 2 * s);
 
-  // Monitor (3/4 view — screen face visible + side edge + top edge)
-  const monW = 9 * s;
-  const monH = 7 * s;
-  const monX = x + deskW - 5 * s;
-  const monY = deskY - monH + 3 * s;
-  const sideW = 2 * s; // side panel width
-  const topH = s * 1.2; // top edge height
+  // Monitor — front-facing, screen toward viewer, on a stand
+  const monW = 22;
+  const monH = 16;
+  const monX = x + 14 * s - monW / 2; // centered on desk
+  const monY = deskY - monH - 4;
 
-  // Back/side edge (dark, right side — shows depth)
-  ctx.fillStyle = "#101018";
-  ctx.beginPath();
-  ctx.moveTo(monX + monW, monY + topH);
-  ctx.lineTo(monX + monW + sideW, monY + topH + s);
-  ctx.lineTo(monX + monW + sideW, monY + monH + s);
-  ctx.lineTo(monX + monW, monY + monH);
-  ctx.closePath();
-  ctx.fill();
-
-  // Top edge (shows we're looking down at it)
-  ctx.fillStyle = "#222230";
-  ctx.beginPath();
-  ctx.moveTo(monX, monY);
-  ctx.lineTo(monX + s, monY - topH);
-  ctx.lineTo(monX + monW + sideW, monY - topH + s);
-  ctx.lineTo(monX + monW, monY);
-  ctx.closePath();
-  ctx.fill();
-
-  // Screen face (main front — what the viewer sees)
+  // Bezel (dark frame)
   ctx.fillStyle = "#1a1a25";
   ctx.fillRect(monX, monY, monW, monH);
-
-  // Screen content
-  const screenClr = isOffline ? "#040406" : isActive ? "#080c14" : "#050608";
-  ctx.fillStyle = screenClr;
-  ctx.fillRect(monX + s, monY + s, monW - 2 * s, monH - 2 * s);
+  // Screen
+  ctx.fillStyle = isOffline ? "#040406" : isActive ? "#080c14" : "#050608";
+  ctx.fillRect(monX + 2, monY + 2, monW - 4, monH - 4);
 
   if (isActive) {
-    // Turquoise glow on screen
+    // Turquoise glow
     const glow = 0.05 + Math.sin(tick * 0.3 + x * 0.01) * 0.03;
     ctx.fillStyle = `rgba(35, 198, 183, ${glow})`;
-    ctx.fillRect(monX + s, monY + s, monW - 2 * s, monH - 2 * s);
-    // Code lines
+    ctx.fillRect(monX + 2, monY + 2, monW - 4, monH - 4);
+    // Code lines (colored)
+    const lineColors = ["#23C6B7", "#4ade80", "#f59e0b", "#3b82f6", "#a855f7"];
     for (let ln = 0; ln < 4; ln++) {
-      const lw = 2 + ((tick + ln * 3) % 5);
-      const alpha = 0.12 + ((ln * 2 + tick) % 3) * 0.05;
-      ctx.fillStyle = `#ffffff${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
-      ctx.fillRect(monX + 2 * s, monY + (1.2 + ln * 1.3) * s, lw * s, s * 0.5);
+      const lw = 4 + ((tick + ln * 3) % 8);
+      const alpha = 0.3 + ((ln * 2 + tick) % 3) * 0.1;
+      ctx.fillStyle = `${lineColors[ln % lineColors.length]}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
+      ctx.fillRect(monX + 4, monY + 4 + ln * 3, Math.min(lw, monW - 8), 1.5);
     }
-    // Glow spill on desk under screen
-    ctx.fillStyle = `rgba(35, 198, 183, ${glow * 0.4})`;
-    ctx.fillRect(monX - s, monY + monH, monW + sideW + s, s);
+    // Glow spill under monitor
+    ctx.fillStyle = `rgba(35, 198, 183, ${glow * 0.3})`;
+    ctx.fillRect(monX - 2, monY + monH + 1, monW + 4, 3);
   }
 
-  // Chin (bottom bezel, slightly thicker)
-  ctx.fillStyle = "#151520";
-  ctx.fillRect(monX, monY + monH - s * 0.6, monW, s * 0.6);
-
-  // Stand
+  // Stand (neck + base)
   ctx.fillStyle = "#1a1a25";
-  ctx.fillRect(monX + 3 * s, monY + monH, 2 * s, s * 1.2);
-  ctx.fillRect(monX + 2 * s, monY + monH + s * 1.2, 4 * s, s * 0.5);
+  ctx.fillRect(monX + monW / 2 - 2, monY + monH, 4, 4);
+  ctx.fillStyle = "#222230";
+  ctx.fillRect(monX + monW / 2 - 5, monY + monH + 4, 10, 2);
 
   // Keyboard + mouse + water bottle
   if (!isOffline) {
@@ -571,31 +545,40 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
       ctx.fillStyle = "#2a1808";
       ctx.fillRect(ex + 3 * S, edY + edH + 2 * S, 2 * S, 2 * S);
       ctx.fillRect(ex + 23 * S, edY + edH + 2 * S, 2 * S, 2 * S);
-      // Monitor (off, angled trapezium)
-      const mX = ex + edW - 4 * S;
-      const mY = edY - 6 * S + 3 * S;
-      const mW = 8 * S;
-      const mH = 6 * S;
-      const mTaper = S * 0.8;
-      ctx.fillStyle = "#1a1a25";
+      // Monitor (off, 3/4 view)
+      const mX = ex + edW - 5 * S;
+      const mY = edY - 7 * S + 3 * S;
+      const mW = 9 * S;
+      const mH = 7 * S;
+      const mSide = 2 * S;
+      const mTop = S * 1.2;
+      // Side edge
+      ctx.fillStyle = "#101018";
       ctx.beginPath();
-      ctx.moveTo(mX + mTaper, mY);
-      ctx.lineTo(mX + mW - mTaper, mY);
+      ctx.moveTo(mX + mW, mY + mTop);
+      ctx.lineTo(mX + mW + mSide, mY + mTop + S);
+      ctx.lineTo(mX + mW + mSide, mY + mH + S);
       ctx.lineTo(mX + mW, mY + mH);
-      ctx.lineTo(mX, mY + mH);
       ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = "#050508";
-      const mSi = S * 0.8;
+      // Top edge
+      ctx.fillStyle = "#222230";
       ctx.beginPath();
-      ctx.moveTo(mX + mTaper + mSi, mY + mSi);
-      ctx.lineTo(mX + mW - mTaper - mSi, mY + mSi);
-      ctx.lineTo(mX + mW - mSi, mY + mH - mSi);
-      ctx.lineTo(mX + mSi, mY + mH - mSi);
+      ctx.moveTo(mX, mY);
+      ctx.lineTo(mX + S, mY - mTop);
+      ctx.lineTo(mX + mW + mSide, mY - mTop + S);
+      ctx.lineTo(mX + mW, mY);
       ctx.closePath();
       ctx.fill();
+      // Front face
       ctx.fillStyle = "#1a1a25";
-      ctx.fillRect(mX + 3 * S, mY + mH, 2 * S, S);
+      ctx.fillRect(mX, mY, mW, mH);
+      ctx.fillStyle = "#040406";
+      ctx.fillRect(mX + S, mY + S, mW - 2 * S, mH - 2 * S);
+      // Stand
+      ctx.fillStyle = "#1a1a25";
+      ctx.fillRect(mX + 3 * S, mY + mH, 2 * S, S * 1.2);
+      ctx.fillRect(mX + 2 * S, mY + mH + S * 1.2, 4 * S, S * 0.5);
       // Keyboard on empty desk
       const ekbX = ex + 9 * S;
       const ekbY = edY + 2 * S;
