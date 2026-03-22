@@ -530,26 +530,83 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
 
     // === Slaapkamer (geen achtergrond — zelfde vloer) ===
 
-    // === Group labels (white, bold italic, spaced) — just above each group ===
+    // === Group labels — each directly above its row of agents ===
     ctx.font = "bold italic 13px Inter, system-ui, sans-serif";
     ctx.letterSpacing = "3px";
     ctx.fillStyle = "#ffffffcc";
+    // "DE BAAS" — above Sem, left-aligned
+    ctx.fillText("DE BAAS", SEM.x, SEM.y - 6);
+    // "HET BESTUUR" — above Theo/Toby/Jones, centered
     ctx.textAlign = "center";
-    // "DE BAAS" just above Sem
-    ctx.fillText("DE BAAS", SEM.x + 14 * S, SEM.y - 4);
-    // "HET BESTUUR" just above Theo/Toby/Jones
-    const bestuurX = BUILDER_X + UNIT_W + (UNIT_W * 3) / 2;
-    ctx.fillText("HET BESTUUR", bestuurX, MGMT_Y - 4);
-    // "DE STAF" just above Ari
+    ctx.fillText("HET BESTUUR", BUILDER_X + UNIT_W * 2 + UNIT_W / 2, MGMT_Y - 6);
+    // "DE ENGINEERS" — above the row with Wout/Bas/etc
+    ctx.fillText("DE ENGINEERS", BUILDER_X + (UNIT_W * 5) / 2, BUILDER_START_Y + UNIT_H - 6);
+    // "DE STAF" — above Ari/Rodi, left-aligned
+    ctx.textAlign = "left";
     const ariY = BUILDER_START_Y + Math.floor(UNIT_H / 2) + 10;
-    ctx.fillText("DE STAF", 20 + 14 * S, ariY - 4);
-    // "DE ENGINEERS" just above the builders (Wout row)
-    const engX = BUILDER_X + (UNIT_W * 5) / 2;
-    ctx.fillText("DE ENGINEERS", engX, BUILDER_START_Y + UNIT_H - 4);
-    // "STAND-BY" just above idle agents
+    ctx.fillText("DE STAF", 20, ariY - 6);
+    // "STAND-BY" — above idle agents, centered
+    ctx.textAlign = "center";
     ctx.fillText("STAND-BY", CANVAS_W / 2, COFFEE_Y - 10);
     ctx.textAlign = "left";
     ctx.letterSpacing = "0px";
+
+    // === Water cooler next to Sem (3D pixel art) ===
+    const wcX = SEM.x + 30 * S + 20;
+    const wcY = SEM.y + 8 * S;
+    // Base/machine body (light grey, 3D)
+    ctx.fillStyle = "#c8c8d0"; // front face
+    ctx.fillRect(wcX, wcY + 20, 20, 28);
+    ctx.fillStyle = "#b0b0b8"; // right side
+    ctx.fillRect(wcX + 20, wcY + 22, 6, 26);
+    ctx.fillStyle = "#d8d8e0"; // top face
+    ctx.beginPath();
+    ctx.moveTo(wcX, wcY + 20);
+    ctx.lineTo(wcX + 6, wcY + 17);
+    ctx.lineTo(wcX + 26, wcY + 19);
+    ctx.lineTo(wcX + 20, wcY + 22);
+    ctx.closePath();
+    ctx.fill();
+    // Buttons/panel
+    ctx.fillStyle = "#8888a0";
+    ctx.fillRect(wcX + 4, wcY + 26, 12, 6);
+    ctx.fillStyle = "#4ade80";
+    ctx.fillRect(wcX + 5, wcY + 27, 3, 4);
+    ctx.fillStyle = "#3b82f6";
+    ctx.fillRect(wcX + 9, wcY + 27, 3, 4);
+    // Tap/nozzle
+    ctx.fillStyle = "#999";
+    ctx.fillRect(wcX + 6, wcY + 34, 8, 2);
+    ctx.fillRect(wcX + 9, wcY + 36, 2, 4);
+    // Drip tray
+    ctx.fillStyle = "#aaa";
+    ctx.fillRect(wcX + 3, wcY + 42, 14, 3);
+    // Water bottle (blue, translucent, on top)
+    ctx.fillStyle = "#87ceeb60";
+    ctx.beginPath();
+    ctx.moveTo(wcX + 4, wcY + 17);
+    ctx.lineTo(wcX + 4, wcY - 2);
+    ctx.quadraticCurveTo(wcX + 10, wcY - 8, wcX + 16, wcY - 2);
+    ctx.lineTo(wcX + 16, wcY + 17);
+    ctx.closePath();
+    ctx.fill();
+    // Bottle highlight (light reflection)
+    ctx.fillStyle = "#a8e4f840";
+    ctx.fillRect(wcX + 6, wcY - 4, 3, 16);
+    // Bottle neck
+    ctx.fillStyle = "#ffffff80";
+    ctx.fillRect(wcX + 7, wcY - 10, 6, 8);
+    // Bottle cap
+    ctx.fillStyle = "#e0e0e0";
+    ctx.fillRect(wcX + 6, wcY - 12, 8, 3);
+    // Water level inside bottle
+    ctx.fillStyle = "#60b8e830";
+    ctx.fillRect(wcX + 5, wcY + 2, 10, 14);
+    // Shadow
+    ctx.fillStyle = "#00000010";
+    ctx.beginPath();
+    ctx.ellipse(wcX + 13, wcY + 50, 14, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
 
     // === Sem desk ===
     drawSemDesk(ctx, SEM.x, SEM.y, tick, selectedId === "sem", S);
