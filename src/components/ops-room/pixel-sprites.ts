@@ -459,7 +459,7 @@ function makeJones(): CharacterDef {
 function makeWout(): CharacterDef {
   return makeHuman({
     height: H_SMALL, skin: "#f0c8a0", hair: "#e8c840",
-    shirt: "#23C6B7", pants: "#2a2a3a",
+    shirt: "#1a1a2a", pants: "#2a2a3a",
     eyeColor: "#4488cc", curlyHair: true,
   });
 }
@@ -467,7 +467,7 @@ function makeWout(): CharacterDef {
 function makeBas(): CharacterDef {
   return makeHuman({
     height: H_TALL, skin: "#f0c8a0", hair: "#c44a1a",
-    shirt: "#ef4444", pants: "#2a2a3a",
+    shirt: "#6b4226", pants: "#2a2a3a",
     eyeColor: "#22aa44", earring: true,
   });
 }
