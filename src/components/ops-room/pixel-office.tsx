@@ -201,63 +201,68 @@ function drawDesk(
   ctx.fillRect(x + 3 * s, deskY + deskH + 2 * s, 2 * s, 2 * s);
   ctx.fillRect(x + 23 * s, deskY + deskH + 2 * s, 2 * s, 2 * s);
 
-  // Monitor (angled trapezium — top narrower than bottom, screen faces viewer)
-  const monW = 8 * s;
-  const monH = 6 * s;
-  const monX = x + deskW - 4 * s;
+  // Monitor (3/4 view — screen face visible + side edge + top edge)
+  const monW = 9 * s;
+  const monH = 7 * s;
+  const monX = x + deskW - 5 * s;
   const monY = deskY - monH + 3 * s;
-  const taper = s * 0.8; // how much narrower the top is
+  const sideW = 2 * s; // side panel width
+  const topH = s * 1.2; // top edge height
 
-  // Frame (trapezium)
+  // Back/side edge (dark, right side — shows depth)
+  ctx.fillStyle = "#101018";
+  ctx.beginPath();
+  ctx.moveTo(monX + monW, monY + topH);
+  ctx.lineTo(monX + monW + sideW, monY + topH + s);
+  ctx.lineTo(monX + monW + sideW, monY + monH + s);
+  ctx.lineTo(monX + monW, monY + monH);
+  ctx.closePath();
+  ctx.fill();
+
+  // Top edge (shows we're looking down at it)
+  ctx.fillStyle = "#222230";
+  ctx.beginPath();
+  ctx.moveTo(monX, monY);
+  ctx.lineTo(monX + s, monY - topH);
+  ctx.lineTo(monX + monW + sideW, monY - topH + s);
+  ctx.lineTo(monX + monW, monY);
+  ctx.closePath();
+  ctx.fill();
+
+  // Screen face (main front — what the viewer sees)
   ctx.fillStyle = "#1a1a25";
-  ctx.beginPath();
-  ctx.moveTo(monX + taper, monY);              // top-left (inset)
-  ctx.lineTo(monX + monW - taper, monY);       // top-right (inset)
-  ctx.lineTo(monX + monW, monY + monH);        // bottom-right
-  ctx.lineTo(monX, monY + monH);               // bottom-left
-  ctx.closePath();
-  ctx.fill();
+  ctx.fillRect(monX, monY, monW, monH);
 
-  // Screen (inner trapezium)
-  const si = s * 0.8;
-  const screenClr = isOffline ? "#050508" : isActive ? "#0a0e16" : "#060810";
+  // Screen content
+  const screenClr = isOffline ? "#040406" : isActive ? "#080c14" : "#050608";
   ctx.fillStyle = screenClr;
-  ctx.beginPath();
-  ctx.moveTo(monX + taper + si, monY + si);
-  ctx.lineTo(monX + monW - taper - si, monY + si);
-  ctx.lineTo(monX + monW - si, monY + monH - si);
-  ctx.lineTo(monX + si, monY + monH - si);
-  ctx.closePath();
-  ctx.fill();
+  ctx.fillRect(monX + s, monY + s, monW - 2 * s, monH - 2 * s);
 
   if (isActive) {
-    // Screen glow (turquoise/blue pulse)
-    const screenGlow = 0.04 + Math.sin(tick * 0.3 + x * 0.01) * 0.025;
-    ctx.fillStyle = `rgba(35, 198, 183, ${screenGlow})`;
-    ctx.beginPath();
-    ctx.moveTo(monX + taper + si, monY + si);
-    ctx.lineTo(monX + monW - taper - si, monY + si);
-    ctx.lineTo(monX + monW - si, monY + monH - si);
-    ctx.lineTo(monX + si, monY + monH - si);
-    ctx.closePath();
-    ctx.fill();
-    // Code lines (follow the taper)
-    for (let ln = 0; ln < 3; ln++) {
-      const lw = 2 + ((tick + ln * 3) % 4);
+    // Turquoise glow on screen
+    const glow = 0.05 + Math.sin(tick * 0.3 + x * 0.01) * 0.03;
+    ctx.fillStyle = `rgba(35, 198, 183, ${glow})`;
+    ctx.fillRect(monX + s, monY + s, monW - 2 * s, monH - 2 * s);
+    // Code lines
+    for (let ln = 0; ln < 4; ln++) {
+      const lw = 2 + ((tick + ln * 3) % 5);
       const alpha = 0.12 + ((ln * 2 + tick) % 3) * 0.05;
-      const frac = (ln + 1) / 4;
-      const lineInset = taper * (1 - frac);
       ctx.fillStyle = `#ffffff${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
-      ctx.fillRect(monX + lineInset + si + s, monY + (1.5 + ln * 1.5) * s, lw * s, s * 0.5);
+      ctx.fillRect(monX + 2 * s, monY + (1.2 + ln * 1.3) * s, lw * s, s * 0.5);
     }
-    // Glow spill under monitor
-    ctx.fillStyle = `rgba(35, 198, 183, ${screenGlow * 0.5})`;
-    ctx.fillRect(monX, monY + monH, monW, s * 0.5);
+    // Glow spill on desk under screen
+    ctx.fillStyle = `rgba(35, 198, 183, ${glow * 0.4})`;
+    ctx.fillRect(monX - s, monY + monH, monW + sideW + s, s);
   }
+
+  // Chin (bottom bezel, slightly thicker)
+  ctx.fillStyle = "#151520";
+  ctx.fillRect(monX, monY + monH - s * 0.6, monW, s * 0.6);
 
   // Stand
   ctx.fillStyle = "#1a1a25";
-  ctx.fillRect(monX + 3 * s, monY + monH, 2 * s, s);
+  ctx.fillRect(monX + 3 * s, monY + monH, 2 * s, s * 1.2);
+  ctx.fillRect(monX + 2 * s, monY + monH + s * 1.2, 4 * s, s * 0.5);
 
   // Keyboard + mouse + water bottle
   if (!isOffline) {
@@ -626,7 +631,7 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
     // "DE BAAS" + "HET BESTUUR" on same line (management row)
     // Hardcoded: each label Y = agent Y - 30
     ctx.fillText("DE GROTE BAAS", SEM.x + 14 * S, SEM.y - 30);
-    ctx.fillText("HET BESTUUR", BUILDER_X + UNIT_W * 2 + UNIT_W / 2, DESK_POSITIONS.theo.y - 30);
+    ctx.fillText("HET BESTUUR", BUILDER_X + UNIT_W * 2 + UNIT_W / 2, DESK_POSITIONS.theo.y + 4);
     ctx.textAlign = "left";
     ctx.fillText("DE STAF", 20, DESK_POSITIONS.ari.y - 30);
     ctx.textAlign = "center";
