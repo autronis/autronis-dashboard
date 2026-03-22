@@ -530,22 +530,23 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
 
     // === Slaapkamer (geen achtergrond — zelfde vloer) ===
 
-    // === Group labels (white, bold italic, spaced) ===
+    // === Group labels (white, bold italic, spaced) — just above each group ===
     ctx.font = "bold italic 13px Inter, system-ui, sans-serif";
     ctx.letterSpacing = "3px";
     ctx.fillStyle = "#ffffffcc";
     ctx.textAlign = "center";
-    // "DE BAAS" below Sem's desk area
-    ctx.fillText("DE BAAS", SEM.x + 14 * S, MGMT_Y + UNIT_H + 8);
-    // "HET BESTUUR" below Theo/Toby/Jones
+    // "DE BAAS" just above Sem
+    ctx.fillText("DE BAAS", SEM.x + 14 * S, SEM.y - 4);
+    // "HET BESTUUR" just above Theo/Toby/Jones
     const bestuurX = BUILDER_X + UNIT_W + (UNIT_W * 3) / 2;
-    ctx.fillText("HET BESTUUR", bestuurX, MGMT_Y + UNIT_H + 8);
-    // "DE STAF" below Ari/Rodi
-    ctx.fillText("DE STAF", 20 + 14 * S, BUILDER_START_Y + Math.floor(UNIT_H / 2) + 10 + UNIT_H + UNIT_H / 2 + 16);
-    // "DE ENGINEERS" below the builders
+    ctx.fillText("HET BESTUUR", bestuurX, MGMT_Y - 4);
+    // "DE STAF" just above Ari
+    const ariY = BUILDER_START_Y + Math.floor(UNIT_H / 2) + 10;
+    ctx.fillText("DE STAF", 20 + 14 * S, ariY - 4);
+    // "DE ENGINEERS" just above the builders (Wout row)
     const engX = BUILDER_X + (UNIT_W * 5) / 2;
-    ctx.fillText("DE ENGINEERS", engX, BUILDER_START_Y + UNIT_H * 3 + 6);
-    // "STAND-BY" above idle agents
+    ctx.fillText("DE ENGINEERS", engX, BUILDER_START_Y + UNIT_H - 4);
+    // "STAND-BY" just above idle agents
     ctx.fillText("STAND-BY", CANVAS_W / 2, COFFEE_Y - 10);
     ctx.textAlign = "left";
     ctx.letterSpacing = "0px";
