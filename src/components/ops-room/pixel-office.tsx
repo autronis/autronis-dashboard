@@ -648,13 +648,13 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
         if (a.status === "error") entry.hasError = true;
       }
     });
-    const cardX = CANVAS_W - 170;
+    const cardX = CANVAS_W - 190;
     let cardY = WALL_H + 16;
     // Header
-    ctx.font = "bold 9px Inter, system-ui, sans-serif";
-    ctx.fillStyle = "#4a5a6a";
-    ctx.fillText("PROJECTEN", cardX + 6, cardY);
-    cardY += 10;
+    ctx.font = "bold 10px Inter, system-ui, sans-serif";
+    ctx.fillStyle = "#5a6a7a";
+    ctx.fillText("PROJECTEN", cardX + 8, cardY);
+    cardY += 14;
 
     const newCardRects: typeof projectCardRects.current = [];
     activeProjects.forEach(({ names, hasError }, proj) => {
@@ -664,29 +664,29 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
       // Card
       ctx.fillStyle = isHoveredProj ? "#0a0f14ee" : "#0a0f14aa";
       ctx.beginPath();
-      ctx.roundRect(cardX, cardY, 162, 32, 4);
+      ctx.roundRect(cardX, cardY, 180, 38, 4);
       ctx.fill();
       // Left color stripe
       ctx.fillStyle = color;
-      ctx.fillRect(cardX, cardY + 2, 3, 28);
+      ctx.fillRect(cardX, cardY + 3, 3, 32);
       // Status dot (pulsing)
       const dotAlpha = hasError ? 1 : (0.6 + Math.sin(tick * 0.2 + cardY * 0.1) * 0.4);
       ctx.fillStyle = hasError ? "#ef4444" : `rgba(74, 222, 128, ${dotAlpha})`;
       ctx.beginPath();
-      ctx.arc(cardX + 152, cardY + 16, 3.5, 0, Math.PI * 2);
+      ctx.arc(cardX + 168, cardY + 19, 3.5, 0, Math.PI * 2);
       ctx.fill();
       // Project name
-      ctx.font = "bold 11px Inter, system-ui, sans-serif";
+      ctx.font = "bold 12px Inter, system-ui, sans-serif";
       ctx.fillStyle = "#e2e8f0";
       let projName = proj;
-      while (ctx.measureText(projName).width > 120 && projName.length > 3) projName = projName.slice(0, -2) + ".";
-      ctx.fillText(projName, cardX + 10, cardY + 14);
-      // Agent names
-      ctx.font = "9px Inter, system-ui, sans-serif";
-      ctx.fillStyle = "#6b7b8b";
-      ctx.fillText(names.slice(0, 3).join(", ") + (names.length > 3 ? ` +${names.length - 3}` : ""), cardX + 10, cardY + 26);
-      newCardRects.push({ proj, x: cardX, y: cardY, w: 162, h: 32 });
-      cardY += 36;
+      while (ctx.measureText(projName).width > 140 && projName.length > 3) projName = projName.slice(0, -2) + ".";
+      ctx.fillText(projName, cardX + 10, cardY + 16);
+      // Agent names (bold, more spacing)
+      ctx.font = "bold 10px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "#7a8a9a";
+      ctx.fillText(names.slice(0, 3).join(", ") + (names.length > 3 ? ` +${names.length - 3}` : ""), cardX + 10, cardY + 31);
+      newCardRects.push({ proj, x: cardX, y: cardY, w: 180, h: 38 });
+      cardY += 42;
     });
     projectCardRects.current = newCardRects;
 
