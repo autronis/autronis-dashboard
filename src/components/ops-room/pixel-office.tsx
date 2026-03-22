@@ -103,7 +103,7 @@ function drawDesk(
   // Labels pass — 3-line format: Naam / Rol / → Project
   if (labelsOnly) {
     const labelX = x + 2 * s;
-    const labelY2 = deskY + deskH + 4 * s;
+    const labelY2 = deskY + deskH + 7 * s;
     const maxW = deskW + 4 * s;
     ctx.save();
     ctx.beginPath();
@@ -829,8 +829,8 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
     };
 
     // 3D plant table helper (with right side face, thicker top, visible legs)
-    const drawPlantTable = (tx: number, ty: number) => {
-      const tw = 44; const th = 10; const td = 6; const legH = 14;
+    const drawPlantTable = (tx: number, ty: number, tw: number = 44) => {
+      const th = 10; const td = 6; const legH = 14;
       // Shadow
       ctx.fillStyle = "#00000012";
       ctx.beginPath();
@@ -871,8 +871,10 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
     const bsY = COFFEE_Y + 5;
     const bsSway = Math.sin(tick * 0.04 + 1.5) * 0.8;
 
-    // Table under bonsai
-    drawPlantTable(bsX - 8, bsY + 52);
+    // Table under bonsai (wider)
+    const bsTblW = 56;
+    const bsTblX = bsX + 18 - bsTblW / 2; // center under pot
+    drawPlantTable(bsTblX, bsY + 52, 56);
 
     // --- Pot (dark square with brown soil) ---
     // Pot body
@@ -1064,7 +1066,7 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
     const sbTW = 80;
     const sbTH = 14;
     const sbTD = 6;
-    const sbTY = COFFEE_Y + 50;
+    const sbTY = COFFEE_Y + 59;
     // Shadow
     ctx.fillStyle = "#00000015";
     ctx.beginPath();
