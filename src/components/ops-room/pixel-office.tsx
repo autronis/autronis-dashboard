@@ -201,42 +201,37 @@ function drawDesk(
   ctx.fillRect(x + 3 * s, deskY + deskH + 2 * s, 2 * s, 2 * s);
   ctx.fillRect(x + 23 * s, deskY + deskH + 2 * s, 2 * s, 2 * s);
 
-  // Monitor — big, on desk, front-right (right of mouse)
-  const monW = 40;
-  const monH = 28;
-  const monX = x + 18 * s; // right of keyboard+mouse area
-  const monY = deskY - monH + s * 3; // standing on desk, more toward front
+  // Monitor — Sem-style (dark frame, turquoise glow, code lines)
+  const monW = 10 * s;
+  const monH = 7 * s;
+  const monX = x + 18 * s;
+  const monY = deskY - monH + s * 3;
+  const glow = 0.05 + Math.sin(tick * 0.3 + x * 0.01) * 0.03;
 
-  // Bezel (dark frame)
-  ctx.fillStyle = "#1a1a25";
+  // Frame
+  ctx.fillStyle = "#2a2a3a";
   ctx.fillRect(monX, monY, monW, monH);
-  // Screen
-  ctx.fillStyle = isOffline ? "#040406" : isActive ? "#080c14" : "#050608";
-  ctx.fillRect(monX + 2, monY + 2, monW - 4, monH - 4);
 
-  if (isActive) {
-    // Turquoise glow
-    const glow = 0.05 + Math.sin(tick * 0.3 + x * 0.01) * 0.03;
-    ctx.fillStyle = `rgba(35, 198, 183, ${glow})`;
-    ctx.fillRect(monX + 2, monY + 2, monW - 4, monH - 4);
-    // Code lines (colored)
-    const lineColors = ["#23C6B7", "#4ade80", "#f59e0b", "#3b82f6", "#a855f7"];
-    for (let ln = 0; ln < 4; ln++) {
-      const lw = 4 + ((tick + ln * 3) % 8);
-      const alpha = 0.3 + ((ln * 2 + tick) % 3) * 0.1;
-      ctx.fillStyle = `${lineColors[ln % lineColors.length]}${Math.round(alpha * 255).toString(16).padStart(2, "0")}`;
-      ctx.fillRect(monX + 4, monY + 4 + ln * 3, Math.min(lw, monW - 8), 1.5);
+  if (isOffline) {
+    ctx.fillStyle = "#040406";
+    ctx.fillRect(monX + s, monY + s, 8 * s, 5 * s);
+  } else if (isActive) {
+    // Turquoise screen glow
+    ctx.fillStyle = `rgba(35, 198, 183, ${glow * 0.25})`;
+    ctx.fillRect(monX + s, monY + s, 8 * s, 5 * s);
+    // Code lines
+    ctx.fillStyle = "#23C6B750";
+    for (let ln = 0; ln < 2; ln++) {
+      ctx.fillRect(monX + 2 * s, monY + (2 + ln * 2) * s, (4 + (tick + ln) % 4) * s, s);
     }
-    // Glow spill under monitor
-    ctx.fillStyle = `rgba(35, 198, 183, ${glow * 0.3})`;
-    ctx.fillRect(monX - 2, monY + monH + 1, monW + 4, 3);
+  } else {
+    ctx.fillStyle = "#050608";
+    ctx.fillRect(monX + s, monY + s, 8 * s, 5 * s);
   }
 
-  // Stand (neck + base)
-  ctx.fillStyle = "#1a1a25";
-  ctx.fillRect(monX + monW / 2 - 2, monY + monH, 4, 4);
-  ctx.fillStyle = "#222230";
-  ctx.fillRect(monX + monW / 2 - 5, monY + monH + 4, 10, 2);
+  // Stand
+  ctx.fillStyle = "#2a2a3a";
+  ctx.fillRect(monX + 4 * s, monY + monH, 2 * s, s);
 
   // Keyboard + mouse + water bottle
   if (!isOffline) {
