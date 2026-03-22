@@ -124,6 +124,7 @@ interface HumanOpts {
   rainbow?: boolean;   // rainbow shirt
   camo?: boolean;      // camouflage shirt
   striped?: string;    // second color for striped shirt
+  tie?: string;        // tie color
 }
 
 function makeHuman(opts: HumanOpts): CharacterDef {
@@ -261,6 +262,13 @@ function makeHuman(opts: HumanOpts): CharacterDef {
     if (r >= armMid - 1 && r <= armMid + 1) {
       s[r][bx - 1] = skin;
       s[r][bx + bw] = skin;
+    }
+  }
+
+  // --- TIE ---
+  if (opts.tie) {
+    for (let r = bodyStart; r < bodyStart + bodyH - 1 && r < H; r++) {
+      s[r][6] = opts.tie;
     }
   }
 
@@ -420,8 +428,9 @@ function makeCoenFish(): CharacterDef {
 function makeSem(): CharacterDef {
   return makeHuman({
     height: H_TALL, skin: "#f0c8a0", hair: "#3a2010",
-    shirt: "#1a1a2a", pants: "#1a1a2a", // all black
+    shirt: "#1a1a2a", pants: "#1a1a2a", // black suit
     eyeColor: "#4488cc", curlyHair: true, stubble: true, mustache: true,
+    tie: "#e0e0e0",
   });
 }
 
@@ -430,7 +439,8 @@ function makeTheo(): CharacterDef {
     height: H_TALL, skin: "#f0c8a0", hair: "#4a3018",
     shirt: "#2a2a35", pants: "#1a1a25",
     eyeColor: "#553311", curlyHair: true, beard: true, beardColor: "#888888",
-  }); // brown curls, grey beard, grey-black suit
+    tie: "#e0e0e0",
+  }); // brown curls, grey beard, black suit + white tie
 }
 
 function makeJones(): CharacterDef {
@@ -728,41 +738,32 @@ export function drawSemDesk(
     ctx.fillRect(mx + 5 * s, my + 7 * s, 3 * s, s);
   }
 
-  // Glass of water on L-desk corner
-  const glX = x + 23 * s;
-  const glY = deskY - 5 * s;
-  // Glass body (transparent blue)
-  ctx.fillStyle = "#88bbdd30";
-  ctx.fillRect(glX, glY, 3 * s, 4 * s);
-  // Water inside
-  ctx.fillStyle = "#4a99cc50";
-  ctx.fillRect(glX + 0.3 * s, glY + 1.5 * s, 2.4 * s, 2.2 * s);
-  // Glass rim
-  ctx.fillStyle = "#aaddee40";
-  ctx.fillRect(glX, glY, 3 * s, 0.5 * s);
-  // Highlight
-  ctx.fillStyle = "#ffffff18";
-  ctx.fillRect(glX + 0.3 * s, glY + 0.5 * s, 0.5 * s, 3 * s);
-
-  // Coffee cup next to glass
-  const ccX = glX + 4 * s;
-  const ccY = deskY - 4.5 * s;
-  // Cup body (white/cream)
+  // Coffee cup on L-desk corner (top)
+  const ccX = x + 24 * s;
+  const ccY = deskY - 7 * s;
   ctx.fillStyle = "#d0c8b8";
-  ctx.fillRect(ccX, ccY, 2.5 * s, 3.5 * s);
-  // Coffee inside
+  ctx.fillRect(ccX, ccY, 2 * s, 2.5 * s);
   ctx.fillStyle = "#5c3a1a";
-  ctx.fillRect(ccX + 0.3 * s, ccY + 0.5 * s, 1.9 * s, 1.5 * s);
-  // Handle
+  ctx.fillRect(ccX + 0.3 * s, ccY + 0.4 * s, 1.4 * s, 1 * s);
   ctx.fillStyle = "#d0c8b8";
-  ctx.fillRect(ccX + 2.5 * s, ccY + 0.8 * s, s, 2 * s);
-  ctx.fillStyle = "#0a0f14";
-  ctx.fillRect(ccX + 2.8 * s, ccY + 1.2 * s, 0.4 * s, 1.2 * s);
+  ctx.fillRect(ccX + 2 * s, ccY + 0.5 * s, 0.6 * s, 1.5 * s);
   // Steam
   if (tick % 8 < 5) {
     ctx.fillStyle = "#ffffff12";
-    ctx.fillRect(ccX + 0.8 * s, ccY - 1.5 * s + (tick % 3) * 0.3, 0.5 * s, s);
-    ctx.fillRect(ccX + 1.5 * s, ccY - 2 * s + (tick % 4) * 0.2, 0.5 * s, s);
+    ctx.fillRect(ccX + 0.5 * s, ccY - s + (tick % 3) * 0.2, 0.4 * s, 0.8 * s);
+    ctx.fillRect(ccX + 1.2 * s, ccY - 1.3 * s + (tick % 4) * 0.15, 0.4 * s, 0.8 * s);
+
+  // Glass of water below coffee cup
+  const glX = x + 24 * s;
+  const glY = deskY - 4 * s;
+  ctx.fillStyle = "#88bbdd30";
+  ctx.fillRect(glX, glY, 2 * s, 3 * s);
+  ctx.fillStyle = "#4a99cc50";
+  ctx.fillRect(glX + 0.3 * s, glY + 1 * s, 1.4 * s, 1.8 * s);
+  ctx.fillStyle = "#aaddee40";
+  ctx.fillRect(glX, glY, 2 * s, 0.4 * s);
+  ctx.fillStyle = "#ffffff18";
+  ctx.fillRect(glX + 0.2 * s, glY + 0.5 * s, 0.4 * s, 2 * s);
   }
 
   // 3-line label: Sem / CEO / → Autronis
