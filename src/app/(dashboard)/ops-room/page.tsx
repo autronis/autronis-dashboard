@@ -17,6 +17,7 @@ import { CommandBar } from "@/components/ops-room/command-bar";
 import { CommandInput } from "@/components/ops-room/command-input";
 import { ApprovalPanel } from "@/components/ops-room/approval-panel";
 import { LogPanel } from "@/components/ops-room/log-panel";
+import { ProjectPanel } from "@/components/ops-room/project-panel";
 import { OfficeViewSyb } from "@/components/ops-room/office-view-syb";
 import type { Agent } from "@/components/ops-room";
 import { useOpsRoom } from "@/hooks/queries/use-ops-room";

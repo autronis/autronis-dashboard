@@ -103,7 +103,7 @@ function drawDesk(
   // Labels pass — 3-line format: Naam / Rol / → Project
   if (labelsOnly) {
     const labelX = x + 2 * s;
-    const labelY2 = deskY + deskH + 7 * s;
+    const labelY2 = deskY + deskH + 5 * s;
     const maxW = deskW + 4 * s;
     ctx.save();
     ctx.beginPath();
@@ -1182,81 +1182,77 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
       }
     });
 
-    // === Project sidebar (right side) ===
-    const activeProjects = new Map<string, { names: string[]; hasError: boolean }>();
-    agents.forEach((a) => {
-      if (a.huidigeTaak && a.status !== "idle" && a.status !== "offline") {
-        const proj = a.huidigeTaak.project;
-        if (!activeProjects.has(proj)) activeProjects.set(proj, { names: [], hasError: false });
-        const entry = activeProjects.get(proj)!;
-        entry.names.push(a.naam);
-        if (a.status === "error") entry.hasError = true;
-      }
-    });
-    const cardX = CANVAS_W - 190;
-    let cardY = WALL_H + 16;
-    // Header
-    ctx.font = "bold 10px Inter, system-ui, sans-serif";
-    ctx.fillStyle = "#5a6a7a";
-    ctx.fillText("PROJECTEN", cardX + 8, cardY);
-    cardY += 14;
-
-    const newCardRects: typeof projectCardRects.current = [];
-    activeProjects.forEach(({ names, hasError }, proj) => {
-      const color = getProjectColor(proj);
-      const isHoveredProj = hoveredProject === proj;
-
-      // Card
-      ctx.fillStyle = isHoveredProj ? "#0a0f14ee" : "#0a0f14aa";
-      ctx.beginPath();
-      ctx.roundRect(cardX, cardY, 180, 38, 4);
-      ctx.fill();
-      // Left color stripe
-      ctx.fillStyle = color;
-      ctx.fillRect(cardX, cardY + 3, 3, 32);
-      // Status dot (pulsing)
-      const dotAlpha = hasError ? 1 : (0.6 + Math.sin(tick * 0.2 + cardY * 0.1) * 0.4);
-      ctx.fillStyle = hasError ? "#ef4444" : `rgba(74, 222, 128, ${dotAlpha})`;
-      ctx.beginPath();
-      ctx.arc(cardX + 168, cardY + 19, 3.5, 0, Math.PI * 2);
-      ctx.fill();
-      // Project name
-      ctx.font = "bold 12px Inter, system-ui, sans-serif";
-      ctx.fillStyle = "#e2e8f0";
-      let projName = proj;
-      while (ctx.measureText(projName).width > 140 && projName.length > 3) projName = projName.slice(0, -2) + ".";
-      ctx.fillText(projName, cardX + 10, cardY + 16);
-      // Agent names (bold, more spacing)
-      ctx.font = "bold 10px Inter, system-ui, sans-serif";
-      ctx.fillStyle = "#7a8a9a";
-      ctx.fillText(names.slice(0, 3).join(", ") + (names.length > 3 ? ` +${names.length - 3}` : ""), cardX + 10, cardY + 31);
-      newCardRects.push({ proj, x: cardX, y: cardY, w: 180, h: 38 });
-      cardY += 42;
-    });
-    projectCardRects.current = newCardRects;
-
-    // === Hover tooltip ===
+    // === Hover tooltip (clean, white text, no border) ===
     if (hovered) {
       const ha = positions.get(hovered);
       if (ha && ha.agent.status !== "offline") {
         const { agent } = ha;
         const desk = DESK_POSITIONS[agent.id];
+        const rolLabels: Record<string, string> = {
+          manager: "Manager", builder: "Builder", reviewer: "Reviewer",
+          architect: "Architect", assistant: "Research & Docs", automation: "Automation",
+        };
+        const rolText = rolLabels[agent.rol] ?? "Builder";
+        const proj = agent.huidigeTaak?.project ?? "Stand-by";
+        const projColor = agent.huidigeTaak ? getProjectColor(proj) : "#8a9aaa";
+        const cost = `\u20AC${agent.kosten.kostenVandaag.toFixed(2)}`;
+        const task = agent.huidigeTaak?.beschrijving ?? "";
+        const taskDisplay = task.length > 35 ? task.slice(0, 34) + "..." : task;
+
+        const tw = 280;
+        const th = task ? 82 : 62;
         const ttX = (desk?.x ?? ha.x) + 2 * S;
-        const ttY = (desk?.y ?? ha.y) - 70;
-        const tw = 260, th = 64;
+        const ttY = (desk?.y ?? ha.y) - th - 12;
         const tx = Math.max(10, Math.min(ttX, CANVAS_W - tw - 10));
         const ty = Math.max(10, ttY);
-        ctx.fillStyle = "#0a0f14ee"; ctx.strokeStyle = "#23C6B740"; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.roundRect(tx, ty, tw, th, 8); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = "#e2e8f0"; ctx.font = "bold 15px monospace";
-        ctx.fillText(agent.naam, tx + 10, ty + 20);
-        ctx.fillStyle = "#6b7b8b"; ctx.font = "11px monospace";
-        ctx.fillText(agent.rol.charAt(0).toUpperCase() + agent.rol.slice(1), tx + 10, ty + 36);
-        const proj = agent.huidigeTaak?.project ?? "Stand-by";
-        ctx.fillStyle = agent.huidigeTaak ? getProjectColor(proj) : "#6b7b8b";
-        ctx.fillText(proj, tx + 10, ty + 52);
+
+        // Background with subtle shadow
+        ctx.fillStyle = "#00000030";
+        ctx.beginPath(); ctx.roundRect(tx + 3, ty + 3, tw, th, 10); ctx.fill();
+        ctx.fillStyle = "#0d1117f0";
+        ctx.beginPath(); ctx.roundRect(tx, ty, tw, th, 10); ctx.fill();
+
+        // Left accent bar
+        ctx.fillStyle = projColor;
+        ctx.fillRect(tx + 1, ty + 8, 3, th - 16);
+
+        // Name (large, white, bold)
+        ctx.font = "bold 16px Inter, system-ui, sans-serif";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(agent.naam, tx + 14, ty + 22);
+
+        // Cost (right-aligned, amber)
+        ctx.font = "bold 12px Inter, system-ui, sans-serif";
         ctx.fillStyle = "#f59e0b";
-        ctx.fillText(`\u20AC${agent.kosten.kostenVandaag.toFixed(2)}`, tx + tw - 60, ty + 20);
+        const costW = ctx.measureText(cost).width;
+        ctx.fillText(cost, tx + tw - costW - 14, ty + 22);
+
+        // Role
+        ctx.font = "11px Inter, system-ui, sans-serif";
+        ctx.fillStyle = "#8a9aaa";
+        ctx.fillText(rolText, tx + 14, ty + 38);
+
+        // Status dot
+        const statusColor = agent.status === "working" ? "#4ade80" :
+          agent.status === "reviewing" ? "#a855f7" :
+          agent.status === "error" ? "#ef4444" : "#6b7280";
+        ctx.fillStyle = statusColor;
+        ctx.beginPath();
+        const rolW = ctx.measureText(rolText).width;
+        ctx.arc(tx + 14 + rolW + 8, ty + 35, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Project
+        ctx.font = "bold 11px Inter, system-ui, sans-serif";
+        ctx.fillStyle = projColor;
+        ctx.fillText(proj, tx + 14, ty + 54);
+
+        // Task description
+        if (taskDisplay) {
+          ctx.font = "10px Inter, system-ui, sans-serif";
+          ctx.fillStyle = "#6b7b8b";
+          ctx.fillText(taskDisplay, tx + 14, ty + 70);
+        }
       }
     }
 
