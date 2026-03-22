@@ -67,7 +67,7 @@ const DESKS_BOTTOM = BUILDER_START_Y + UNIT_H * 3 + 10;
 const MEETING = { x: BUILDER_X + UNIT_W * 5 + 20, y: MGMT_Y + 10, w: CANVAS_W - (BUILDER_X + UNIT_W * 5 + 20) - 180, h: 110 };
 
 // Slaapkamer — tight, just beds
-const COFFEE_Y = DESKS_BOTTOM + 30;
+const COFFEE_Y = DESKS_BOTTOM + 40;
 const COFFEE_X = 14;
 const COFFEE_W = CANVAS_W - 28;
 const COFFEE_H = 80;
@@ -530,23 +530,24 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
 
     // === Slaapkamer (geen achtergrond — zelfde vloer) ===
 
-    // === Group labels ===
-    ctx.font = "bold 12px Inter, system-ui, sans-serif";
-    ctx.letterSpacing = "2px";
-    ctx.fillStyle = "#23C6B799";
+    // === Group labels (white, bold italic, spaced) ===
+    ctx.font = "bold italic 13px Inter, system-ui, sans-serif";
+    ctx.letterSpacing = "3px";
+    ctx.fillStyle = "#ffffffcc";
     // "DE BAAS" above Sem
-    ctx.fillText("DE BAAS", SEM.x + 20, MGMT_Y - 6);
+    ctx.fillText("DE BAAS", SEM.x + 10, MGMT_Y - 6);
     // "HET BESTUUR" centered above Theo/Toby/Jones
     const bestuurX = BUILDER_X + UNIT_W + (UNIT_W * 3) / 2;
     ctx.textAlign = "center";
     ctx.fillText("HET BESTUUR", bestuurX, MGMT_Y - 6);
-    // "DE STAF" centered above Ari/Rodi
-    ctx.fillText("DE STAF", 20 + 14 * S, BUILDER_START_Y + Math.floor(UNIT_H / 2) - 6);
-    // "DE ENGINEERS" centered above builders row
+    // "DE STAF" centered above Ari/Rodi (lower)
+    const stafY = BUILDER_START_Y + Math.floor(UNIT_H / 2) + 10;
+    ctx.fillText("DE STAF", 20 + 14 * S, stafY - 16);
+    // "DE ENGINEERS" above the first empty row (above builders)
     const engX = BUILDER_X + (UNIT_W * 5) / 2;
-    ctx.fillText("DE ENGINEERS", engX, BUILDER_START_Y + UNIT_H - 6);
+    ctx.fillText("DE ENGINEERS", engX, BUILDER_START_Y - 6);
     // "STAND-BY" above idle agents
-    ctx.fillText("STAND-BY", CANVAS_W / 2, COFFEE_Y - 6);
+    ctx.fillText("STAND-BY", CANVAS_W / 2, COFFEE_Y - 10);
     ctx.textAlign = "left";
     ctx.letterSpacing = "0px";
 
