@@ -537,11 +537,13 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
     ctx.textAlign = "center";
     const centerX = CANVAS_W / 2;
     // "DE BAAS" + "HET BESTUUR" on same line (management row)
-    // Each label 16px above the first agent of its group
-    ctx.fillText("DE GROTE BAAS", SEM.x + 14 * S, SEM.y - 16);
-    ctx.fillText("HET BESTUUR", BUILDER_X + UNIT_W * 2 + UNIT_W / 2, DESK_POSITIONS.theo.y - 16);
-    ctx.fillText("DE STAF", 20 + 14 * S, DESK_POSITIONS.ari.y - 16);
-    ctx.fillText("DE ENGINEERS", BUILDER_X + (UNIT_W * 5) / 2, DESK_POSITIONS.wout.y - 16);
+    // Hardcoded: each label Y = agent Y - 30
+    ctx.fillText("DE GROTE BAAS", SEM.x + 14 * S, SEM.y - 30);
+    ctx.fillText("HET BESTUUR", BUILDER_X + UNIT_W * 2 + UNIT_W / 2, DESK_POSITIONS.theo.y - 30);
+    ctx.textAlign = "left";
+    ctx.fillText("DE STAF", 20, DESK_POSITIONS.ari.y - 30);
+    ctx.textAlign = "center";
+    ctx.fillText("DE ENGINEERS", BUILDER_X + (UNIT_W * 5) / 2, DESK_POSITIONS.wout.y - 30);
     // "STAND-BY" — with same gap above as other labels
     ctx.fillText("STAND-BY", centerX, COFFEE_Y - 10);
     ctx.textAlign = "left";
@@ -672,6 +674,54 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
     // Water level
     ctx.fillStyle = "#60b8e820";
     ctx.fillRect(wrX + 5, btlTop - 14, wrW - 10, 12);
+
+    // === 3D Plants ===
+    const drawPlant3D = (px: number, py: number, sway: number) => {
+      // Dark pot (3D box)
+      ctx.fillStyle = "#2a2a35";
+      ctx.fillRect(px, py + 18, 22, 14);
+      ctx.fillStyle = "#222230";
+      ctx.fillRect(px + 22, py + 20, 4, 12);
+      ctx.fillStyle = "#333340";
+      ctx.fillRect(px, py + 16, 22, 3);
+      // Dirt
+      ctx.fillStyle = "#3a3020";
+      ctx.fillRect(px + 2, py + 16, 18, 2);
+      // Stem
+      ctx.fillStyle = "#2d6b3a";
+      ctx.fillRect(px + 9 + sway * 0.3, py + 6, 3, 12);
+      // Leaves (multiple layers, light + dark green)
+      const drawLeaf = (lx: number, ly: number, w: number, h: number, clr: string) => {
+        ctx.fillStyle = clr;
+        ctx.beginPath();
+        ctx.ellipse(lx + sway * 0.5, ly, w, h, 0, 0, Math.PI * 2);
+        ctx.fill();
+      };
+      // Back leaves (dark)
+      drawLeaf(px + 6, py + 4, 8, 5, "#1a5c2a");
+      drawLeaf(px + 18, py + 2, 7, 5, "#1a5c2a");
+      // Mid leaves
+      drawLeaf(px + 4, py, 7, 4, "#2d8a4e");
+      drawLeaf(px + 20, py - 2, 8, 5, "#2d8a4e");
+      drawLeaf(px + 11, py - 4, 6, 4, "#3cb371");
+      // Front leaves (bright)
+      drawLeaf(px + 8, py - 2, 6, 3, "#4ade60");
+      drawLeaf(px + 16, py - 4, 5, 3, "#4ade60");
+      drawLeaf(px + 12, py - 6, 4, 3, "#6aee80");
+      // Shadow
+      ctx.fillStyle = "#00000010";
+      ctx.beginPath();
+      ctx.ellipse(px + 13, py + 34, 14, 3, 0, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    // Plant next to Sem (under his labels)
+    const plantSway1 = Math.sin(tick * 0.08) * 1.5;
+    drawPlant3D(SEM.x + 2, SEM.y + 22 * S + 10, plantSway1);
+
+    // Plant bottom-right corner
+    const plantSway2 = Math.sin(tick * 0.08 + 2) * 1.5;
+    drawPlant3D(CANVAS_W - 220, DESKS_BOTTOM - 30, plantSway2);
 
     // === Sem desk ===
     drawSemDesk(ctx, SEM.x, SEM.y, tick, selectedId === "sem", S);
