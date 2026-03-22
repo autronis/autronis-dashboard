@@ -537,119 +537,141 @@ export function PixelOffice({ agents, selectedId, onSelect }: PixelOfficeProps) 
     ctx.textAlign = "center";
     const centerX = CANVAS_W / 2;
     // "DE BAAS" + "HET BESTUUR" on same line (management row)
-    // All labels tight above their group (same style as DE ENGINEERS)
-    ctx.fillText("DE GROTE BAAS", SEM.x + 14 * S, SEM.y - 6);
-    ctx.fillText("HET BESTUUR", BUILDER_X + UNIT_W * 2 + UNIT_W / 2, DESK_POSITIONS.theo.y - 6);
-    const ariY = BUILDER_START_Y + Math.floor(UNIT_H / 2) + 10;
-    ctx.fillText("DE STAF", centerX, ariY - 6);
-    ctx.fillText("DE ENGINEERS", centerX, DESK_POSITIONS.wout.y - 6);
+    // Each label 16px above the first agent of its group
+    ctx.fillText("DE GROTE BAAS", SEM.x + 14 * S, SEM.y - 16);
+    ctx.fillText("HET BESTUUR", BUILDER_X + UNIT_W * 2 + UNIT_W / 2, DESK_POSITIONS.theo.y - 16);
+    ctx.fillText("DE STAF", 20 + 14 * S, DESK_POSITIONS.ari.y - 16);
+    ctx.fillText("DE ENGINEERS", BUILDER_X + (UNIT_W * 5) / 2, DESK_POSITIONS.wout.y - 16);
     // "STAND-BY" — with same gap above as other labels
     ctx.fillText("STAND-BY", centerX, COFFEE_Y - 10);
     ctx.textAlign = "left";
     ctx.letterSpacing = "0px";
 
-    // === Coffee machine + Water cooler on table next to Sem ===
-    const wcX = SEM.x + 30 * S + 12;
-    const wcY = SEM.y + 14 * S;
+    // === Coffee machine + Water cooler on 3D table next to Sem ===
+    const wcX = SEM.x + 30 * S + 10;
+    const wcY = SEM.y + 12 * S;
 
-    // Wider table (fits both machines)
-    const tblW = 60;
-    const tblH2 = 12;
-    const tblY2 = wcY + 30;
-    ctx.fillStyle = "#5c4a3a";
-    ctx.fillRect(wcX - 6, tblY2, tblW, tblH2);
-    ctx.fillStyle = "#4a3828";
-    ctx.fillRect(wcX - 6, tblY2 + tblH2, tblW, 4);
-    ctx.fillStyle = "#3a2818";
-    ctx.fillRect(wcX - 4, tblY2 + tblH2 + 4, 3, 6);
-    ctx.fillRect(wcX + tblW - 9, tblY2 + tblH2 + 4, 3, 6);
-    ctx.fillStyle = "#00000010";
+    // 3D Table (bigger, same style as desks)
+    const tW = 80;
+    const tH = 14;
+    const tD = 6;
+    const tY = wcY + 40;
+    // Shadow
+    ctx.fillStyle = "#00000015";
     ctx.beginPath();
-    ctx.ellipse(wcX + tblW / 2 - 3, tblY2 + tblH2 + 12, tblW / 2, 3, 0, 0, Math.PI * 2);
+    ctx.ellipse(wcX + tW / 2 - 4, tY + tH + tD + 8, tW / 2 + 4, 4, 0, 0, Math.PI * 2);
     ctx.fill();
+    // Table legs
+    ctx.fillStyle = "#3a2818";
+    ctx.fillRect(wcX, tY + tH + tD, 3, 8);
+    ctx.fillRect(wcX + tW - 6, tY + tH + tD, 3, 8);
+    // Front face
+    ctx.fillStyle = "#4a3828";
+    ctx.fillRect(wcX - 2, tY + tH, tW, tD);
+    // Right side face
+    ctx.fillStyle = "#3a2818";
+    ctx.fillRect(wcX + tW - 2, tY + tH - 1, 4, tD + 1);
+    // Top surface
+    ctx.fillStyle = "#5c4a3a";
+    ctx.fillRect(wcX - 2, tY, tW, tH);
+    // Reflection
+    ctx.fillStyle = "#ffffff03";
+    ctx.fillRect(wcX, tY + tH + tD + 1, tW - 4, 2);
 
-    // --- Coffee machine (left side of table, dark/black, like reference) ---
-    const cmX = wcX - 2;
-    const cmY = tblY2;
-    // Machine body (dark)
-    ctx.fillStyle = "#2a2a30";
-    ctx.fillRect(cmX, cmY - 28, 22, 28);
+    // --- Coffee machine (left, bigger, dark) ---
+    const cmX = wcX;
+    const cmY = tY;
+    const cmW = 30;
+    const cmH = 38;
+    // Body
+    ctx.fillStyle = "#2a2a32";
+    ctx.fillRect(cmX, cmY - cmH, cmW, cmH);
+    // Right side (3D)
     ctx.fillStyle = "#222228";
-    ctx.fillRect(cmX + 22, cmY - 26, 4, 26);
+    ctx.fillRect(cmX + cmW, cmY - cmH + 3, 5, cmH - 3);
     // Top
-    ctx.fillStyle = "#333338";
-    ctx.fillRect(cmX, cmY - 30, 22, 3);
-    // Display/panel
+    ctx.fillStyle = "#333340";
+    ctx.fillRect(cmX, cmY - cmH - 3, cmW, 4);
+    ctx.fillStyle = "#2a2a32";
+    ctx.fillRect(cmX + cmW, cmY - cmH - 1, 5, 4);
+    // Display
     ctx.fillStyle = "#444450";
-    ctx.fillRect(cmX + 3, cmY - 22, 16, 5);
+    ctx.fillRect(cmX + 4, cmY - cmH + 8, 20, 6);
     ctx.fillStyle = "#f59e0b50";
-    ctx.fillRect(cmX + 4, cmY - 21, 6, 3);
+    ctx.fillRect(cmX + 5, cmY - cmH + 9, 8, 4);
     // Buttons
     ctx.fillStyle = "#555560";
-    ctx.fillRect(cmX + 3, cmY - 15, 4, 3);
-    ctx.fillRect(cmX + 9, cmY - 15, 4, 3);
+    ctx.fillRect(cmX + 4, cmY - cmH + 17, 5, 4);
+    ctx.fillRect(cmX + 11, cmY - cmH + 17, 5, 4);
+    ctx.fillRect(cmX + 18, cmY - cmH + 17, 5, 4);
     // Nozzle area
     ctx.fillStyle = "#1a1a20";
-    ctx.fillRect(cmX + 4, cmY - 10, 14, 8);
+    ctx.fillRect(cmX + 5, cmY - 14, 18, 12);
     // Cup
     ctx.fillStyle = "#d0c8b8";
-    ctx.fillRect(cmX + 7, cmY - 6, 6, 5);
+    ctx.fillRect(cmX + 9, cmY - 8, 8, 7);
     ctx.fillStyle = "#5c3a1a";
-    ctx.fillRect(cmX + 8, cmY - 5, 4, 3);
+    ctx.fillRect(cmX + 10, cmY - 7, 6, 4);
     // Drip tray
-    ctx.fillStyle = "#3a3a40";
-    ctx.fillRect(cmX + 2, cmY - 2, 18, 2);
-    // Steam handle (left side)
+    ctx.fillStyle = "#3a3a42";
+    ctx.fillRect(cmX + 3, cmY - 2, 22, 2);
+    // Steam handle
     ctx.fillStyle = "#444";
-    ctx.fillRect(cmX - 4, cmY - 14, 4, 2);
-    ctx.fillRect(cmX - 6, cmY - 14, 2, 6);
+    ctx.fillRect(cmX - 6, cmY - 18, 6, 3);
+    ctx.fillRect(cmX - 8, cmY - 18, 3, 8);
 
-    // --- Water cooler (right side of table, like reference) ---
-    const wrX = wcX + 28;
-    // Machine body (light grey)
+    // --- Water cooler (right, bigger) ---
+    const wrX = wcX + 40;
+    const wrW = 28;
+    const wrH = 32;
+    // Body
     ctx.fillStyle = "#c8c8d0";
-    ctx.fillRect(wrX, cmY - 24, 20, 24);
+    ctx.fillRect(wrX, cmY - wrH, wrW, wrH);
+    // Right side (3D)
     ctx.fillStyle = "#b0b0b8";
-    ctx.fillRect(wrX + 20, cmY - 22, 5, 22);
-    // Top surface
+    ctx.fillRect(wrX + wrW, cmY - wrH + 3, 5, wrH - 3);
+    // Top
     ctx.fillStyle = "#d8d8e0";
-    ctx.fillRect(wrX, cmY - 26, 20, 3);
+    ctx.fillRect(wrX, cmY - wrH - 3, wrW, 4);
+    ctx.fillStyle = "#c8c8d0";
+    ctx.fillRect(wrX + wrW, cmY - wrH - 1, 5, 4);
     // Panel
     ctx.fillStyle = "#8888a0";
-    ctx.fillRect(wrX + 3, cmY - 18, 14, 5);
+    ctx.fillRect(wrX + 4, cmY - wrH + 8, 18, 6);
     ctx.fillStyle = "#4ade80";
-    ctx.fillRect(wrX + 4, cmY - 17, 3, 3);
+    ctx.fillRect(wrX + 5, cmY - wrH + 9, 4, 4);
     ctx.fillStyle = "#3b82f6";
-    ctx.fillRect(wrX + 9, cmY - 17, 3, 3);
+    ctx.fillRect(wrX + 11, cmY - wrH + 9, 4, 4);
     // Tap
     ctx.fillStyle = "#999";
-    ctx.fillRect(wrX + 5, cmY - 11, 8, 2);
-    ctx.fillRect(wrX + 8, cmY - 9, 2, 4);
+    ctx.fillRect(wrX + 7, cmY - wrH + 18, 10, 3);
+    ctx.fillRect(wrX + 11, cmY - wrH + 21, 3, 5);
     // Drip tray
-    ctx.fillStyle = "#aaa";
-    ctx.fillRect(wrX + 3, cmY - 3, 14, 2);
+    ctx.fillStyle = "#bbb";
+    ctx.fillRect(wrX + 4, cmY - 4, 18, 3);
 
-    // Water bottle (blue, rounded, on top — like reference photo)
-    ctx.fillStyle = "#87ceeb45";
+    // Water bottle (bigger, rounded)
+    const btlTop = cmY - wrH - 3;
+    ctx.fillStyle = "#87ceeb40";
     ctx.beginPath();
-    ctx.moveTo(wrX + 3, cmY - 26);
-    ctx.lineTo(wrX + 3, cmY - 42);
-    ctx.quadraticCurveTo(wrX + 10, cmY - 50, wrX + 17, cmY - 42);
-    ctx.lineTo(wrX + 17, cmY - 26);
+    ctx.moveTo(wrX + 4, btlTop);
+    ctx.lineTo(wrX + 4, btlTop - 22);
+    ctx.quadraticCurveTo(wrX + wrW / 2, btlTop - 30, wrX + wrW - 4, btlTop - 22);
+    ctx.lineTo(wrX + wrW - 4, btlTop);
     ctx.closePath();
     ctx.fill();
-    // Bottle highlight
-    ctx.fillStyle = "#a8e4f830";
-    ctx.fillRect(wrX + 5, cmY - 46, 3, 18);
-    // Bottle neck
-    ctx.fillStyle = "#ffffff60";
-    ctx.fillRect(wrX + 7, cmY - 52, 6, 6);
+    // Highlight
+    ctx.fillStyle = "#a8e4f828";
+    ctx.fillRect(wrX + 7, btlTop - 26, 3, 22);
+    // Neck
+    ctx.fillStyle = "#ffffff50";
+    ctx.fillRect(wrX + 9, btlTop - 34, 8, 8);
     // Cap
     ctx.fillStyle = "#e8e8e8";
-    ctx.fillRect(wrX + 6, cmY - 54, 8, 3);
+    ctx.fillRect(wrX + 8, btlTop - 36, 10, 3);
     // Water level
-    ctx.fillStyle = "#60b8e825";
-    ctx.fillRect(wrX + 4, cmY - 36, 12, 10);
+    ctx.fillStyle = "#60b8e820";
+    ctx.fillRect(wrX + 5, btlTop - 14, wrW - 10, 12);
 
     // === Sem desk ===
     drawSemDesk(ctx, SEM.x, SEM.y, tick, selectedId === "sem", S);
