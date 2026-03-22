@@ -734,22 +734,16 @@ export function drawSemDesk(
   // 3-line label: Sem / CEO / → Autronis
   const labelX = x + 2 * s;
   const labelY = y + 27 * s;
-  // No background — transparent labels
-  // Line 1: Name
-  ctx.font = "bold 13px Inter, system-ui, sans-serif";
+  // Compact label: Name + Rol on one line, project below
+  ctx.font = "bold 12px Inter, system-ui, sans-serif";
   ctx.fillStyle = "#ffffff";
   ctx.fillText("Sem", labelX, labelY);
-  // Line 2: Rol
-  ctx.font = "11px Inter, system-ui, sans-serif";
-  ctx.fillStyle = "#6b7b8b";
-  ctx.fillText("CEO", labelX, labelY + 12);
-  // Line 3: Project
-  ctx.font = "11px Inter, system-ui, sans-serif";
+  ctx.font = "10px Inter, system-ui, sans-serif";
+  ctx.fillStyle = "#8a9aa5";
+  ctx.fillText("CEO", labelX + 30, labelY);
+  ctx.font = "10px Inter, system-ui, sans-serif";
   ctx.fillStyle = "#23C6B7";
-  ctx.fillText("→ Autronis", labelX, labelY + 24);
-  // Status dot
-  ctx.fillStyle = "#4ade80";
-  ctx.beginPath(); ctx.arc(labelX + 90, labelY - 6, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillText("→ Autronis", labelX, labelY + 12);
 
   if (isSelected) {
     ctx.strokeStyle = "#23C6B7";

@@ -110,41 +110,27 @@ function drawDesk(
     };
     const rolText = rolLabels[agent.rol ?? "builder"] ?? "Builder";
 
-    // No background — fully transparent labels
-
-    // Line 1: Name (13px bold white)
-    ctx.font = "bold 13px Inter, system-ui, sans-serif";
+    // Line 1: Name + rol on same line (compact)
+    ctx.font = "bold 12px Inter, system-ui, sans-serif";
     ctx.fillStyle = "#ffffff";
     let name = agent.naam;
-    while (ctx.measureText(name).width > maxW - 8 && name.length > 2) name = name.slice(0, -1);
-    ctx.fillText(name, labelX, labelY2 + 12);
+    while (ctx.measureText(name).width > maxW * 0.5 && name.length > 2) name = name.slice(0, -1);
+    ctx.fillText(name, labelX, labelY2 + 10);
 
-    // Line 2: Rol (11px, grey)
-    ctx.font = "11px Inter, system-ui, sans-serif";
-    ctx.fillStyle = "#6b7b8b";
-    ctx.fillText(rolText, labelX, labelY2 + 24);
+    // Rol inline after name (smaller, grey)
+    ctx.font = "bold 12px Inter, system-ui, sans-serif";
+    const nmW = ctx.measureText(name).width;
+    ctx.font = "10px Inter, system-ui, sans-serif";
+    ctx.fillStyle = "#8a9aa5";
+    ctx.fillText(rolText, labelX + nmW + 4, labelY2 + 10);
 
-    // Line 3: → Project (11px, turquoise/project color)
+    // Line 2: → Project (10px, project color)
     if (agent.huidigeTaak) {
-      ctx.font = "11px Inter, system-ui, sans-serif";
+      ctx.font = "10px Inter, system-ui, sans-serif";
       let proj = agent.huidigeTaak.project;
-      while (ctx.measureText("→ " + proj).width > maxW - 8 && proj.length > 3) proj = proj.slice(0, -2) + ".";
+      while (ctx.measureText("→ " + proj).width > maxW && proj.length > 3) proj = proj.slice(0, -2) + ".";
       ctx.fillStyle = projectColor;
-      ctx.fillText("→ " + proj, labelX, labelY2 + 36);
-    }
-
-    // Status dot (right side of label)
-    const dotX = labelX + maxW - 10;
-    const dotY = labelY2 + 8;
-    if (isActive) {
-      ctx.fillStyle = "#4ade80"; // green = running
-      ctx.beginPath(); ctx.arc(dotX, dotY, 3, 0, Math.PI * 2); ctx.fill();
-    } else if (agent.status === "idle") {
-      ctx.fillStyle = "#f59e0b"; // yellow = idle
-      ctx.beginPath(); ctx.arc(dotX, dotY, 3, 0, Math.PI * 2); ctx.fill();
-    } else if (agent.status === "error") {
-      ctx.fillStyle = "#ef4444"; // red = error
-      ctx.beginPath(); ctx.arc(dotX, dotY, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillText("→ " + proj, labelX, labelY2 + 22);
     }
 
     ctx.restore();
